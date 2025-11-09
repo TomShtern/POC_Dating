@@ -165,6 +165,96 @@ Production-ready infrastructure code:
 - GitHub Actions workflows
 - Cost optimization strategies
 
+---
+
+## Advanced Implementation Patterns
+
+### 🔒 [10 - Backend Architecture Patterns](./docs/10-backend-architecture-patterns.md)
+Advanced architectural patterns for maintainable, scalable backend:
+- Clean Architecture and Domain-Driven Design (DDD)
+- Monorepo structure with npm workspaces
+- Domain layer (Entities, Value Objects, Repository interfaces)
+- Application layer (Use Cases)
+- Infrastructure layer (Prisma repositories, external services)
+- Dependency Injection with Inversify
+- Error handling patterns
+- Winston + Morgan logging
+- Jest testing strategies (unit, integration, API tests)
+- API versioning strategies
+
+**Includes**:
+- Complete monorepo structure
+- Full code examples for all layers
+- Repository pattern implementation
+- DI container configuration
+- Global error handling middleware
+- Testing patterns and examples
+
+### 📱 [11 - Mobile Architecture](./docs/11-mobile-architecture.md)
+React Native architecture and performance optimization:
+- Project structure and organization
+- Zustand state management (recommended over Redux)
+- React Navigation setup (tab + stack navigators)
+- Axios client with token refresh interceptors
+- React Query for data fetching and caching
+- FlatList optimization (memoization, getItemLayout, windowing)
+- react-native-fast-image for performance
+- Image upload with compression
+- WebSocket integration
+- Performance optimization techniques
+
+**Includes**:
+- Complete project structure
+- State management setup with Zustand
+- API client with automatic token refresh
+- Optimized list rendering code
+- Image handling and upload
+- Performance best practices
+
+### 🔐 [12 - Security Implementation](./docs/12-security-implementation.md)
+Complete security guide with production-ready code:
+- JWT authentication with refresh token rotation
+- Role-Based Access Control (RBAC)
+- Sliding window rate limiting with Redis
+- Argon2 password hashing (memory-hard, GPU-resistant)
+- OAuth 2.0 social login (Google, Facebook, Apple)
+- Input validation and sanitization
+- Helmet.js security headers
+- AES-256 encryption for sensitive data
+- TLS/SSL configuration
+
+**Includes**:
+- Complete JWT token service
+- Authentication middleware and controllers
+- Authorization patterns (roles, ownership)
+- Rate limiter implementation
+- Password service with strength validation
+- OAuth Passport.js strategies
+- express-validator validation rules
+- Encryption service for data at rest
+
+### ⚡ [13 - Performance Monitoring](./docs/13-performance-monitoring.md)
+Performance optimization and monitoring strategies:
+- DataDog APM integration
+- Query optimization with EXPLAIN ANALYZE
+- N+1 problem solutions (DataLoader, Prisma strategies)
+- Multi-level caching (memory + Redis)
+- Performance profiling with Clinic.js
+- Prometheus metrics with Express
+- Database optimization (indexes, connection pooling)
+- k6 load testing
+
+**Includes**:
+- DataDog tracer configuration
+- Custom metrics tracking
+- Query analyzer with Prisma
+- DataLoader pattern implementation
+- Multi-level cache service
+- Clinic.js profiling examples
+- Prometheus middleware
+- Database index strategies
+- Load testing scripts
+
 ## Key Takeaways
 
 ### Technical Architecture
@@ -200,7 +290,11 @@ POC_Dating/
 │   ├── 06-database-schemas.md             # PostgreSQL, MongoDB, Redis schemas
 │   ├── 07-matching-algorithm.md           # Matching algorithm implementation
 │   ├── 08-realtime-messaging.md           # WebSocket messaging system
-│   └── 09-infrastructure-deployment.md    # Docker, K8s, Terraform, CI/CD
+│   ├── 09-infrastructure-deployment.md    # Docker, K8s, Terraform, CI/CD
+│   ├── 10-backend-architecture-patterns.md # Clean Architecture, DDD, testing
+│   ├── 11-mobile-architecture.md          # React Native patterns, performance
+│   ├── 12-security-implementation.md      # Authentication, authorization, encryption
+│   └── 13-performance-monitoring.md       # APM, profiling, optimization
 ├── README.md
 └── (Future: source code directories)
 ```
