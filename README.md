@@ -255,6 +255,81 @@ Performance optimization and monitoring strategies:
 - Database index strategies
 - Load testing scripts
 
+---
+
+## Java Implementation Guides
+
+### ☕ [14 - Java Backend Architecture](./docs/14-java-backend-architecture.md)
+Complete Spring Boot backend implementation:
+- Multi-module Maven project structure
+- Spring Boot 3.x configuration
+- JPA/Hibernate entities and repositories
+- Service layer with business logic
+- REST controllers with Spring Security
+- JWT authentication and authorization
+- Argon2 password hashing with Bouncy Castle
+- Redis caching with Spring Data Redis
+- Global exception handling
+- JUnit 5 + Mockito testing
+- Connection pooling with HikariCP
+
+**Includes**:
+- Parent POM and module configuration
+- Complete entity models with PostGIS
+- Repository interfaces and custom queries
+- Service implementations
+- Security filter chain configuration
+- Custom JWT service
+- Integration tests with MockMvc
+- Performance optimization tips
+
+### 🔄 [15 - Hybrid Architecture](./docs/15-hybrid-architecture-java-nodejs.md)
+Java + Node.js hybrid system design:
+- When to use Java vs Node.js
+- Service communication patterns (REST, gRPC, Kafka)
+- Shared JWT authentication across platforms
+- Event sourcing and Saga patterns
+- Data consistency strategies
+- Docker Compose for development
+- Kubernetes deployment for production
+- Distributed tracing with OpenTelemetry
+- Unified logging with Fluentd
+
+**Includes**:
+- Architecture decision matrix
+- Java Kafka producer/consumer
+- Node.js Kafka integration
+- gRPC service definitions (Protocol Buffers)
+- Token validation in both languages
+- Complete Docker Compose configuration
+- K8s manifests for both stacks
+- Monitoring and observability setup
+
+### 📱 [16 - Android Architecture](./docs/16-android-kotlin-architecture.md)
+Modern Android app with Kotlin and Jetpack Compose:
+- Clean Architecture (Domain, Data, Presentation layers)
+- MVVM pattern with StateFlow
+- Hilt dependency injection
+- Retrofit for networking with auto token refresh
+- Room database for local storage
+- DataStore for preferences
+- Jetpack Compose UI
+- Navigation Component
+- Coil for image loading
+- Socket.IO for real-time messaging
+- Coroutines and Flow for async operations
+
+**Includes**:
+- Complete project structure
+- Build.gradle.kts configuration
+- Domain models and use cases
+- Repository implementations
+- ViewModel with UI state
+- Composable screens
+- Auth interceptor with token refresh
+- WebSocket manager
+- Performance optimization techniques
+
 ## Key Takeaways
 
 ### Technical Architecture
@@ -291,10 +366,13 @@ POC_Dating/
 │   ├── 07-matching-algorithm.md           # Matching algorithm implementation
 │   ├── 08-realtime-messaging.md           # WebSocket messaging system
 │   ├── 09-infrastructure-deployment.md    # Docker, K8s, Terraform, CI/CD
-│   ├── 10-backend-architecture-patterns.md # Clean Architecture, DDD, testing
+│   ├── 10-backend-architecture-patterns.md # Clean Architecture, DDD, testing (TypeScript)
 │   ├── 11-mobile-architecture.md          # React Native patterns, performance
-│   ├── 12-security-implementation.md      # Authentication, authorization, encryption
-│   └── 13-performance-monitoring.md       # APM, profiling, optimization
+│   ├── 12-security-implementation.md      # Authentication, authorization, encryption (TypeScript)
+│   ├── 13-performance-monitoring.md       # APM, profiling, optimization (TypeScript)
+│   ├── 14-java-backend-architecture.md    # Spring Boot backend implementation (Java)
+│   ├── 15-hybrid-architecture-java-nodejs.md # Java + Node.js integration
+│   └── 16-android-kotlin-architecture.md  # Android native app (Kotlin)
 ├── README.md
 └── (Future: source code directories)
 ```
