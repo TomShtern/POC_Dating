@@ -5,6 +5,177 @@ OkCupid is one of the pioneering online dating platforms, known for its algorith
 
 ---
 
+## Architecture Evolution: OKWS to Modern Stack
+
+```mermaid
+graph TB
+    subgraph "2004-2020: OKWS Era"
+        CLIENT_OLD[Web Browsers]
+        OKWS[OKWS<br/>Custom C++ Web Server<br/>Single-threaded Event-driven]
+        PROC1[Process 1: Search]
+        PROC2[Process 2: Messages]
+        PROC3[Process 3: Profiles]
+        PROC4[Process 4: Matches]
+        HELPERS[Helper Processes<br/>Traffic Routing<br/>Crash Recovery<br/>Logging]
+        DB_OLD[(Database<br/>Likely MySQL)]
+
+        CLIENT_OLD --> OKWS
+        OKWS --> HELPERS
+        HELPERS --> PROC1
+        HELPERS --> PROC2
+        HELPERS --> PROC3
+        HELPERS --> PROC4
+        PROC1 --> DB_OLD
+        PROC2 --> DB_OLD
+        PROC3 --> DB_OLD
+        PROC4 --> DB_OLD
+    end
+
+    subgraph "2020-Present: Modern GraphQL Stack"
+        CLIENT_NEW[Mobile Apps<br/>Swift + Kotlin]
+        WEB[React/Redux<br/>Web Apps]
+        GRAPHQL[GraphQL API<br/>Apollo Server<br/>Node.js + Express]
+        REST_LEGACY[Legacy REST APIs<br/>OKWS Still Running]
+
+        subgraph "Backend Services"
+            USER_SVC[User Service]
+            MATCH_SVC[Match Service]
+            MSG_SVC[Message Service]
+            PROFILE_SVC[Profile Service]
+        end
+
+        CACHE[Redis Cache]
+        DB_NEW[(Modern Database<br/>Unknown Type)]
+        ANALYTICS[mParticle + Looker<br/>Analytics Stack]
+
+        CLIENT_NEW --> GRAPHQL
+        WEB --> GRAPHQL
+        CLIENT_NEW -.legacy.-> REST_LEGACY
+
+        GRAPHQL --> USER_SVC
+        GRAPHQL --> MATCH_SVC
+        GRAPHQL --> MSG_SVC
+        GRAPHQL --> PROFILE_SVC
+
+        USER_SVC --> CACHE
+        MATCH_SVC --> CACHE
+        USER_SVC --> DB_NEW
+        MATCH_SVC --> DB_NEW
+        MSG_SVC --> DB_NEW
+
+        GRAPHQL --> ANALYTICS
+    end
+
+    subgraph "AWS Migration Target (2021-2025+)"
+        AWS[AWS Cloud<br/>Terraform IaC]
+        RDS[RDS/DynamoDB]
+        ELASTICACHE[ElastiCache]
+        ECS[ECS/EKS]
+        S3_STORE[S3]
+
+        GRAPHQL -.migrating.-> ECS
+        DB_NEW -.migrating.-> RDS
+        CACHE -.migrating.-> ELASTICACHE
+    end
+
+    style OKWS fill:#ffcc00
+    style REST_LEGACY fill:#ff6b6b
+    style AWS fill:#90EE90
+```
+
+## OKWS Architecture (Historical)
+
+```mermaid
+graph LR
+    subgraph "OKWS Process Model"
+        TRAFFIC[Traffic Director<br/>Routes Requests]
+
+        subgraph "Service Processes (C++)"
+            SEARCH[Search Service<br/>Single Process]
+            PROFILE[Profile Service<br/>Single Process]
+            MESSAGE[Message Service<br/>Single Process]
+            LOGIN[Login Service<br/>Single Process]
+        end
+
+        LAUNCHER[Launcher<br/>Auto-restart on Crash]
+        LOGGER[Logger<br/>HTTP Transaction Logs]
+        TEMPLATE[Template Engine<br/>Static HTML Access]
+
+        TRAFFIC --> SEARCH
+        TRAFFIC --> PROFILE
+        TRAFFIC --> MESSAGE
+        TRAFFIC --> LOGIN
+
+        LAUNCHER -.monitors.-> SEARCH
+        LAUNCHER -.monitors.-> PROFILE
+        LAUNCHER -.monitors.-> MESSAGE
+        LAUNCHER -.monitors.-> LOGIN
+
+        SEARCH --> LOGGER
+        PROFILE --> LOGGER
+        MESSAGE --> TEMPLATE
+    end
+
+    subgraph "Why It Was Brilliant (2004)"
+        PERF[Peak Performance<br/>Millions of Users<br/>on <50 Machines]
+        SECURE[Security-First<br/>Design]
+        EVENT[Event-Driven<br/>No Threading Issues]
+    end
+
+    subgraph "Why It's a Problem Now (2025)"
+        OLD[20-Year-Old Code]
+        HIRE[Can't Hire C++<br/>Web Developers]
+        SLOW[Slow Feature<br/>Development]
+        SINGLE[Single-Threaded<br/>Can't Use Multi-Core]
+    end
+
+    OKWS -.2004.-> PERF
+    OKWS -.2025.-> OLD
+
+    style PERF fill:#90EE90
+    style SECURE fill:#90EE90
+    style EVENT fill:#90EE90
+    style OLD fill:#ff6b6b
+    style HIRE fill:#ff6b6b
+    style SLOW fill:#ff6b6b
+    style SINGLE fill:#ff6b6b
+```
+
+## GraphQL Migration Benefits
+
+```mermaid
+graph LR
+    subgraph "Legacy REST API Problems"
+        REST[Multiple REST<br/>Endpoints]
+        OVER[Over-fetching<br/>Too Much Data]
+        UNDER[Under-fetching<br/>Multiple Requests]
+        VERSIONING[API Versioning<br/>Complexity]
+    end
+
+    subgraph "GraphQL Solutions"
+        GQL[Single GraphQL<br/>Endpoint]
+        PRECISE[Client Specifies<br/>Exact Data Needed]
+        SINGLE_REQ[Single Request<br/>Gets All Data]
+        TYPESAFE[Type Safety<br/>Schema Validation]
+    end
+
+    REST --> OVER
+    REST --> UNDER
+    REST --> VERSIONING
+
+    GQL -.solves.-> PRECISE
+    GQL -.solves.-> SINGLE_REQ
+    GQL -.solves.-> TYPESAFE
+
+    style REST fill:#ff6b6b
+    style GQL fill:#90EE90
+    style PRECISE fill:#90EE90
+    style SINGLE_REQ fill:#90EE90
+    style TYPESAFE fill:#90EE90
+```
+
+---
+
 ## Technology Stack
 
 ### Mobile Applications

@@ -11,6 +11,145 @@ This document provides a comprehensive technical comparison of four major dating
 
 ---
 
+## Architecture Complexity Comparison
+
+```mermaid
+graph TB
+    subgraph "Complexity Spectrum"
+        direction LR
+        HINGE[Hinge<br/>Simple<br/>Monolith/Few Services<br/>Grade: B]
+        OKCUPID[OkCupid<br/>Medium<br/>Migration in Progress<br/>Grade: C+]
+        BUMBLE[Bumble<br/>High<br/>Polyglot Microservices<br/>Grade: B-]
+        TINDER[Tinder<br/>Very High<br/>500+ Microservices<br/>Grade: B+]
+    end
+
+    HINGE -.increasing complexity.-> OKCUPID
+    OKCUPID -.increasing complexity.-> BUMBLE
+    BUMBLE -.increasing complexity.-> TINDER
+
+    style HINGE fill:#90EE90
+    style OKCUPID fill:#ffcc00
+    style BUMBLE fill:#ff9966
+    style TINDER fill:#ff6b6b
+```
+
+## Stack Comparison Visualization
+
+```mermaid
+graph TB
+    subgraph "Tinder"
+        T_MOB[Native<br/>Swift + Kotlin]
+        T_BACK[Node.js<br/>Java<br/>Scala]
+        T_DB[MongoDB<br/>DynamoDB<br/>Redis]
+        T_ARCH[500+ Services<br/>Envoy Mesh<br/>TAG Gateway]
+
+        T_MOB --> T_ARCH
+        T_ARCH --> T_BACK
+        T_BACK --> T_DB
+    end
+
+    subgraph "Bumble"
+        B_MOB[Native<br/>Swift + Kotlin]
+        B_BACK[Java<br/>Kotlin<br/>Python<br/>PHP<br/>Node.js<br/>Ruby]
+        B_DB[DynamoDB<br/>PostgreSQL<br/>Redis]
+        B_ARCH[Microservices<br/>Bumble 2.0<br/>AWS]
+
+        B_MOB --> B_ARCH
+        B_ARCH --> B_BACK
+        B_BACK --> B_DB
+    end
+
+    subgraph "OkCupid"
+        O_MOB[Native<br/>Swift + Kotlin]
+        O_BACK[Node.js<br/>GraphQL<br/>C++ Legacy]
+        O_DB[Unknown<br/>Redis<br/>Migrating]
+        O_ARCH[GraphQL API<br/>OKWS Legacy<br/>AWS Migration]
+
+        O_MOB --> O_ARCH
+        O_ARCH --> O_BACK
+        O_BACK --> O_DB
+    end
+
+    subgraph "Hinge"
+        H_MOB[Cross-Platform<br/>React Native]
+        H_BACK[Python<br/>Django]
+        H_DB[PostgreSQL<br/>Redis]
+        H_ARCH[REST API<br/>Few Services<br/>AWS]
+
+        H_MOB --> H_ARCH
+        H_ARCH --> H_BACK
+        H_BACK --> H_DB
+    end
+
+    style T_ARCH fill:#ff6b6b
+    style B_BACK fill:#ff6b6b
+    style O_BACK fill:#ffcc00
+    style H_DB fill:#90EE90
+```
+
+## Database Choice Analysis
+
+```mermaid
+graph LR
+    subgraph "NoSQL Choices (Tinder, Bumble)"
+        NOSQL[MongoDB<br/>DynamoDB]
+        NOSQL_PROS[✅ Horizontal Scaling<br/>✅ Flexible Schema<br/>✅ Fast Writes]
+        NOSQL_CONS[❌ Poor Complex Queries<br/>❌ Eventual Consistency<br/>❌ Vendor Lock-in DynamoDB]
+
+        NOSQL --> NOSQL_PROS
+        NOSQL --> NOSQL_CONS
+    end
+
+    subgraph "SQL Choice (Hinge - Best Practice)"
+        SQL[PostgreSQL]
+        SQL_PROS[✅ Complex Query Support<br/>✅ ACID Compliance<br/>✅ Geospatial PostGIS<br/>✅ JSON Support<br/>✅ No Vendor Lock-in]
+        SQL_CONS[❌ Vertical Scaling Limits<br/>Read Replicas Mitigate]
+
+        SQL --> SQL_PROS
+        SQL --> SQL_CONS
+    end
+
+    subgraph "Unknown (OkCupid - Red Flag)"
+        UNKNOWN[???<br/>Not Disclosed]
+        UNKNOWN_ISSUE[🚩 Likely Fragmented<br/>🚩 Technical Debt<br/>🚩 Mid-Migration]
+
+        UNKNOWN --> UNKNOWN_ISSUE
+    end
+
+    style SQL_PROS fill:#90EE90
+    style NOSQL_CONS fill:#ff6b6b
+    style UNKNOWN_ISSUE fill:#ff6b6b
+```
+
+## Language Choice Spectrum
+
+```mermaid
+graph TB
+    subgraph "Performance vs Development Speed"
+        CPP[C++<br/>OkCupid OKWS<br/>Peak Performance<br/>Unmaintainable]
+        GO[Go<br/>NOT USED<br/>Ideal Choice<br/>Balance]
+        JAVA[Java/Kotlin<br/>Tinder/Bumble<br/>Good Performance<br/>JVM Overhead]
+        NODE[Node.js<br/>All Apps<br/>Fast Dev<br/>Single-threaded]
+        PYTHON[Python<br/>Hinge/Bumble<br/>Fastest Dev<br/>Slowest Runtime]
+    end
+
+    CPP -.better performance.-> GO
+    GO -.better performance.-> JAVA
+    JAVA -.better performance.-> NODE
+    NODE -.better performance.-> PYTHON
+
+    CPP -.slower development.-> GO
+    GO -.slower development.-> JAVA
+    JAVA -.slower development.-> NODE
+    NODE -.slower development.-> PYTHON
+
+    style CPP fill:#ff6b6b
+    style GO fill:#90EE90
+    style PYTHON fill:#ffcc00
+```
+
+---
+
 ## Quick Comparison Matrix
 
 | Category | Tinder | Bumble | OkCupid | Hinge |
@@ -412,7 +551,136 @@ Not a single dating app uses **Go** for backend services. This is shocking becau
 
 ---
 
+## Real-Time Messaging Architecture (Common Pattern)
+
+```mermaid
+sequenceDiagram
+    participant U1 as User A
+    participant WS1 as WebSocket Server A
+    participant Redis as Redis Pub/Sub
+    participant Kafka as Kafka Queue
+    participant DB as Database
+    participant WS2 as WebSocket Server B
+    participant U2 as User B
+
+    U1->>WS1: Send message
+    WS1->>Redis: Publish to channel
+    Redis-->>WS2: Fanout to User B's server
+
+    par Real-time Delivery
+        WS2->>U2: Deliver message (WebSocket)
+    and Persistence Path
+        WS1->>Kafka: Queue message
+        Kafka->>DB: Store in database
+    end
+
+    Note over Redis: Fast fanout for<br/>online users
+    Note over Kafka: Reliable delivery for<br/>offline users
+    Note over DB: Message history<br/>and search
+```
+
+## Microservices: Sweet Spot Visualization
+
+```mermaid
+graph TB
+    subgraph "1 Service (Monolith)"
+        M1[Single Application<br/>All Features Together]
+        M1_PROS[✅ Simple Deployment<br/>✅ Easy Debugging<br/>✅ Fast Internal Calls]
+        M1_CONS[❌ Can't Scale Parts<br/>❌ Single Point of Failure<br/>❌ Tight Coupling]
+
+        M1 --> M1_PROS
+        M1 --> M1_CONS
+    end
+
+    subgraph "20-30 Services (Sweet Spot)"
+        M2[Well-Bounded Services<br/>Clear Responsibilities]
+        M2_SERVICES[User • Profile • Match<br/>Chat • Search<br/>Notification • Payment<br/>Analytics • Media<br/>Admin • Moderation]
+        M2_PROS[✅ Independent Scaling<br/>✅ Team Autonomy<br/>✅ Manageable Complexity<br/>✅ Clear Boundaries]
+
+        M2 --> M2_SERVICES
+        M2 --> M2_PROS
+    end
+
+    subgraph "500+ Services (Over-engineered)"
+        M3[Too Many Services<br/>Unclear Boundaries]
+        M3_CONS[❌ Operational Nightmare<br/>❌ Network Latency<br/>❌ Debugging Hell<br/>❌ High Infrastructure Cost<br/>❌ Who Owns What?]
+
+        M3 --> M3_CONS
+    end
+
+    style M1_CONS fill:#ffcc00
+    style M2_PROS fill:#90EE90
+    style M3_CONS fill:#ff6b6b
+```
+
 ## The Ideal Dating App Stack (2025)
+
+```mermaid
+graph TB
+    subgraph "Recommended Architecture"
+        subgraph "Mobile Layer"
+            RN_IDEAL[React Native<br/>+ TypeScript<br/>+ Native Modules]
+        end
+
+        subgraph "API Gateway"
+            KONG[Kong or<br/>AWS API Gateway<br/>DON'T BUILD YOUR OWN]
+        end
+
+        subgraph "Backend Services (20-30 services)"
+            GO_SERVICES[Go Services<br/>User, Match, Chat<br/>Profile, Search]
+            PYTHON_ML[Python Services<br/>ML Models<br/>Recommendations]
+        end
+
+        subgraph "Data Layer"
+            PG[PostgreSQL<br/>Primary Database]
+            REDIS_IDEAL[Redis<br/>Cache + Sessions]
+            ES_IDEAL[Elasticsearch<br/>User Search]
+            S3_IDEAL[S3<br/>Media Storage]
+        end
+
+        subgraph "Message Queue"
+            KAFKA_IDEAL[Kafka<br/>Event Streaming]
+        end
+
+        subgraph "Infrastructure"
+            ECS_IDEAL[AWS ECS/Fargate<br/>NOT Kubernetes]
+            RDS_IDEAL[RDS PostgreSQL<br/>Managed]
+            ELASTICACHE_IDEAL[ElastiCache<br/>Managed Redis]
+        end
+
+        RN_IDEAL --> KONG
+        KONG --> GO_SERVICES
+        KONG --> PYTHON_ML
+
+        GO_SERVICES --> PG
+        GO_SERVICES --> REDIS_IDEAL
+        PYTHON_ML --> PG
+
+        GO_SERVICES --> KAFKA_IDEAL
+        KAFKA_IDEAL --> PG
+
+        GO_SERVICES --> ES_IDEAL
+        GO_SERVICES --> S3_IDEAL
+
+        ECS_IDEAL -.manages.-> GO_SERVICES
+        RDS_IDEAL -.hosts.-> PG
+        ELASTICACHE_IDEAL -.hosts.-> REDIS_IDEAL
+    end
+
+    subgraph "Why This Stack?"
+        REASON1[✅ Go = Performance + Simplicity]
+        REASON2[✅ PostgreSQL = Best for Complex Queries]
+        REASON3[✅ React Native = Fast Development]
+        REASON4[✅ 20-30 Services = Manageable]
+        REASON5[✅ AWS Managed = Less Ops Overhead]
+        REASON6[✅ Boring Tech = Battle-Tested]
+    end
+
+    style GO_SERVICES fill:#90EE90
+    style PG fill:#90EE90
+    style KONG fill:#90EE90
+    style RN_IDEAL fill:#90EE90
+```
 
 If you were building a dating app today, here's the optimal stack:
 

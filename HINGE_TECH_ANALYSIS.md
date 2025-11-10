@@ -5,6 +5,196 @@ Hinge is a relationship-focused dating app owned by Match Group since February 2
 
 ---
 
+## High-Level Architecture
+
+```mermaid
+graph TB
+    subgraph "Mobile Layer"
+        RN[React Native App<br/>iOS + Android<br/>Single Codebase]
+        NATIVE[Native Modules<br/>Camera, Geolocation]
+    end
+
+    subgraph "API Layer"
+        GATEWAY[API Gateway<br/>Likely REST]
+        AUTH[Authentication]
+    end
+
+    subgraph "Backend Services (Django/Python)"
+        USER[User Service<br/>Django ORM]
+        MATCH[Matching Service<br/>Gale-Shapley Algorithm]
+        CHAT[Chat Service]
+        PROFILE[Profile Service]
+        SEARCH[Search/Discovery<br/>Filters + Preferences]
+    end
+
+    subgraph "Data Layer"
+        POSTGRES[(PostgreSQL<br/>User Profiles<br/>Matches<br/>Messages)]
+        REDIS[Redis Cache<br/>Sessions<br/>Hot Data]
+        ES[Elasticsearch<br/>User Search]
+    end
+
+    subgraph "Real-Time & Async"
+        WS[WebSocket Server<br/>Real-time Chat]
+        CELERY[Celery Workers<br/>Background Jobs]
+        QUEUE[Message Queue<br/>Likely Kafka/SQS]
+    end
+
+    subgraph "AI/ML"
+        ML[ML Models<br/>Collaborative Filtering<br/>Content-based Filtering]
+    end
+
+    subgraph "AWS Infrastructure"
+        ECS[ECS/Fargate]
+        RDS[RDS PostgreSQL]
+        ELASTICACHE[ElastiCache Redis]
+        S3[S3<br/>Photos/Videos]
+        LAMBDA[Lambda<br/>Event Processing]
+    end
+
+    RN --> NATIVE
+    RN --> GATEWAY
+    GATEWAY --> AUTH
+    AUTH --> USER
+    AUTH --> MATCH
+    AUTH --> CHAT
+    AUTH --> PROFILE
+    AUTH --> SEARCH
+
+    USER --> POSTGRES
+    MATCH --> POSTGRES
+    CHAT --> POSTGRES
+    PROFILE --> POSTGRES
+
+    USER --> REDIS
+    MATCH --> REDIS
+    CHAT --> WS
+    WS --> QUEUE
+
+    MATCH --> ML
+    SEARCH --> ES
+
+    CELERY --> QUEUE
+    QUEUE --> POSTGRES
+
+    ECS -.hosts.-> USER
+    ECS -.hosts.-> MATCH
+    RDS -.managed.-> POSTGRES
+    ELASTICACHE -.managed.-> REDIS
+```
+
+## Matching Algorithm: Gale-Shapley Implementation
+
+```mermaid
+graph TB
+    subgraph "Most Compatible Feature"
+        INPUT[User Preferences<br/>Profile Data<br/>Swipe History]
+
+        COLLAB[Collaborative Filtering<br/>Find Similar Users]
+        CONTENT[Content-Based Filtering<br/>Match Preferences]
+        GS[Gale-Shapley Algorithm<br/>Stable Matching]
+
+        SCORE[Compatibility Score<br/>Per User Pair]
+        RANK[Daily Recommendation<br/>1 Most Compatible Match]
+    end
+
+    INPUT --> COLLAB
+    INPUT --> CONTENT
+    COLLAB --> GS
+    CONTENT --> GS
+    GS --> SCORE
+    SCORE --> RANK
+
+    subgraph "User Experience"
+        NOTIF[Push Notification<br/>Daily at 9am]
+        PROFILE_VIEW[View Most Compatible<br/>Profile]
+        SWIPE[User Swipes<br/>Yes/No]
+        FEEDBACK[Feedback Loop<br/>Improve Algorithm]
+    end
+
+    RANK --> NOTIF
+    NOTIF --> PROFILE_VIEW
+    PROFILE_VIEW --> SWIPE
+    SWIPE --> FEEDBACK
+    FEEDBACK -.improves.-> COLLAB
+    FEEDBACK -.improves.-> CONTENT
+```
+
+## Cross-Platform Mobile Architecture
+
+```mermaid
+graph LR
+    subgraph "React Native Layer"
+        JS[JavaScript/TypeScript<br/>Business Logic<br/>UI Components]
+        BRIDGE[React Native Bridge]
+    end
+
+    subgraph "Native Modules (iOS)"
+        SWIFT[Swift Modules<br/>Camera<br/>Geolocation<br/>Push Notifications]
+    end
+
+    subgraph "Native Modules (Android)"
+        KOTLIN[Kotlin Modules<br/>Camera<br/>Geolocation<br/>Push Notifications]
+    end
+
+    subgraph "Trade-offs"
+        PROS[✅ Single Codebase<br/>✅ Fast Development<br/>✅ Consistent UX]
+        CONS[❌ Performance Overhead<br/>❌ Larger App Size<br/>❌ Bridge Latency]
+    end
+
+    JS <--> BRIDGE
+    BRIDGE <--> SWIFT
+    BRIDGE <--> KOTLIN
+
+    JS -.-> PROS
+    BRIDGE -.-> CONS
+
+    style PROS fill:#90EE90
+    style CONS fill:#ff6b6b
+```
+
+## Django Backend Performance Considerations
+
+```mermaid
+graph TB
+    subgraph "Django Strengths"
+        ORM[Django ORM<br/>Database Abstraction]
+        ADMIN[Built-in Admin Panel]
+        RAPID[Rapid Development<br/>Batteries Included]
+        ML_LIB[Python ML Libraries<br/>scikit-learn, TensorFlow]
+    end
+
+    subgraph "Django Limitations at Scale"
+        GIL[Global Interpreter Lock<br/>Limits Concurrency]
+        SLOW[Slower than Go/Java<br/>for CPU-bound tasks]
+        MEM[Higher Memory Usage<br/>than Compiled Languages]
+    end
+
+    subgraph "Mitigation Strategies"
+        CELERY_M[Celery for<br/>Async Processing]
+        REDIS_M[Aggressive<br/>Redis Caching]
+        REPLICA[Read Replicas<br/>for Database]
+        COMPILE[Cython/PyPy<br/>for Hot Paths]
+    end
+
+    ORM -.ideal for.-> RAPID
+    RAPID -.enables.-> ML_LIB
+
+    GIL -.causes.-> SLOW
+    SLOW -.requires.-> CELERY_M
+    MEM -.requires.-> REDIS_M
+    GIL -.requires.-> REPLICA
+
+    style ORM fill:#90EE90
+    style ADMIN fill:#90EE90
+    style RAPID fill:#90EE90
+    style ML_LIB fill:#90EE90
+    style GIL fill:#ff6b6b
+    style SLOW fill:#ff6b6b
+    style MEM fill:#ff6b6b
+```
+
+---
+
 ## Technology Stack
 
 ### Mobile Applications

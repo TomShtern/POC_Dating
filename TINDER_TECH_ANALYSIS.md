@@ -5,6 +5,121 @@ Tinder is one of the world's largest dating platforms, serving 2 billion daily m
 
 ---
 
+## High-Level Architecture Diagram
+
+```mermaid
+graph TB
+    subgraph "Client Layer"
+        iOS[iOS App<br/>Swift/Kotlin]
+        Android[Android App<br/>Kotlin/Java]
+    end
+
+    subgraph "API Gateway Layer"
+        TAG[TAG<br/>Tinder API Gateway<br/>Spring Cloud Gateway]
+    end
+
+    subgraph "Service Mesh - Envoy"
+        SM[500+ Microservices<br/>Each with Envoy Sidecar]
+        US[User Service]
+        MS[Matching Service]
+        CS[Chat Service]
+        NS[Notification Service]
+        PS[Profile Service]
+        dots[... 495+ more services]
+    end
+
+    subgraph "Message Queue & Streaming"
+        Kafka[Apache Kafka]
+        SQS[AWS SQS]
+        Kinesis[AWS Kinesis]
+    end
+
+    subgraph "Data Layer"
+        Mongo[MongoDB]
+        Dynamo[DynamoDB]
+        Redis[ElastiCache Redis]
+        ES[Elasticsearch]
+    end
+
+    subgraph "AWS Infrastructure"
+        K8s[Kubernetes<br/>Container Orchestration]
+        S3[S3<br/>Media Storage]
+    end
+
+    iOS --> TAG
+    Android --> TAG
+    TAG --> SM
+    SM --> US
+    SM --> MS
+    SM --> CS
+    SM --> NS
+    SM --> PS
+    SM --> dots
+
+    US --> Kafka
+    MS --> Kafka
+    CS --> Kafka
+
+    Kafka --> Mongo
+    Kafka --> Dynamo
+
+    US --> Redis
+    MS --> Redis
+    CS --> Redis
+
+    MS --> ES
+    PS --> Mongo
+
+    K8s -.manages.-> SM
+    CS --> S3
+```
+
+## Request Flow: Swipe to Match
+
+```mermaid
+sequenceDiagram
+    participant User as User (Mobile)
+    participant TAG as TAG Gateway
+    participant Envoy as Envoy Proxy
+    participant Profile as Profile Service
+    participant Match as Matching Service
+    participant Redis as Redis Cache
+    participant Kafka as Kafka Queue
+    participant DB as MongoDB/Dynamo
+    participant Notify as Notification Service
+
+    User->>TAG: POST /swipe/right
+    TAG->>Envoy: Route to Profile Service
+    Envoy->>Profile: Get user profiles
+    Profile->>Redis: Check cached profiles
+
+    alt Cache Hit
+        Redis-->>Profile: Return cached data
+    else Cache Miss
+        Profile->>DB: Query profiles
+        DB-->>Profile: Return profiles
+        Profile->>Redis: Cache profiles
+    end
+
+    Profile-->>Envoy: Return profiles
+    Envoy->>Match: Process swipe
+    Match->>Redis: Check for mutual like
+
+    alt Mutual Match Found
+        Match->>Kafka: Publish match event
+        Kafka->>DB: Store match
+        Kafka->>Notify: Send notification
+        Notify->>User: Push notification "It's a Match!"
+    else No Match
+        Match->>DB: Store swipe only
+    end
+
+    Match-->>TAG: Return result
+    TAG-->>User: Response
+```
+
+---
+
 ## Technology Stack
 
 ### Mobile Applications
@@ -84,6 +199,88 @@ Tinder is one of the world's largest dating platforms, serving 2 billion daily m
 - Migrated from self-managed Redis to AWS ElastiCache
 - Achieved immediate and dramatic gains in scalability and stability
 - Supports massive scale requirements
+
+## Microservices Complexity Visualization
+
+```mermaid
+graph LR
+    subgraph "Tinder's Reality: 500+ Services"
+        MS1[Service 1]
+        MS2[Service 2]
+        MS3[Service 3]
+        MS4[Service 4]
+        MS5[Service 5]
+        DOTS1[...]
+        MS498[Service 498]
+        MS499[Service 499]
+        MS500[Service 500+]
+
+        MS1 -.-> MS2
+        MS1 -.-> MS3
+        MS2 -.-> MS4
+        MS3 -.-> MS5
+        MS4 -.-> MS498
+        MS5 -.-> MS499
+        MS498 -.-> MS500
+        MS499 -.-> MS500
+    end
+
+    subgraph "Ideal Architecture: 20-30 Services"
+        US2[User Service]
+        PS2[Profile Service]
+        MS2A[Match Service]
+        CS2[Chat Service]
+        NS2[Notification Service]
+        SS2[Search Service]
+        AS2[Analytics Service]
+
+        US2 --> MS2A
+        PS2 --> MS2A
+        MS2A --> CS2
+        CS2 --> NS2
+        PS2 --> SS2
+        MS2A --> AS2
+    end
+```
+
+## TAG API Gateway Architecture
+
+```mermaid
+graph TB
+    subgraph "Mobile Clients"
+        IOS[iOS Apps]
+        AND[Android Apps]
+    end
+
+    subgraph "TAG - Tinder Application Gateway"
+        YAML[YAML Route Config]
+        GATEWAY[Spring Cloud Gateway<br/>JVM-based]
+        ENVOY_CP[Envoy Control Plane<br/>Service Discovery]
+        SESSION[Session Management]
+    end
+
+    subgraph "Backend Services (500+)"
+        AUTH[Auth Service]
+        PROFILE[Profile Service]
+        MATCH[Match Service]
+        CHAT[Chat Service]
+        PAYMENT[Payment Service]
+        DOTS[... 495 more]
+    end
+
+    IOS --> GATEWAY
+    AND --> GATEWAY
+    YAML -.configures.-> GATEWAY
+    GATEWAY --> SESSION
+    GATEWAY <--> ENVOY_CP
+
+    ENVOY_CP --> AUTH
+    ENVOY_CP --> PROFILE
+    ENVOY_CP --> MATCH
+    ENVOY_CP --> CHAT
+    ENVOY_CP --> PAYMENT
+    ENVOY_CP --> DOTS
+```
 
 ---
 

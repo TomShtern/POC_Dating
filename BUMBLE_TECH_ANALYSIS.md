@@ -5,6 +5,111 @@ Bumble operates at massive scale with over 500 million users across its family o
 
 ---
 
+## Architecture Evolution: Legacy to Bumble 2.0
+
+```mermaid
+graph TB
+    subgraph "Legacy Architecture"
+        L_APP[Monolithic Apps]
+        L_DB[(Mixed Databases)]
+        L_INFRA[On-Premise/Hybrid]
+    end
+
+    subgraph "Bumble 2.0 - Cloud Native"
+        B2_MOBILE[Native Mobile<br/>Swift + Kotlin]
+        B2_GATEWAY[API Gateway]
+
+        subgraph "Microservices (Polyglot)"
+            MS_JAVA[Java Services]
+            MS_KOTLIN[Kotlin Services]
+            MS_PYTHON[Python Services]
+            MS_PHP[PHP 8 Services]
+            MS_NODE[Node.js Services]
+            MS_RUBY[Ruby Services]
+        end
+
+        subgraph "AWS Infrastructure"
+            DYNAMO[DynamoDB]
+            REDIS[Redis/ElastiCache]
+            POSTGRES[PostgreSQL/RDS]
+            S3[S3 Storage]
+            K8S[Kubernetes/ECS]
+        end
+
+        subgraph "AI/ML Layer"
+            ML[ML Models<br/>Safety + Matching]
+        end
+    end
+
+    L_APP -.migrating.-> B2_MOBILE
+    L_DB -.migrating.-> DYNAMO
+    L_DB -.migrating.-> POSTGRES
+    L_INFRA -.migrating.-> K8S
+
+    B2_MOBILE --> B2_GATEWAY
+    B2_GATEWAY --> MS_JAVA
+    B2_GATEWAY --> MS_KOTLIN
+    B2_GATEWAY --> MS_PYTHON
+    B2_GATEWAY --> MS_PHP
+    B2_GATEWAY --> MS_NODE
+    B2_GATEWAY --> MS_RUBY
+
+    MS_JAVA --> DYNAMO
+    MS_KOTLIN --> POSTGRES
+    MS_PYTHON --> ML
+    MS_PHP --> REDIS
+    MS_NODE --> DYNAMO
+
+    K8S -.orchestrates.-> MS_JAVA
+    K8S -.orchestrates.-> MS_KOTLIN
+    K8S -.orchestrates.-> MS_PYTHON
+    K8S -.orchestrates.-> MS_PHP
+    K8S -.orchestrates.-> MS_NODE
+    K8S -.orchestrates.-> MS_RUBY
+```
+
+## Polyglot Architecture Problem Visualization
+
+```mermaid
+graph LR
+    subgraph "6+ Programming Languages"
+        JAVA[Java<br/>JVM<br/>Spring Boot]
+        KOTLIN[Kotlin<br/>JVM<br/>Modern]
+        PYTHON[Python<br/>Django<br/>ML/AI]
+        PHP[PHP 8<br/>Legacy<br/>Modernized]
+        NODE[Node.js<br/>JavaScript<br/>Event-driven]
+        RUBY[Ruby<br/>Rails<br/>Rapid Dev]
+    end
+
+    subgraph "Operational Challenges"
+        MON[6 Different<br/>Monitoring Stacks]
+        DEP[6 Different<br/>Deployment Pipelines]
+        HIRE[Hiring Requires<br/>6 Skill Sets]
+        DEBUG[Different Debugging<br/>Tools Per Language]
+        LIB[Cannot Share<br/>Code Libraries]
+    end
+
+    JAVA -.-> MON
+    KOTLIN -.-> MON
+    PYTHON -.-> MON
+    PHP -.-> MON
+    NODE -.-> MON
+    RUBY -.-> MON
+
+    JAVA -.-> DEP
+    JAVA -.-> HIRE
+    PYTHON -.-> DEBUG
+    PHP -.-> LIB
+
+    style MON fill:#ff6b6b
+    style DEP fill:#ff6b6b
+    style HIRE fill:#ff6b6b
+    style DEBUG fill:#ff6b6b
+    style LIB fill:#ff6b6b
+```
+
+---
+
 ## Technology Stack
 
 ### Mobile Applications
