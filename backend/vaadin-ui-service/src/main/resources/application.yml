@@ -1,0 +1,56 @@
+server:
+  port: ${SERVER_PORT:8090}
+
+spring:
+  application:
+    name: vaadin-ui-service
+
+  # Redis session storage
+  session:
+    store-type: redis
+    redis:
+      namespace: vaadin:session
+    timeout: 30m
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+
+# Vaadin configuration
+vaadin:
+  productionMode: false
+  pnpm:
+    enable: true
+
+# Backend service URLs
+services:
+  user-service:
+    url: http://${USER_SERVICE_HOST:localhost}:8081
+  match-service:
+    url: http://${MATCH_SERVICE_HOST:localhost}:8082
+  chat-service:
+    url: http://${CHAT_SERVICE_HOST:localhost}:8083
+  recommendation-service:
+    url: http://${RECOMMENDATION_SERVICE_HOST:localhost}:8084
+
+# Security
+jwt:
+  secret: ${JWT_SECRET:your-secret-key-change-in-production-please-use-env-variable}
+
+# Logging
+logging:
+  level:
+    com.dating: DEBUG
+    com.vaadin: INFO
+    org.springframework.security: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
