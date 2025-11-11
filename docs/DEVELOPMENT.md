@@ -1,5 +1,9 @@
 # Development Guide - POC Dating Application
 
+**Document Status:** ✅ **ACTIVE** - Updated for Vaadin approach
+**Last Updated:** 2025-11-11
+**Version:** 2.0
+
 ## Getting Started
 
 ### Prerequisites
@@ -7,8 +11,9 @@
 - Java 21 JDK (https://adoptopenjdk.net/)
 - Maven 3.8+ (https://maven.apache.org/)
 - Docker & Docker Compose (https://www.docker.com/)
-- Node.js 18+ (https://nodejs.org/)
+- ~~Node.js 18+~~ ⚠️ NOT NEEDED (using Vaadin, not React)
 - Git
+- IDE: IntelliJ IDEA (recommended) or VS Code with Java extensions
 
 ### Initial Setup
 
@@ -20,21 +25,45 @@ cd POC_Dating
 # 2. Copy environment configuration
 cp .env.example .env
 
-# 3. Start all services with Docker Compose
+# 3. Build all services (including Vaadin UI)
+cd backend
+mvn clean install
+
+# 4. Start all services with Docker Compose
+cd ..
 docker-compose up -d
 
-# 4. Verify services are running
-curl http://localhost:8080/actuator/health
+# 5. Verify services are running
+curl http://localhost:8080/actuator/health  # API Gateway
+curl http://localhost:8090/                 # Vaadin UI
 
-# 5. Setup frontend
-cd frontend
-npm install
-npm run dev
+# 6. Access the application
+# Open browser: http://localhost:8090
+```
+
+### Quick Start (Development Mode)
+
+```bash
+# Terminal 1: Start infrastructure only
+docker-compose up postgres redis rabbitmq
+
+# Terminal 2: Run backend service
+cd backend/user-service
+mvn spring-boot:run
+
+# Terminal 3: Run Vaadin UI
+cd backend/vaadin-ui-service
+mvn spring-boot:run
+
+# Access: http://localhost:8090
 ```
 
 ### Service Health Checks
 
 ```bash
+# Vaadin UI Service
+curl http://localhost:8090/
+
 # API Gateway
 curl http://localhost:8080/actuator/health
 
@@ -196,85 +225,115 @@ docker-compose logs -f --tail=100 user-service
 
 ---
 
-## Frontend Development
+## Frontend Development (Vaadin UI)
 
 ### Development Server
 
 ```bash
-cd frontend
-npm run dev
+cd backend/vaadin-ui-service
+mvn spring-boot:run
 
-# Open http://localhost:3000
+# Open http://localhost:8090
+# Vaadin auto-reloads on Java file changes
 ```
 
-### Component Development
+### View Development
 
 ```bash
-# All components in src/components/
-src/components/
-├── common/        # Button, Input, Card, etc
-├── auth/         # Login, Register
-├── profile/      # Profile, Preferences
-├── match/        # Swipe cards, feed
-└── chat/         # Messages, conversations
+# All views in src/main/java/com/dating/ui/views/
+views/
+├── LoginView.java         # User authentication
+├── RegisterView.java      # New user registration
+├── SwipeView.java         # Profile browsing
+├── ChatView.java          # Real-time messaging
+├── ProfileView.java       # User profile
+└── SettingsView.java      # User preferences
 ```
 
-### State Management (Zustand)
+### Creating a New View
 
-```typescript
-// Create a new store
-// src/store/newStore.ts
+```java
+package com.dating.ui.views;
 
-import create from 'zustand';
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.router.Route;
 
-interface NewState {
-  data: any[];
-  isLoading: boolean;
-  setData: (data: any[]) => void;
-}
+@Route(value = "myview", layout = MainLayout.class)
+@PageTitle("My View | POC Dating")
+public class MyView extends VerticalLayout {
 
-export const useNewStore = create<NewState>((set) => ({
-  data: [],
-  isLoading: false,
-  setData: (data) => set({ data }),
-}));
-```
+    public MyView() {
+        H1 title = new H1("My View");
+        Button button = new Button("Click me", e -> handleClick());
 
-### Using Stores in Components
+        add(title, button);
+    }
 
-```typescript
-import { useNewStore } from '@/store/newStore';
-
-export function MyComponent() {
-  const { data, isLoading, setData } = useNewStore();
-
-  return (
-    // Use data, isLoading, setData
-  );
+    private void handleClick() {
+        Notification.show("Button clicked!");
+    }
 }
 ```
 
-### Testing Components
+### Service Integration
 
-```bash
-# Run tests
-npm run test
+```java
+// Create Feign client
+@FeignClient(name = "match-service", url = "${services.match-service.url}")
+public interface MatchServiceClient {
+    @GetMapping("/api/matches/next-profile")
+    User getNextProfile(@RequestHeader("Authorization") String token);
+}
 
-# Watch mode
-npm run test:watch
+// Use in view
+@Service
+public class MatchService {
+    @Autowired
+    private MatchServiceClient matchClient;
 
-# Coverage
-npm run test:coverage
+    public User getNextProfile() {
+        String token = SecurityUtils.getCurrentToken();
+        return matchClient.getNextProfile("Bearer " + token);
+    }
+}
 ```
 
-### Building for Production
+### Testing Vaadin Views
+
+```java
+@SpringBootTest
+class SwipeViewTest {
+
+    @Autowired
+    private MatchService matchService;
+
+    @Test
+    void testLoadProfile() {
+        when(matchService.getNextProfile()).thenReturn(createTestUser());
+
+        SwipeView view = new SwipeView(matchService);
+
+        assertNotNull(view.getCurrentUser());
+    }
+}
+```
+
+### Hot Reload (Vaadin)
+
+Vaadin supports hot-reload during development:
+
+1. Run with Spring Boot DevTools enabled
+2. Make changes to Java files
+3. Save file → automatic recompilation
+4. Browser refreshes automatically
 
 ```bash
-npm run build
+# Enable DevTools in pom.xml (already included)
+mvn spring-boot:run
 
-# Output in dist/ directory
-# Serve locally to test:
-npm run preview
+# Or run from IDE with "Update classes and resources" on save
 ```
 
 ---
