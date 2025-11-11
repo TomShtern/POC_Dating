@@ -1,0 +1,93 @@
+spring:
+  application:
+    name: match-service
+    version: 1.0.0
+
+  server:
+    port: 8082
+    servlet:
+      context-path: /api
+    shutdown: graceful
+    error:
+      include-message: always
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_db}
+    username: ${POSTGRES_USER:dating_user}
+    password: ${POSTGRES_PASSWORD:changeme123}
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 60000ms
+    jedis:
+      pool:
+        max-active: 8
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: ${REDIS_TTL_MINUTES:30}m
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.dating: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+  endpoint:
+    health:
+      show-details: always
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework.web: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: WARN
