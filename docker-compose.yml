@@ -248,25 +248,62 @@ services:
       - dating_network
     restart: unless-stopped
 
-  # Frontend Application - React Web UI
-  # PURPOSE: User-facing web application
-  # PORT: 3000 (public-facing)
-  # NOTE: In production, this would be served from CDN/S3, not container
-  frontend:
+  # Vaadin UI Service - Pure Java Web Interface
+  # PURPOSE: User-facing web application (100% Java using Vaadin)
+  # PORT: 8090 (public-facing)
+  # CHANGE: Replaced React/TypeScript with Vaadin for team Java expertise
+  vaadin-ui:
     build:
-      context: ./frontend
-      dockerfile: docker/Dockerfile
-    container_name: dating_frontend
+      context: ./backend/vaadin-ui-service
+      dockerfile: Dockerfile
+    container_name: dating_vaadin_ui
     ports:
-      - "3000:3000"
+      - "8090:8090"
     environment:
-      REACT_APP_API_URL: http://localhost:8080
-      REACT_APP_WS_URL: ws://localhost:8080/ws
+      SERVER_PORT: 8090
+      SERVICE_NAME: vaadin-ui-service
+      USER_SERVICE_HOST: user-service
+      MATCH_SERVICE_HOST: match-service
+      CHAT_SERVICE_HOST: chat-service
+      RECOMMENDATION_SERVICE_HOST: recommendation-service
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
     depends_on:
-      - api-gateway
+      user-service:
+        condition: service_started
+      match-service:
+        condition: service_started
+      chat-service:
+        condition: service_started
+      recommendation-service:
+        condition: service_started
+      redis:
+        condition: service_healthy
     networks:
       - dating_network
     restart: unless-stopped
+
+  # Frontend Application - React Web UI - ⚠️ DEPRECATED
+  # STATUS: NOT USED - Replaced by Vaadin UI Service (Port 8090)
+  # REASON: Team Java expertise, 3-week MVP timeline
+  # SEE: docs/FRONTEND_OPTIONS_ANALYSIS.md for decision rationale
+  # NOTE: Service commented out, kept for reference
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: docker/Dockerfile
+  #   container_name: dating_frontend_deprecated
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     REACT_APP_API_URL: http://localhost:8080
+  #     REACT_APP_WS_URL: ws://localhost:8080/ws
+  #   depends_on:
+  #     - api-gateway
+  #   networks:
+  #     - dating_network
+  #   restart: unless-stopped
 
 # Network Definition
 # WHY: All containers on same network enables service discovery by name

@@ -1,0 +1,80 @@
+/* Dating Theme - Custom Styles for POC Dating App */
+
+:root {
+    /* Custom colors */
+    --dating-primary-color: #667eea;
+    --dating-secondary-color: #764ba2;
+    --dating-accent-color: #f093fb;
+    --dating-error-color: #ef4444;
+    --dating-success-color: #10b981;
+}
+
+/* Override Lumo theme colors */
+html {
+    --lumo-primary-color: var(--dating-primary-color);
+    --lumo-primary-text-color: var(--dating-primary-color);
+    --lumo-error-color: var(--dating-error-color);
+    --lumo-success-color: var(--dating-success-color);
+}
+
+/* Profile card transitions */
+.profile-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Button styling */
+vaadin-button[theme~="primary"] {
+    background: linear-gradient(135deg, var(--dating-primary-color) 0%, var(--dating-secondary-color) 100%);
+    border: none;
+}
+
+vaadin-button[theme~="primary"]:hover {
+    background: linear-gradient(135deg, #5568d3 0%, #653a8b 100%);
+}
+
+/* Grid styling */
+vaadin-grid {
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Form layout */
+vaadin-form-layout {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Navigation drawer */
+vaadin-side-nav {
+    background: linear-gradient(180deg, var(--dating-primary-color) 0%, var(--dating-secondary-color) 100%);
+}
+
+vaadin-side-nav-item {
+    color: white;
+}
+
+vaadin-side-nav-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* App header */
+header.app-header {
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Notifications */
+vaadin-notification-card[theme~="success"] {
+    background: var(--dating-success-color);
+}
+
+vaadin-notification-card[theme~="error"] {
+    background: var(--dating-error-color);
+}

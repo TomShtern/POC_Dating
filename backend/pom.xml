@@ -61,6 +61,7 @@
         <module>chat-service</module>
         <module>recommendation-service</module>
         <module>api-gateway</module>
+        <module>vaadin-ui-service</module>
     </modules>
 
     <!-- ========================================

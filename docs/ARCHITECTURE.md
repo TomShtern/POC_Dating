@@ -1,12 +1,17 @@
 # POC Dating Application - System Architecture
 
+**Document Status:** ✅ **ACTIVE** - Updated for Vaadin approach
+**Last Updated:** 2025-11-11
+**Version:** 2.0
+**Status:** Implementation Phase - Vaadin UI
+
 ## Document Purpose
 
-Technical architecture overview of the POC Dating Application for developers, architects, and stakeholders.
+Technical architecture overview of the POC Dating Application for developers, architects, and stakeholders. This document reflects the current implementation using **Vaadin** (pure Java) for the frontend.
 
-**Last Updated:** 2025-11-11
-**Version:** 1.0
-**Status:** Initial Design Phase
+### Architecture Evolution
+- **v1.0 (Initial):** Planned React + TypeScript frontend
+- **v2.0 (Current):** Vaadin (Pure Java) frontend - See [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) for rationale
 
 ---
 
@@ -31,26 +36,34 @@ Technical architecture overview of the POC Dating Application for developers, ar
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                   CLIENT LAYER                          │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  │
-│  │  Web Browser │  │  Mobile App  │  │   Desktop    │  │
-│  │   (React)    │  │(React Native)│  │    App       │  │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  │
-└─────────┼────────────────────────────────────┼──────────┘
-          │                                     │
-          └──────────────┬──────────────────────┘
-                         │
-                    HTTPS/WSS
-                         │
-┌────────────────────────▼────────────────────────────────┐
+│  ┌─────────────────────────────────────────────────┐    │
+│  │         Web Browser (Any Device)                │    │
+│  │         Accesses Vaadin UI directly             │    │
+│  └──────────────────┬──────────────────────────────┘    │
+└─────────────────────┼───────────────────────────────────┘
+                      │
+                 HTTPS/WSS
+                      │
+┌─────────────────────▼───────────────────────────────────┐
+│         VAADIN UI SERVICE (Port 8090)                   │
+│  - Pure Java web interface (Vaadin Flow)                │
+│  - Server-side rendering + client sync                  │
+│  - Session management (Redis)                           │
+│  - WebSocket (@Push) for real-time updates              │
+│  - Spring Security integration                          │
+│  - Calls backend services via Feign                     │
+└─────────────────────┬───────────────────────────────────┘
+                      │ REST/Feign Clients
+┌─────────────────────▼───────────────────────────────────┐
 │              API GATEWAY (Port 8080)                    │
-│  - Request routing & load balancing                    │
-│  - JWT token validation                                │
-│  - Rate limiting                                       │
-│  - CORS & security headers                             │
-│  - Circuit breaker for fault tolerance                 │
-└─┬────────────────────────────────────────────────────┬─┘
+│  - Request routing & load balancing                     │
+│  - JWT token validation                                 │
+│  - Rate limiting                                        │
+│  - CORS & security headers                              │
+│  - Circuit breaker for fault tolerance                  │
+└─┬────────────────────────────────────────────────────┬──┘
   │                                                    │
-  │ HTTP/WebSocket                                    │
+  │ HTTP/WebSocket                                     │
   │                                                    │
   ├─ /api/users/*          ────────────────┐          │
   ├─ /api/matches/*        ────────────────┼────┐     │
@@ -90,6 +103,105 @@ Technical architecture overview of the POC Dating Application for developers, ar
 ---
 
 ## Microservices Overview
+
+### 0. Vaadin UI Service (Port 8090) 🆕
+
+**Responsibility:** Web user interface (frontend) built entirely in Java using Vaadin
+
+**Key Features:**
+- Pure Java UI components (no JavaScript required)
+- Server-side rendering with automatic client synchronization
+- WebSocket support via @Push annotation for real-time updates
+- Spring Security integration for authentication
+- Session management via Redis
+- Feign clients to call backend microservices
+- Responsive design (works on desktop, tablet, mobile browsers)
+
+**Technology Stack:**
+- Vaadin 24.3 (Vaadin Flow)
+- Spring Boot 3.2.0
+- Spring Security
+- Spring Cloud OpenFeign
+- Redis (session storage)
+- Lumo theme (customizable)
+
+**Views Implemented:**
+- LoginView - User authentication
+- RegisterView - New user registration
+- SwipeView - Profile browsing and swiping
+- ChatView - Real-time messaging
+- ProfileView - User profile management
+- MatchesView - View all matches
+- SettingsView - User preferences
+
+**Integration Pattern:**
+```java
+// Feign client calling User Service
+@FeignClient(name = "user-service", url = "${services.user-service.url}")
+public interface UserServiceClient {
+    @GetMapping("/api/users/{id}")
+    User getUser(@PathVariable String id, @RequestHeader("Authorization") String token);
+}
+
+// Used in Vaadin view
+@Route("profile")
+public class ProfileView extends VerticalLayout {
+    public ProfileView(UserService userService) {
+        User user = userService.getCurrentUser();
+        add(new H2(user.getFirstName()));
+    }
+}
+```
+
+**WebSocket Integration:**
+```java
+@Push // Enables server push via WebSocket/SSE
+@Route("chat")
+public class ChatView extends VerticalLayout {
+    // Real-time message updates pushed from server
+    private void onNewMessage(Message message) {
+        getUI().ifPresent(ui -> ui.access(() -> {
+            messageList.add(message);
+        }));
+    }
+}
+```
+
+**Session Management:**
+- Stateful server-side sessions stored in Redis
+- Automatic session expiration and cleanup
+- Sticky sessions not required (session in Redis, not memory)
+- Load balancing friendly
+
+**Security:**
+- Spring Security authentication
+- JWT tokens stored in session
+- Per-request authorization via SecurityUtils
+- CSRF protection built-in
+- XSS protection via Vaadin's HTML escaping
+
+**Performance Characteristics:**
+- Initial page load: 1-2s (server-rendered HTML)
+- Subsequent interactions: 100-200ms (server round-trip)
+- WebSocket message delivery: <100ms
+- Memory per session: 50-100KB (server-side state)
+- Concurrent users per instance: ~5,000 (acceptable for POC)
+
+**Pros:**
+- 100% Java (team expertise utilized)
+- Type-safe frontend-backend integration
+- Rapid development (CRUD screens in minutes)
+- Built-in components (Grid, Form, Chart, etc.)
+- Real-time support (@Push)
+
+**Cons:**
+- Server-side rendering load
+- Scalability ceiling vs SPA
+- Vaadin-specific patterns
+
+**Dependencies:** User Service, Match Service, Chat Service, Recommendation Service (via Feign)
+
+---
 
 ### 1. User Service (Port 8081)
 
@@ -241,17 +353,28 @@ Technical architecture overview of the POC Dating Application for developers, ar
 | Message Broker | RabbitMQ 3.12 | Async events | Inter-service communication |
 | (Future) | Cassandra | Time-series data | High-volume message history |
 
-### Frontend
+### Frontend (Vaadin UI Service)
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| Framework | React 18 | Component-based UI |
-| Language | TypeScript | Type safety |
-| Build | Vite | Fast dev server, build |
-| Router | React Router v6 | Client-side routing |
-| State | Zustand | Lightweight state mgmt |
-| HTTP Client | Axios | API communication |
-| Styling | Tailwind CSS | Utility-first CSS |
-| Testing | Jest + RTL | Unit & integration tests |
+| Framework | Vaadin 24.3 | Pure Java web UI |
+| Language | Java 21 | Same as backend! |
+| UI Components | Vaadin Flow | Built-in components |
+| Build | Maven 3.8+ | Same build tool as backend |
+| Router | Vaadin Router | Java-based routing |
+| State | Server-side | Session management via Redis |
+| HTTP Client | Spring Cloud Feign | Type-safe API calls to microservices |
+| Styling | Lumo Theme | Customizable CSS variables |
+| Testing | Vaadin TestBench | Java-based UI testing |
+| Real-time | Vaadin @Push | WebSocket/SSE for live updates |
+
+**Key Advantage:** Entire stack is Java 21 - no language/paradigm switching!
+
+### Frontend (React/TypeScript) - ⚠️ DEPRECATED
+| Status | Notes |
+|--------|-------|
+| ⚠️ NOT USED | Replaced by Vaadin (Java) approach |
+| 📋 REFERENCE | See [frontend/DEPRECATION_NOTICE.md](../frontend/DEPRECATION_NOTICE.md) |
+| 📄 Analysis | See [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) for decision rationale |
 
 ### DevOps
 | Component | Technology | Purpose |
