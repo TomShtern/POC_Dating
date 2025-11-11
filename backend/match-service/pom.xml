@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dating</groupId>
+        <artifactId>poc-dating-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>match-service</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Match Service</name>
+    <description>Microservice for handling swipes and calculating matches</description>
+
+    <!--
+    PURPOSE: Processes swipes and determines mutual matches between users
+
+    RESPONSIBILITIES:
+    - Record user swipes (like/pass)
+    - Detect mutual matches (both users swiped right)
+    - Return feed of potential matches to user
+    - Calculate match score based on preferences
+    - Generate match notifications
+
+    PORT: 8082 (internal only)
+
+    DATABASE:
+    - Swipes table: user_id, target_id, action, timestamp
+    - Matches table: user1_id, user2_id, matched_at
+    - Feed cache: In Redis for performance
+
+    PUBLISHED EVENTS:
+    - match:created (when mutual match detected)
+    - swipe:recorded (all swipes)
+
+    CONSUMED EVENTS:
+    - user:registered (initialize empty swipe history)
+    - user:preferences-updated (recalculate recommended feed)
+
+    SCALING CONSIDERATIONS:
+    - Swipes are high-frequency events
+    - Feed generation can be computation-intensive
+    - Redis caching critical for performance
+    - Could be split into Feed Service if needed
+
+    ALTERNATIVES:
+    - Single endpoint for all actions: Leads to god service
+    - Chat service handles matches: Violates separation of concerns
+    - Batch processing: Slower feedback, worse UX
+    -->
+
+    <dependencies>
+        <dependency>
+            <groupId>com.dating</groupId>
+            <artifactId>common-library</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

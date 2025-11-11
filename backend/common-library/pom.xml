@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dating</groupId>
+        <artifactId>poc-dating-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>common-library</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Common Library</name>
+    <description>Shared code and utilities used across all microservices</description>
+
+    <!--
+    PURPOSE: Library module containing shared code between microservices
+
+    CONTENTS WILL INCLUDE:
+    - DTOs (Data Transfer Objects): Common request/response models
+    - Entities: JPA entities used across services (User, Match, Message)
+    - Exceptions: Custom exception classes
+    - Constants: Shared constants/enumerations
+    - Utilities: Common utility classes (validation, mappers, etc.)
+    - Configuration: Base configs shared across services
+
+    WHY THIS APPROACH:
+    - DRY principle: Avoid duplicating common code
+    - Single source of truth for shared models
+    - Reduces coupling between services
+    - Easier to maintain consistent data structures
+
+    ALTERNATIVES:
+    - Copy-paste (NOT recommended): Leads to inconsistencies and maintenance hell)
+    - No shared library (tight coupling): Services must know about each other's models
+    - Separate database per service (CQRS pattern): More complex, only for large scale
+
+    RATIONALE:
+    - Common library is NOT a microservice itself, just a JAR dependency
+    - Minimal dependencies to avoid bloating all services
+    - Contains only truly shared code, not business logic
+    - Each service has own business logic, repositories, services
+
+    ASSUMPTIONS:
+    - This module will be imported by all other service POMs
+    - No business logic here, only data structures and utilities
+    - Entities might be shared, but each service has own repositories
+    -->
+
+    <dependencies>
+        <!-- Jakarta Persistence (JPA) for Entity annotations -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+
+        <!-- Lombok for reducing entity boilerplate -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>

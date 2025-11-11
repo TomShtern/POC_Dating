@@ -1,0 +1,282 @@
+# POC_Dating - Docker Compose for Local Development
+#
+# PURPOSE: Orchestrates all services for local development environment
+#
+# WHY THIS APPROACH:
+# - Single file to spin up entire local environment
+# - Matches production architecture (same containers)
+# - Isolates services, prevents port conflicts
+# - Enables rapid iteration without manual service management
+#
+# ALTERNATIVES:
+# - Kubernetes (too complex for POC, better for production at scale)
+# - Manual JVM processes (hard to manage, no isolation, database conflicts)
+# - Docker Swarm (deprecated, Kubernetes is standard now)
+#
+# RATIONALE: Docker Compose is perfect for:
+# - Local development
+# - CI/CD pipeline testing
+# - Team onboarding (one command: docker-compose up)
+# - Matches Docker/Kubernetes patterns for eventual production migration
+#
+# HOW TO USE:
+# 1. cp .env.example .env
+# 2. docker-compose up -d
+# 3. Services will be available at:
+#    - API Gateway: http://localhost:8080
+#    - PostgreSQL: localhost:5432
+#    - Redis: localhost:6379
+#    - RabbitMQ: localhost:5672 (management UI: 15672)
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database - Primary data store
+  # WHY: ACID compliance essential for user data, matches, relationships
+  postgres:
+    image: postgres:15-alpine
+    container_name: dating_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-dating_db}
+      POSTGRES_USER: ${POSTGRES_USER:-dating_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme123}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d
+    networks:
+      - dating_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-dating_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache - Session and real-time data cache
+  # WHY: Fast in-memory cache for sessions, chat state, recommendations
+  # RATIONALE: Dramatically improves performance vs DB queries
+  redis:
+    image: redis:7-alpine
+    container_name: dating_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - dating_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # RabbitMQ Message Broker - Async event processing
+  # WHY: Decouples services, enables event-driven architecture
+  # RATIONALE: Allows services to communicate asynchronously
+  # EVENTS: match-created, message-sent, user-profile-updated, etc.
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: dating_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - dating_network
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # API Gateway Service - Single entry point
+  # PURPOSE: Routes all API requests to appropriate microservice
+  # PORT: 8080 (public-facing)
+  # DEPENDENCIES: All downstream services
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: dating_api_gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      USER_SERVICE_URL: http://user-service:8081
+      MATCH_SERVICE_URL: http://match-service:8082
+      CHAT_SERVICE_URL: http://chat-service:8083
+      RECOMMENDATION_SERVICE_URL: http://recommendation-service:8084
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+  # User Service - Authentication & Profiles
+  # PURPOSE: Manages user registration, login, profiles, preferences
+  # PORT: 8081 (internal only)
+  user-service:
+    build:
+      context: ./backend/user-service
+      dockerfile: Dockerfile
+    container_name: dating_user_service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SERVICE_NAME: user-service
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+  # Match Service - Matching Algorithm
+  # PURPOSE: Handles swipes, calculates matches, match notifications
+  # PORT: 8082 (internal only)
+  match-service:
+    build:
+      context: ./backend/match-service
+      dockerfile: Dockerfile
+    container_name: dating_match_service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SERVICE_NAME: match-service
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+  # Chat Service - Real-time Messaging
+  # PURPOSE: WebSocket server for real-time chat, message history
+  # PORT: 8083 (internal, accessed through gateway)
+  # SPECIAL: Maintains WebSocket connections, integration with RabbitMQ for distribution
+  chat-service:
+    build:
+      context: ./backend/chat-service
+      dockerfile: Dockerfile
+    container_name: dating_chat_service
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      SERVICE_NAME: chat-service
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+  # Recommendation Service - ML/Algorithm-based Recommendations
+  # PURPOSE: Calculates personalized recommendations based on user preferences, matches, interactions
+  # PORT: 8084 (internal only)
+  # SPECIAL: Can be resource-intensive, independent scaling
+  recommendation-service:
+    build:
+      context: ./backend/recommendation-service
+      dockerfile: Dockerfile
+    container_name: dating_recommendation_service
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      SERVICE_NAME: recommendation-service
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+  # Frontend Application - React Web UI
+  # PURPOSE: User-facing web application
+  # PORT: 3000 (public-facing)
+  # NOTE: In production, this would be served from CDN/S3, not container
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    container_name: dating_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:8080
+      REACT_APP_WS_URL: ws://localhost:8080/ws
+    depends_on:
+      - api-gateway
+    networks:
+      - dating_network
+    restart: unless-stopped
+
+# Network Definition
+# WHY: All containers on same network enables service discovery by name
+networks:
+  dating_network:
+    driver: bridge
+
+# Volume Definitions
+# WHY: Persistent data storage across container restarts
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:

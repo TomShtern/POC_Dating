@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dating</groupId>
+        <artifactId>poc-dating-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>api-gateway</artifactId>
+    <packaging>jar</packaging>
+
+    <name>API Gateway</name>
+    <description>API Gateway for routing, authentication, and load balancing</description>
+
+    <!--
+    PURPOSE: Single entry point for all API requests
+
+    RESPONSIBILITIES:
+    - Route requests to appropriate microservice
+    - JWT authentication enforcement
+    - Rate limiting
+    - Request/response logging
+    - CORS handling
+    - Load balancing
+    - Circuit breaking (for fault tolerance)
+
+    PORT: 8080 (public-facing)
+
+    TECHNOLOGY:
+    - Spring Cloud Gateway: Request routing
+    - Spring Security: JWT validation
+    - Spring Cloud CircuitBreaker: Fault tolerance
+    - Spring Retry: Request retry logic
+
+    WHY API GATEWAY:
+    - Single point for cross-cutting concerns (auth, logging, rate limit)
+    - Hides internal microservice structure
+    - Can route requests without client knowing target
+    - Easy to add new microservices
+    - Security: Can enforce HTTPS, API key validation
+
+    ROUTING RULES:
+    - /api/users/* → user-service:8081
+    - /api/matches/* → match-service:8082
+    - /api/chat/* → chat-service:8083
+    - /api/recommendations/* → recommendation-service:8084
+
+    ALTERNATIVES:
+    - No gateway (direct microservice calls): Security risk, client knows internals
+    - Load balancer (Nginx): Works but less Spring-integrated, manual config
+    - AWS API Gateway: Good if AWS-hosted, not for POC
+    -->
+
+    <dependencies>
+        <!-- Spring Cloud Gateway -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
+
+        <!-- Service Discovery (for dynamic routing) -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+        </dependency>
+
+        <!-- Circuit Breaker for Resilience -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-circuitbreaker-reactor-resilience4j</artifactId>
+        </dependency>
+
+        <!-- JWT Token Validation -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Actuator for Health -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

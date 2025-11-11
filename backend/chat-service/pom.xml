@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dating</groupId>
+        <artifactId>poc-dating-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>chat-service</artifactId>
+    <packaging>jar</packaging>
+
+    <name>Chat Service</name>
+    <description>Microservice for real-time messaging via WebSockets</description>
+
+    <!--
+    PURPOSE: Real-time messaging platform for matched users
+
+    RESPONSIBILITIES:
+    - WebSocket server for real-time messaging
+    - Message storage and retrieval
+    - Message delivery status tracking
+    - Online/offline status
+    - Typing indicators
+    - Conversation management
+
+    PORT: 8083 (internal, accessed through API Gateway)
+
+    TECHNOLOGY:
+    - Spring WebSocket: Real-time bidirectional communication
+    - RabbitMQ: Distributed message handling (multi-instance support)
+    - PostgreSQL: Message persistence
+    - Redis: Active connections, typing status, message cache
+
+    KEY CHALLENGE: WebSocket Scaling
+    - Single WebSocket server bottleneck
+    - Solution: RabbitMQ broker between service instances
+    - Allows messages to route to any connected client
+
+    DATABASE:
+    - Messages table: Persistent storage
+    - Conversations table: Match ↔ Conversation mapping
+
+    PUBLISHED EVENTS:
+    - message:sent
+    - message:delivered
+    - message:read
+    - conversation:created
+    - conversation:ended
+
+    CONSUMED EVENTS:
+    - match:created (create conversation)
+    - match:ended (close conversation)
+
+    ALTERNATIVES:
+    - Firebase Realtime DB: Vendor lock-in, harder to customize
+    - Socket.IO: Good but less Spring-integrated
+    - gRPC: Better performance but more complex setup
+    -->
+
+    <dependencies>
+        <dependency>
+            <groupId>com.dating</groupId>
+            <artifactId>common-library</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- WebSocket Support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-websocket</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
