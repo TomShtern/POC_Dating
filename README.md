@@ -52,6 +52,38 @@ This repository contains comprehensive technical analysis of four major dating a
    - Recommended ideal stack for 2025
    - Key lessons for engineers
 
+### Deep Dive: Performance, Scale & Costs
+6. **[PERFORMANCE_SCALE_METRICS.md](PERFORMANCE_SCALE_METRICS.md)** - NEW
+   - Performance metrics: Tinder (300ms latency, 2B daily swipes), Hinge (833 req/sec)
+   - Team sizes: Tinder (~680 engineers), engineering team structures
+   - Infrastructure costs: $60-180M/year estimates for Tinder
+   - Mobile app benchmarks: 99.9% crash-free sessions, <2-3s startup
+   - Cost efficiency analysis and recommendations
+
+### Deep Dive: Security & Compliance
+7. **[SECURITY_COMPLIANCE_ANALYSIS.md](SECURITY_COMPLIANCE_ANALYSIS.md)** - NEW
+   - Authentication: Multi-factor auth reduces fakes by 89%
+   - Encryption: AES-256, TLS 1.3, end-to-end for messages
+   - GDPR/CCPA compliance: Fines up to €20M or 4% revenue
+   - Security vulnerabilities: KU Leuven research findings
+   - Incident response frameworks and best practices
+
+### Deep Dive: DevOps, Testing & ML
+8. **[DEVOPS_TESTING_ML_INFRASTRUCTURE.md](DEVOPS_TESTING_ML_INFRASTRUCTURE.md)** - NEW
+   - CI/CD: Jenkins pipelines, deployment frequency, Kubernetes strategies
+   - Testing: A/B testing (Tinder, Bumble), automation-first approach
+   - Quality assurance: 20% time on matching algorithm testing
+   - ML infrastructure: TinVec embeddings, Smart Photos, Gale-Shapley
+   - Monitoring & observability: DataDog, Prometheus, distributed tracing
+
+### Deep Dive: Technical Evolution & Integrations
+9. **[TECHNICAL_EVOLUTION_INTEGRATIONS.md](TECHNICAL_EVOLUTION_INTEGRATIONS.md)** - NEW
+   - Complete timeline: Tinder (2012-2025), Bumble, OkCupid, Hinge
+   - Major migrations: DynamoDB (6 months), Kubernetes (2 years), ElastiCache
+   - OKWS cautionary tale: 20-year-old C++ server still running
+   - Third-party integrations: Stripe, Twilio, SendGrid, AWS services
+   - Migration lessons: What worked, what failed, cost analysis
+
 ---
 
 ## Quick Comparison
