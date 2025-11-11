@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.dating</groupId>
+        <artifactId>poc-dating-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>user-service</artifactId>
+    <packaging>jar</packaging>
+
+    <name>User Service</name>
+    <description>Microservice for user authentication, profile management, and preferences</description>
+
+    <!--
+    PURPOSE: Standalone Spring Boot microservice for user management
+
+    RESPONSIBILITIES:
+    - User registration and authentication
+    - JWT token generation and validation
+    - User profile CRUD operations
+    - User preferences management
+    - Password management and reset
+    - User account status management
+
+    TECHNOLOGY CHOICES:
+    - Spring Boot Web: REST API endpoints
+    - Spring Security + JWT: Authentication
+    - Spring Data JPA: Database access
+    - PostgreSQL: Primary data store
+    - Redis: Token blacklist/cache
+
+    PORT: 8081 (internal only, accessed through API Gateway)
+
+    DATABASE:
+    - Uses PostgreSQL
+    - Migrations handled by Flyway/Liquibase
+    - Tables: users, user_preferences, refresh_tokens
+
+    PUBLISHED EVENTS (via RabbitMQ):
+    - user:registered
+    - user:profile-updated
+    - user:deleted
+
+    CONSUMED EVENTS:
+    - match:found (to update user's match count)
+
+    ALTERNATIVE ARCHITECTURES:
+    - Monolithic: All in one app (not scalable)
+    - Separate user database per service: Data consistency issues
+    - Events-only (no REST): Harder to query, latency issues
+
+    RATIONALE FOR MICROSERVICE:
+    - User data is core, accessed by all services
+    - High-frequency reads (profile lookups, preferences)
+    - Independent scaling from match/chat services
+    - Can be cached aggressively in Redis
+    - Potential for multi-tenancy in future
+    -->
+
+    <dependencies>
+        <!-- Common Library -->
+        <dependency>
+            <groupId>com.dating</groupId>
+            <artifactId>common-library</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Redis for Caching -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
+        <!-- JWT Token Handling -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- RabbitMQ for Event Publishing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- Actuator for Health Checks -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- TestContainers for Integration Tests -->
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>
