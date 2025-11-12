@@ -1,0 +1,274 @@
+# Match Service Configuration
+#
+# PURPOSE: Spring Boot application properties for Match Service
+#
+# WHY YAML over Properties:
+# - Hierarchical structure (clearer)
+# - Less repetitive (no key prefixes)
+# - Better for complex configurations
+# - Industry standard for Spring Boot
+#
+# NOTE: Environment variables override these values
+# Docker/Compose can override via env vars
+#
+# PROFILES:
+# - dev: Local development (H2 in-memory DB optional)
+# - test: Integration tests (TestContainers)
+# - prod: Production (secure defaults)
+
+spring:
+  application:
+    name: match-service
+    version: 1.0.0
+
+  # Default configuration uses PostgreSQL (local installation)
+  # To use H2 in-memory database instead: java -Dspring.profiles.active=dev -jar app.jar
+  # profiles:
+  #   active: dev
+
+  # ========================================
+  # SERVER CONFIGURATION
+  # ========================================
+  server:
+    port: 8082
+    servlet:
+      context-path: /api
+    shutdown: graceful
+    error:
+      include-message: always
+      include-stacktrace: on-param
+      include-exception: false
+
+  # ========================================
+  # DATABASE CONFIGURATION
+  # ========================================
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_matches}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update schema for development
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+
+  # ========================================
+  # REDIS CONFIGURATION (OPTIONAL - for caching)
+  # Redis is not required for basic functionality
+  # To enable Redis caching, install Redis and set CACHE_TYPE=redis
+  # ========================================
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 60000ms
+    jedis:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+
+  cache:
+    type: ${CACHE_TYPE:simple}  # Use 'simple' (in-memory) cache by default, 'redis' if available
+    redis:
+      time-to-live: ${REDIS_TTL_MINUTES:30}m
+
+  # ========================================
+  # RABBITMQ CONFIGURATION (OPTIONAL - for event messaging)
+  # RabbitMQ is not required for basic functionality
+  # Install RabbitMQ to enable inter-service event messaging
+  # ========================================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 10000
+    publisher-confirms: true
+    publisher-returns: true
+
+  # ========================================
+  # JACKSON CONFIGURATION (JSON)
+  # ========================================
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # ========================================
+  # CLOUD / FEIGN CONFIGURATION
+  # ========================================
+  cloud:
+    openfeign:
+      client:
+        config:
+          user-service:
+            url: ${USER_SERVICE_URL:http://localhost:8081/api}
+            connect-timeout: 5000
+            read-timeout: 5000
+            logger-level: basic
+
+# ========================================
+# SECURITY CONFIGURATION
+# ========================================
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-me-with-a-secure-32-character-key-here}
+    expiration-ms: ${JWT_EXPIRATION_MS:86400000}
+
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
+
+# ========================================
+# FEIGN CLIENTS CONFIGURATION
+# ========================================
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+# ========================================
+# LOGGING CONFIGURATION
+# ========================================
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.dating: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: WARN
+    feign: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/match-service.log
+    max-size: 10MB
+    max-history: 10
+
+# ========================================
+# ACTUATOR (Health Checks, Metrics)
+# ========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+---
+# ========================================
+# PROFILE: PROD (PostgreSQL with stricter settings)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # PostgreSQL configuration - same as default but with stricter settings
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_matches}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use validate in production (requires manual schema management)
+    show-sql: false
+
+  # Enable Redis caching in production
+  cache:
+    type: redis
+
+logging:
+  level:
+    root: WARN
+    com.dating: INFO
+
+---
+# ========================================
+# PROFILE: DEV (H2 In-Memory, No Docker Required)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # H2 In-Memory Database
+  datasource:
+    url: jdbc:h2:mem:dating_matches_dev
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Auto-create schema for dev
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # Simple in-memory cache instead of Redis
+  cache:
+    type: simple
+
+  # RabbitMQ optional for local dev
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+logging:
+  level:
+    root: DEBUG
+    com.dating: DEBUG
+    org.springframework.web: DEBUG
+    feign: DEBUG
+    org.hibernate.SQL: DEBUG

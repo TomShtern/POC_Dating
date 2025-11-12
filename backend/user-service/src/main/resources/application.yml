@@ -21,6 +21,11 @@ spring:
     name: user-service
     version: 1.0.0
 
+  # Default configuration uses PostgreSQL (local installation)
+  # To use H2 in-memory database instead: java -Dspring.profiles.active=dev -jar app.jar
+  # profiles:
+  #   active: dev
+
   # ========================================
   # SERVER CONFIGURATION
   # ========================================
@@ -38,9 +43,10 @@ spring:
   # DATABASE CONFIGURATION
   # ========================================
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_db}
-    username: ${POSTGRES_USER:dating_user}
-    password: ${POSTGRES_PASSWORD:changeme123}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_users}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
       minimum-idle: ${DB_POOL_MIN_SIZE:5}
@@ -50,8 +56,8 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate  # Use Flyway/Liquibase for migrations
-    show-sql: false
+      ddl-auto: update  # Auto-create/update schema for development
+    show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -62,7 +68,9 @@ spring:
         order_updates: true
 
   # ========================================
-  # REDIS CONFIGURATION (Caching)
+  # REDIS CONFIGURATION (OPTIONAL - for caching)
+  # Redis is not required for basic functionality
+  # To enable Redis caching, install Redis and set CACHE_TYPE=redis
   # ========================================
   redis:
     host: ${REDIS_HOST:localhost}
@@ -76,12 +84,14 @@ spring:
         min-idle: 0
 
   cache:
-    type: redis
+    type: ${CACHE_TYPE:simple}  # Use 'simple' (in-memory) cache by default, 'redis' if available
     redis:
       time-to-live: ${REDIS_TTL_MINUTES:30}m
 
   # ========================================
-  # RABBITMQ CONFIGURATION (Events)
+  # RABBITMQ CONFIGURATION (OPTIONAL - for event messaging)
+  # RabbitMQ is not required for basic functionality
+  # Install RabbitMQ to enable inter-service event messaging
   # ========================================
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
@@ -151,35 +161,95 @@ management:
 
 ---
 # ========================================
-# PROFILE: DEV
-# ========================================
-spring:
-  config:
-    activate:
-      on-profile: dev
-  jpa:
-    hibernate:
-      ddl-auto: create-drop  # Auto-create schema for dev
-    show-sql: true
-
-logging:
-  level:
-    root: DEBUG
-    org.springframework.web: DEBUG
-
----
-# ========================================
-# PROFILE: PROD
+# PROFILE: PROD (PostgreSQL with stricter settings)
 # ========================================
 spring:
   config:
     activate:
       on-profile: prod
+
+  # PostgreSQL configuration - same as default but with stricter settings
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_users}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: validate  # Use validate in production (requires manual schema management)
     show-sql: false
+
+  # Enable Redis caching in production
+  cache:
+    type: redis
 
 logging:
   level:
     root: WARN
+    com.dating: INFO
+
+---
+# ========================================
+# PROFILE: DEV (H2 In-Memory, No Docker Required)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # H2 In-Memory Database
+  datasource:
+    url: jdbc:h2:mem:dating_users_dev
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Auto-create schema for dev
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+
+  # Disable Redis for local dev (optional caching)
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 60000ms
+
+  cache:
+    type: simple  # Use simple in-memory cache instead of Redis
+
+  # Disable RabbitMQ for local dev (optional messaging)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+logging:
+  level:
+    root: DEBUG
+    com.dating: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG

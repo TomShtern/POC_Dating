@@ -1,0 +1,234 @@
+spring:
+  application:
+    name: chat-service
+
+  # Default configuration uses PostgreSQL (local installation)
+  # To use H2 in-memory database instead: java -Dspring.profiles.active=dev -jar app.jar
+  # profiles:
+  #   active: dev
+
+  # ========================================
+  # DATABASE CONFIGURATION
+  # ========================================
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_chat}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update schema for development
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  # ========================================
+  # REDIS CONFIGURATION (OPTIONAL - for WebSocket session management)
+  # Redis is not required for basic functionality
+  # To enable Redis, install Redis and configure appropriately
+  # ========================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+
+  # ========================================
+  # RABBITMQ CONFIGURATION (OPTIONAL - for WebSocket STOMP relay)
+  # RabbitMQ is not required for basic functionality
+  # Install RabbitMQ to enable advanced WebSocket features
+  # ========================================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+
+server:
+  port: 8083
+  error:
+    include-message: always
+    include-binding-errors: always
+
+# JWT Configuration (same as user-service)
+jwt:
+  secret: your-256-bit-secret-key-for-jwt-token-signing-should-be-changed-in-production
+  expiration: 86400000 # 24 hours in milliseconds
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+  user-service:
+    url: http://localhost:8081
+
+  match-service:
+    url: http://localhost:8082
+
+# WebSocket Configuration
+websocket:
+  allowed-origins:
+    - http://localhost:8080
+    - http://localhost:3000
+  message-size-limit: 8192 # 8KB max message size
+  send-buffer-size: 512KB
+  send-time-limit: 20000 # 20 seconds
+
+# Rate Limiting Configuration
+rate-limit:
+  messages-per-second: 10
+  enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    com.dating.chat: ${LOG_LEVEL:INFO}
+    org.springframework.web.socket: INFO
+    org.springframework.messaging: INFO
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_BIND_LOG_LEVEL:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+---
+# ========================================
+# PROFILE: PROD (PostgreSQL with stricter settings)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_chat}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use validate in production (requires manual schema management)
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+logging:
+  level:
+    com.dating.chat: INFO
+    org.springframework.web.socket: INFO
+    org.springframework.messaging: INFO
+    org.hibernate.SQL: WARN
+
+---
+# ========================================
+# PROFILE: DEV (H2 In-Memory, No Docker Required)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # H2 In-Memory Database
+  datasource:
+    url: jdbc:h2:mem:dating_chat_dev
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Auto-create schema for dev
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  # Redis Configuration (optional for local dev)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+
+  # RabbitMQ Configuration (optional for local dev)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        concurrency: 5
+        max-concurrency: 10
+
+logging:
+  level:
+    com.dating.chat: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.messaging: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

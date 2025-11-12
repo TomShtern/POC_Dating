@@ -1,32 +1,55 @@
-# POC_Dating - Docker Compose for Local Development
+# ============================================================================
+# POC Dating - Docker Compose Configuration
+# ============================================================================
 #
-# PURPOSE: Orchestrates all services for local development environment
+# ⚠️  IMPORTANT: This file is for PRODUCTION DEPLOYMENT ONLY
 #
-# WHY THIS APPROACH:
-# - Single file to spin up entire local environment
-# - Matches production architecture (same containers)
-# - Isolates services, prevents port conflicts
-# - Enables rapid iteration without manual service management
+# FOR LOCAL DEVELOPMENT:
+#   You DO NOT need Docker! See backend/QUICKSTART.md instead.
 #
-# ALTERNATIVES:
-# - Kubernetes (too complex for POC, better for production at scale)
-# - Manual JVM processes (hard to manage, no isolation, database conflicts)
-# - Docker Swarm (deprecated, Kubernetes is standard now)
+#   Quick Start:
+#   1. Install PostgreSQL locally
+#   2. Run backend/setup-databases.sql
+#   3. Start services with: mvn spring-boot:run
+#   4. See backend/QUICKSTART.md for complete instructions
 #
-# RATIONALE: Docker Compose is perfect for:
-# - Local development
-# - CI/CD pipeline testing
-# - Team onboarding (one command: docker-compose up)
-# - Matches Docker/Kubernetes patterns for eventual production migration
+# ============================================================================
 #
-# HOW TO USE:
-# 1. cp .env.example .env
-# 2. docker-compose up -d
+# PURPOSE: Production deployment with all services containerized
+#
+# WHY THIS FILE EXISTS:
+# - Production deployment (all services in containers)
+# - Full-stack testing (testing containerized deployment)
+# - CI/CD pipeline (automated testing with containers)
+# - Staging/demo environments
+#
+# WHY NOT USE FOR DEVELOPMENT:
+# - Slower startup times vs native Java processes
+# - Harder to debug (logs in containers)
+# - More resource intensive
+# - Extra complexity not needed for development
+# - PostgreSQL on localhost is simpler and faster
+#
+# WHEN TO USE THIS FILE:
+# ✅ Production deployment
+# ✅ Staging environments
+# ✅ Testing containerized deployment
+# ✅ Demo environments
+# ❌ Local development (use QUICKSTART.md instead)
+#
+# HOW TO USE (Production):
+# 1. Build all services: cd backend && mvn clean install
+# 2. Start containers: docker-compose up -d
 # 3. Services will be available at:
-#    - API Gateway: http://localhost:8080
+#    - Vaadin UI: http://localhost:8090
+#    - User Service: http://localhost:8081
 #    - PostgreSQL: localhost:5432
-#    - Redis: localhost:6379
-#    - RabbitMQ: localhost:5672 (management UI: 15672)
+#    - Redis: localhost:6379 (optional)
+#    - RabbitMQ: localhost:5672 (optional, management UI: 15672)
+#
+# For development setup, see: backend/QUICKSTART.md
+# For deployment details, see: docs/DEPLOYMENT.md
+# ============================================================================
 
 version: '3.8'
 

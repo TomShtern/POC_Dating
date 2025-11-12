@@ -138,6 +138,7 @@ Browser → Vaadin UI Service (Port 8090) → API Gateway → Microservices
 | HTTP Client | Axios |
 | UI Components | Custom/third-party |
 | Testing | Jest + React Testing Library |
+| Database Setup | Docker Compose required |
 | Learning Curve | **3-4 months** |
 
 ### After (Implemented)
@@ -147,13 +148,20 @@ Browser → Vaadin UI Service (Port 8090) → API Gateway → Microservices
 | Frontend Language | **Java 21** ✅ |
 | Frontend Framework | **Vaadin 24.3** |
 | Build Tool | **Maven 3.8+** (same as backend!) |
-| State Management | **Server-side sessions (Redis)** |
+| State Management | **Server-side (in-memory for dev, Redis for prod)** |
 | HTTP Client | **Spring Cloud Feign** |
 | UI Components | **Vaadin Flow (built-in)** |
 | Testing | **Vaadin TestBench (Java)** |
+| Database Setup | **PostgreSQL on localhost (no Docker)** ✅ |
+| Cache/Messaging | **Optional (Redis/RabbitMQ)** |
+| Docker | **Production only (not required for dev)** ✅ |
 | Learning Curve | **3 days** ✅ |
 
-**Key Benefit:** Entire stack is Java - zero context switching!
+**Key Benefits:**
+- Entire stack is Java - zero context switching!
+- No Docker required for development
+- Simple PostgreSQL setup on localhost
+- Optional features (Redis, RabbitMQ) don't block development
 
 ---
 
@@ -189,16 +197,18 @@ All documentation is now organized with clear status markers:
 
 ### Phase 1: Setup (Week 1, Day 1-2)
 
-**Follow:** [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md)
+**Follow:** [backend/QUICKSTART.md](../backend/QUICKSTART.md) for database setup, then [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md)
 
-1. Create `backend/vaadin-ui-service/` module
-2. Add Vaadin dependencies to `pom.xml`
-3. Configure `application.yml` (ports, service URLs, Redis)
-4. Create main application class with Spring Boot
-5. Set up Feign clients for backend services
-6. Configure Spring Security
+1. **Install PostgreSQL** locally (see QUICKSTART.md)
+2. **Setup databases** - Run `setup-databases.sql` script
+3. Create `backend/vaadin-ui-service/` module
+4. Add Vaadin dependencies to `pom.xml`
+5. Configure `application.yml` (ports, service URLs - all localhost)
+6. Create main application class with Spring Boot
+7. Set up Feign clients for backend services
+8. Configure Spring Security
 
-**Deliverable:** Vaadin service runs, shows blank page
+**Deliverable:** Vaadin service runs, shows blank page, connects to backend services on localhost
 
 ### Phase 2: Core Views (Week 1, Day 3-7)
 

@@ -30,17 +30,12 @@ We chose **Vaadin** (pure Java UI framework) over React/TypeScript to:
 ### Microservices Structure
 ```
 ┌─────────────────────────────────────────┐
-│     Vaadin UI Service (Port 8090)       │
-│    - Pure Java web interface            │
-│    - Calls backend via Feign/REST       │
-│    - WebSocket integration (@Push)      │
+│  Vaadin UI Service (Port 8090)          │
+│  - Pure Java web interface (optional)   │
+│  - Calls backend via Feign/REST         │
+│  - WebSocket integration (@Push)        │
 └─────────────┬───────────────────────────┘
               │ REST/Feign
-┌─────────────▼───────────────────────────┐
-│          API Gateway (Port 8080)        │
-│    - Request routing & load balancing   │
-│    - Authentication enforcement         │
-└─────────────┬───────────────────────────┘
               │
     ┌─────────┼─────────┬────────────┐
     │         │         │            │
@@ -52,12 +47,17 @@ We chose **Vaadin** (pure Java UI framework) over React/TypeScript to:
      │       │         │           │
      └───────┴─────────┴───────────┘
               │
-    ┌─────────┼──────────┬──────────┐
-    │         │          │          │
-┌───▼──┐  ┌──▼──┐  ┌────▼──┐  ┌───▼───┐
-│PgSQL │  │Redis│  │RabbitMQ│  │Cassandra
-│      │  │Cache │  │EventBus│  │(optional)
-└──────┘  └──────┘  └───────┘  └────────┘
+    ┌─────────▼──────────┐
+    │  PostgreSQL        │
+    │  localhost:5432    │
+    │  (4 databases)     │
+    └────────────────────┘
+
+Optional for Advanced Features:
+┌────────┐  ┌──────────┐
+│ Redis  │  │ RabbitMQ │
+│ :6379  │  │ :5672    │
+└────────┘  └──────────┘
 ```
 
 ### Technology Stack
@@ -66,8 +66,10 @@ We chose **Vaadin** (pure Java UI framework) over React/TypeScript to:
 - **Language:** Java 21+
 - **Framework:** Spring Boot 3.x
 - **Build:** Maven
-- **Database:** PostgreSQL (primary), Redis (cache), RabbitMQ (message broker)
-- **Containerization:** Docker & Docker Compose
+- **Database:** PostgreSQL (primary, runs on localhost)
+- **Cache:** Redis (optional, for advanced features)
+- **Message Broker:** RabbitMQ (optional, for event-driven features)
+- **Deployment:** Docker & Docker Compose (production only, not required for development)
 - **Real-time:** WebSockets (Spring WebSocket)
 
 #### Frontend
@@ -76,6 +78,11 @@ We chose **Vaadin** (pure Java UI framework) over React/TypeScript to:
 - **Styling:** Lumo Theme (customizable)
 - **Real-time:** Vaadin @Push (WebSocket/SSE)
 - **Security:** Spring Security integration
+
+#### Development Setup
+- **Local Development:** PostgreSQL on localhost (no Docker required)
+- **Testing:** H2 in-memory database via `dev` profile
+- **Production:** Docker Compose with all services containerized
 
 ---
 
@@ -139,54 +146,113 @@ POC_Dating/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Java 21+
-- Maven 3.8+
-- Docker & Docker Compose
-- Git
 
-### Local Development
+#### Required
+- **Java 21+** - [Download](https://adoptium.net/)
+- **Maven 3.8+** - [Download](https://maven.apache.org/download.cgi)
+- **PostgreSQL 14+** - [Installation Guide](#postgresql-installation)
+- **Git** - Version control
+
+#### Optional
+- **Docker & Docker Compose** - Only for production deployment (not required for development)
+- **Redis** - Optional caching (services work without it)
+- **RabbitMQ** - Optional messaging (services work without it)
+
+### PostgreSQL Installation
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+```
+
+#### macOS (Homebrew)
+```bash
+brew install postgresql@14
+brew services start postgresql@14
+```
+
+#### Windows
+Download installer from [postgresql.org](https://www.postgresql.org/download/windows/) and follow the setup wizard.
+
+### Database Setup
+
+Run the provided setup script to create all databases:
+
+```bash
+# Linux/Mac
+sudo -u postgres psql -f backend/setup-databases.sql
+
+# Windows
+psql -U postgres -f backend/setup-databases.sql
+```
+
+This creates: `dating_users`, `dating_matches`, `dating_chat`, `dating_recommendations`
+
+### Local Development (PostgreSQL-First)
+
+**For detailed setup instructions, see [backend/QUICKSTART.md](backend/QUICKSTART.md)**
+
 ```bash
 # Clone the repository
 git clone <repo-url>
 cd POC_Dating
 
-# Setup environment
-cp .env.example .env
-
-# Build all services (including Vaadin UI)
+# Build all services
 cd backend
 mvn clean install
 
-# Start all services with Docker Compose
-cd ..
-docker-compose up -d
+# Start each service in a separate terminal
+# Terminal 1: User Service
+cd backend/user-service && mvn spring-boot:run
 
-# Access the application
-# Vaadin UI: http://localhost:8090
+# Terminal 2: Match Service
+cd backend/match-service && mvn spring-boot:run
+
+# Terminal 3: Chat Service
+cd backend/chat-service && mvn spring-boot:run
+
+# Terminal 4: Recommendation Service
+cd backend/recommendation-service && mvn spring-boot:run
+
+# Terminal 5: Vaadin UI (Optional - if you need the web interface)
+cd backend/vaadin-ui-service && mvn spring-boot:run
 ```
 
 ### Service Endpoints
-- **Vaadin UI:** http://localhost:8090 (Main application)
-- **API Gateway:** http://localhost:8080
-- **User Service:** http://localhost:8081
+- **Vaadin UI:** http://localhost:8090 (Web interface - optional)
+- **User Service:** http://localhost:8081 (Core service)
 - **Match Service:** http://localhost:8082
 - **Chat Service:** http://localhost:8083
 - **Recommendation Service:** http://localhost:8084
 
-### Development Mode (without Docker)
+### Alternative: Quick Testing with H2
+
+For quick testing without PostgreSQL setup, use the dev profile:
 
 ```bash
-# Terminal 1: Start databases
-docker-compose up postgres redis rabbitmq
-
-# Terminal 2: Start backend services
-cd backend/user-service && mvn spring-boot:run
-
-# Terminal 3: Start Vaadin UI
-cd backend/vaadin-ui-service && mvn spring-boot:run
-
-# Access: http://localhost:8090
+cd backend/user-service
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 ```
+
+This uses in-memory H2 database (data is lost on restart).
+
+### Production Deployment (Docker)
+
+For production deployment with all services containerized:
+
+```bash
+# Build all services
+cd backend
+mvn clean install
+
+# Start with Docker Compose
+cd ..
+docker-compose up -d
+```
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for detailed deployment instructions.
 
 ---
 

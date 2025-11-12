@@ -69,25 +69,43 @@ vaadin-ui-service/
 
 ### Prerequisites
 
-- Java 21+
-- Maven 3.8+
-- Redis running (for sessions)
-- Backend services running (or accessible)
+#### Required
+- **Java 21+**
+- **Maven 3.8+**
+- **Backend services running** - User, Match, Chat, Recommendation services on localhost
 
-### Running Locally
+#### Optional
+- **Redis** - Only needed for production (session storage)
+- **Docker** - Only for production deployment
+
+**Note**: For development, Redis is NOT required. Sessions are stored in-memory.
+
+### Running Locally (Development)
+
+**Step 1**: Ensure backend services are running first
 
 ```bash
-# 1. Start Redis (if not already running)
-docker run -d -p 6379:6379 redis:7-alpine
+# In separate terminals, start each service:
+cd backend/user-service && mvn spring-boot:run
+cd backend/match-service && mvn spring-boot:run
+cd backend/chat-service && mvn spring-boot:run
+cd backend/recommendation-service && mvn spring-boot:run
+```
 
-# 2. Run the application
+See [backend/QUICKSTART.md](../QUICKSTART.md) for complete backend setup instructions.
+
+**Step 2**: Start Vaadin UI
+
+```bash
+# Start Vaadin UI service
+cd backend/vaadin-ui-service
 mvn spring-boot:run
 
-# 3. Access the UI
+# Access the UI
 # Open browser: http://localhost:8090
 ```
 
-### Running with Docker
+### Running with Docker (Production Only)
 
 ```bash
 # Build
@@ -96,21 +114,27 @@ docker build -t vaadin-ui-service .
 
 # Run
 docker run -p 8090:8090 \
+  -e SESSION_STORE=redis \
   -e REDIS_HOST=redis \
   -e USER_SERVICE_HOST=user-service \
   -e MATCH_SERVICE_HOST=match-service \
   -e CHAT_SERVICE_HOST=chat-service \
   -e RECOMMENDATION_SERVICE_HOST=recommendation-service \
+  -e JWT_SECRET=your-secret \
   vaadin-ui-service
 ```
 
-### Running with Docker Compose
+### Running with Docker Compose (Production)
 
 ```bash
 # From project root
 cd ../..
 docker-compose up vaadin-ui
+
+# See docker-compose.yml for full configuration
 ```
+
+**Note**: Docker Compose is for production deployment. For development, use `mvn spring-boot:run` as shown above.
 
 ## Configuration
 
@@ -122,6 +146,7 @@ Key configuration properties:
 server:
   port: 8090
 
+# Backend service URLs (all on localhost for development)
 services:
   user-service:
     url: http://localhost:8081
@@ -133,6 +158,10 @@ services:
     url: http://localhost:8084
 
 spring:
+  # Session storage (in-memory for dev, Redis for production)
+  session:
+    store-type: ${SESSION_STORE:none}  # 'none' for dev, 'redis' for prod
+
   redis:
     host: localhost
     port: 6379
@@ -140,15 +169,18 @@ spring:
 
 ### Environment Variables
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SERVER_PORT` | Service port | 8090 |
-| `REDIS_HOST` | Redis hostname | localhost |
-| `USER_SERVICE_HOST` | User service host | localhost |
-| `MATCH_SERVICE_HOST` | Match service host | localhost |
-| `CHAT_SERVICE_HOST` | Chat service host | localhost |
-| `RECOMMENDATION_SERVICE_HOST` | Recommendation service host | localhost |
-| `JWT_SECRET` | JWT secret for validation | (required) |
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `SERVER_PORT` | Service port | 8090 | No |
+| `SESSION_STORE` | Session storage type | none (in-memory) | No (dev), Yes (prod: redis) |
+| `REDIS_HOST` | Redis hostname (prod only) | localhost | No (dev), Yes (prod) |
+| `USER_SERVICE_HOST` | User service host | localhost | Yes |
+| `MATCH_SERVICE_HOST` | Match service host | localhost | Yes |
+| `CHAT_SERVICE_HOST` | Chat service host | localhost | Yes |
+| `RECOMMENDATION_SERVICE_HOST` | Recommendation service host | localhost | Yes |
+| `JWT_SECRET` | JWT secret for validation | - | Yes |
+
+**Development Note**: For local development, only `JWT_SECRET` needs to be set. All other variables have sensible defaults for localhost.
 
 ## Development
 
@@ -306,26 +338,27 @@ Deploy JAR to:
 
 ## Troubleshooting
 
-### Redis Connection Failed
-
-```bash
-# Check Redis is running
-docker ps | grep redis
-
-# Test connection
-redis-cli ping
-```
-
 ### Backend Service Unreachable
 
+**Problem**: Vaadin UI can't connect to backend services
+
+**Solution**:
 ```bash
-# Check service URLs in application.yml
-# Verify services are running
-curl http://localhost:8081/actuator/health
+# Check if all backend services are running
+curl http://localhost:8081/actuator/health  # User Service
+curl http://localhost:8082/actuator/health  # Match Service
+curl http://localhost:8083/actuator/health  # Chat Service
+curl http://localhost:8084/actuator/health  # Recommendation Service
+
+# If any service is down, start it:
+cd backend/user-service && mvn spring-boot:run
 ```
 
 ### Vaadin npm/pnpm Issues
 
+**Problem**: Vaadin build fails with npm/pnpm errors
+
+**Solution**:
 ```bash
 # Clear Vaadin cache
 rm -rf node_modules frontend/generated
@@ -334,11 +367,47 @@ rm -rf node_modules frontend/generated
 mvn clean install
 ```
 
-### Session Issues
+### Session Issues (Development)
 
+**Problem**: Sessions not persisting between requests
+
+**Solution**:
+In development, sessions are in-memory (no Redis needed). This is expected behavior.
+
+If you need persistent sessions for testing:
+1. Install Redis locally
+2. Set environment variable: `export SESSION_STORE=redis`
+3. Start Redis: `redis-server`
+4. Restart Vaadin UI service
+
+### Session Issues (Production)
+
+**Problem**: Sessions not persisting in production
+
+**Solution**:
 ```bash
-# Clear Redis sessions
+# Verify Redis is running and accessible
+redis-cli ping
+
+# Check environment variables
+echo $SESSION_STORE  # Should be 'redis'
+echo $REDIS_HOST     # Should point to Redis
+
+# Clear Redis sessions if needed
 redis-cli FLUSHDB
+```
+
+### JWT Authentication Fails
+
+**Problem**: Authentication not working across services
+
+**Solution**:
+Ensure JWT_SECRET is the same across ALL services:
+```bash
+# Set JWT_SECRET environment variable
+export JWT_SECRET=your-secret-key-at-least-32-characters-long
+
+# Restart all services with the same JWT_SECRET
 ```
 
 ## Performance

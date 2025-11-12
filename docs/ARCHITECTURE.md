@@ -348,10 +348,19 @@ public class ChatView extends VerticalLayout {
 ### Data Persistence
 | Component | Technology | Purpose | Notes |
 |-----------|-----------|---------|-------|
-| Primary DB | PostgreSQL 15 | Relational data | ACID compliance, complex queries |
-| Cache | Redis 7 | Session, feed, cache | Fast access, invalidation |
-| Message Broker | RabbitMQ 3.12 | Async events | Inter-service communication |
+| Primary DB | PostgreSQL 14+ | Relational data | ACID compliance, runs on localhost for dev |
+| Cache | Redis 7 | Session, feed, cache | Optional for advanced features |
+| Message Broker | RabbitMQ 3.12 | Async events | Optional for event-driven features |
 | (Future) | Cassandra | Time-series data | High-volume message history |
+
+### Database Setup
+| Aspect | Development | Production |
+|--------|-------------|------------|
+| Installation | PostgreSQL on localhost | Containerized in Docker |
+| Setup | Run `setup-databases.sql` | Automated via Docker Compose |
+| Schema Management | Auto-created via Hibernate `ddl-auto: update` | Managed via migrations |
+| Access | Direct localhost:5432 | Via container network |
+| Databases | 4 separate DBs (users, matches, chat, recs) | Same structure |
 
 ### Frontend (Vaadin UI Service)
 | Component | Technology | Purpose |
@@ -377,12 +386,13 @@ public class ChatView extends VerticalLayout {
 | 📄 Analysis | See [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) for decision rationale |
 
 ### DevOps
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Containerization | Docker | Isolated environments |
-| Orchestration | Docker Compose | Local dev, testing |
-| Container Registry | (Future) | Image storage |
-| CI/CD | GitHub Actions | Automated testing, building |
+| Component | Technology | Purpose | Usage |
+|-----------|-----------|---------|-------|
+| Containerization | Docker | Isolated environments | Production deployment only |
+| Orchestration | Docker Compose | Service orchestration | Production/staging, not required for dev |
+| Container Registry | (Future) | Image storage | Cloud deployment |
+| CI/CD | GitHub Actions | Automated testing, building | Uses H2 dev profile |
+| Local Development | Maven | Direct service execution | Recommended approach |
 
 ---
 
@@ -539,39 +549,84 @@ public class ChatView extends VerticalLayout {
 
 ## Deployment Architecture
 
-### Local Development (Docker Compose)
+### Local Development (PostgreSQL-First)
+
+**Recommended for development:**
+
+```
+1. Install PostgreSQL locally
+   ↓
+2. Run setup-databases.sql script
+   ↓
+3. Start services with Maven:
+   - User Service (8081): mvn spring-boot:run
+   - Match Service (8082): mvn spring-boot:run
+   - Chat Service (8083): mvn spring-boot:run
+   - Recommendation Service (8084): mvn spring-boot:run
+   - Vaadin UI (8090): mvn spring-boot:run (optional)
+   ↓
+4. Services connect to PostgreSQL on localhost:5432
+   ↓
+5. Each service auto-creates its own database schema
+```
+
+**Benefits:**
+- No Docker required for development
+- Faster startup times
+- Easier debugging (native Java processes)
+- Direct database access for inspection
+- Lower resource usage
+
+### Alternative: H2 for Quick Testing
+
+```bash
+# Use dev profile for in-memory H2 database
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Good for:
+# - Quick testing without PostgreSQL setup
+# - CI/CD pipeline testing
+# - Demo environments
+```
+
+### Production Deployment (Docker Compose)
+
+**For production or full-stack testing:**
 
 ```
 1. docker-compose up
    ↓
 2. Containers Start:
    - PostgreSQL (5432)
-   - Redis (6379)
-   - RabbitMQ (5672)
+   - Redis (6379) [optional]
+   - RabbitMQ (5672) [optional]
    - User Service (8081)
    - Match Service (8082)
    - Chat Service (8083)
    - Recommendation Service (8084)
-   - API Gateway (8080)
-   - Frontend (3000)
+   - Vaadin UI (8090)
+   ↓
+3. All services containerized and orchestrated
 ```
 
-### Staging/Production (Kubernetes - Future)
+**See [docs/DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.**
+
+### Future: Kubernetes (Cloud Production)
 
 ```
 Namespace: dating-app
 ├── Deployments
-│   ├── api-gateway (2+ replicas)
 │   ├── user-service (2+ replicas)
 │   ├── match-service (2+ replicas)
 │   ├── chat-service (3+ replicas) [WebSocket needs sticky sessions]
-│   └── recommendation-service (2+ replicas)
+│   ├── recommendation-service (2+ replicas)
+│   └── vaadin-ui (2+ replicas)
 ├── StatefulSets
-│   ├── PostgreSQL
-│   └── Redis
+│   ├── PostgreSQL (or managed RDS/Cloud SQL)
+│   └── Redis (or managed ElastiCache/MemoryStore)
 ├── Services
 │   ├── ClusterIP (internal)
-│   └── LoadBalancer (API Gateway)
+│   └── LoadBalancer (Vaadin UI public access)
 └── ConfigMaps & Secrets
     ├── application configs
     ├── database credentials

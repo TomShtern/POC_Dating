@@ -8,54 +8,114 @@
 
 ### Prerequisites
 
-- Java 21 JDK (https://adoptopenjdk.net/)
-- Maven 3.8+ (https://maven.apache.org/)
-- Docker & Docker Compose (https://www.docker.com/)
-- ~~Node.js 18+~~ ⚠️ NOT NEEDED (using Vaadin, not React)
-- Git
-- IDE: IntelliJ IDEA (recommended) or VS Code with Java extensions
+#### Required
+- **Java 21 JDK** - [Download](https://adoptium.net/)
+- **Maven 3.8+** - [Download](https://maven.apache.org/download.cgi)
+- **PostgreSQL 14+** - See [PostgreSQL Installation](#postgresql-installation) below
+- **Git** - Version control
+- **IDE** - IntelliJ IDEA (recommended) or VS Code with Java extensions
 
-### Initial Setup
+#### Optional
+- **Docker & Docker Compose** - Only for production deployment (not required for development)
+- **Redis** - Optional caching (services work without it)
+- **RabbitMQ** - Optional messaging (services work without it)
+
+### PostgreSQL Installation
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install postgresql postgresql-contrib
+sudo systemctl start postgresql
+sudo systemctl enable postgresql
+```
+
+#### macOS (Homebrew)
+```bash
+brew install postgresql@14
+brew services start postgresql@14
+```
+
+#### Windows
+1. Download from [postgresql.org](https://www.postgresql.org/download/windows/)
+2. Run installer and follow wizard
+3. Remember the password you set for postgres user
+
+### Database Setup
+
+Run the provided script to create all databases:
+
+```bash
+# Linux/Mac
+sudo -u postgres psql -f backend/setup-databases.sql
+
+# Windows
+psql -U postgres -f backend/setup-databases.sql
+```
+
+This creates:
+- `dating_users`
+- `dating_matches`
+- `dating_chat`
+- `dating_recommendations`
+
+### Initial Setup (PostgreSQL-First)
+
+**For complete step-by-step instructions, see [backend/QUICKSTART.md](../backend/QUICKSTART.md)**
 
 ```bash
 # 1. Clone the repository
 git clone <repository-url>
 cd POC_Dating
 
-# 2. Copy environment configuration
-cp .env.example .env
+# 2. Setup databases (see Database Setup above)
+sudo -u postgres psql -f backend/setup-databases.sql
 
-# 3. Build all services (including Vaadin UI)
+# 3. Build all services
 cd backend
 mvn clean install
 
-# 4. Start all services with Docker Compose
-cd ..
-docker-compose up -d
+# 4. Start services in separate terminals
 
-# 5. Verify services are running
-curl http://localhost:8080/actuator/health  # API Gateway
-curl http://localhost:8090/                 # Vaadin UI
-
-# 6. Access the application
-# Open browser: http://localhost:8090
-```
-
-### Quick Start (Development Mode)
-
-```bash
-# Terminal 1: Start infrastructure only
-docker-compose up postgres redis rabbitmq
-
-# Terminal 2: Run backend service
+# Terminal 1: User Service
 cd backend/user-service
 mvn spring-boot:run
 
-# Terminal 3: Run Vaadin UI
+# Terminal 2: Match Service
+cd backend/match-service
+mvn spring-boot:run
+
+# Terminal 3: Chat Service
+cd backend/chat-service
+mvn spring-boot:run
+
+# Terminal 4: Recommendation Service
+cd backend/recommendation-service
+mvn spring-boot:run
+
+# Terminal 5 (Optional): Vaadin UI
 cd backend/vaadin-ui-service
 mvn spring-boot:run
 
-# Access: http://localhost:8090
+# 5. Verify services are running
+curl http://localhost:8081/actuator/health  # User Service
+curl http://localhost:8082/actuator/health  # Match Service
+curl http://localhost:8083/actuator/health  # Chat Service
+curl http://localhost:8084/actuator/health  # Recommendation Service
+```
+
+### Quick Start (H2 for Testing)
+
+For quick testing without PostgreSQL setup:
+
+```bash
+cd backend/user-service
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Access H2 console: http://localhost:8081/h2-console
+# JDBC URL: jdbc:h2:mem:dating_users_dev
+# Username: sa
+# Password: (leave empty)
 ```
 
 ### Service Health Checks
@@ -343,40 +403,77 @@ mvn spring-boot:run
 ### Connect to PostgreSQL
 
 ```bash
-# Via Docker
-docker exec -it dating_postgres psql -U dating_user -d dating_db
+# Connect to a specific database
+psql -U postgres -d dating_users
 
-# Via local psql
-psql -h localhost -U dating_user -d dating_db
+# On Linux, you may need sudo
+sudo -u postgres psql -d dating_users
 
 # Common commands:
+\l                  # List all databases
+\c dating_users     # Connect to database
 \dt                 # List tables
-\d table_name       # Describe table
+\d users            # Describe table
 SELECT * FROM users LIMIT 5;
+\q                  # Quit
+```
+
+### View All Databases
+
+```bash
+psql -U postgres -c "\l"
+
+# You should see:
+# - dating_users
+# - dating_matches
+# - dating_chat
+# - dating_recommendations
 ```
 
 ### Reset Database (Development Only)
 
 ```bash
-# Stop containers
-docker-compose down -v
+# Connect to PostgreSQL
+psql -U postgres
 
-# Remove volumes (will delete all data)
-docker volume rm poc_dating_postgres_data
+# Drop and recreate database
+DROP DATABASE dating_users;
+CREATE DATABASE dating_users;
 
-# Restart
-docker-compose up -d
+# Or reset all databases
+psql -U postgres -f backend/setup-databases.sql
 ```
 
-### Create a Migration
+### Schema Auto-Creation
+
+Services use Hibernate `ddl-auto: update`:
+- Tables are **automatically created** on first startup
+- Schema **automatically updated** when you add new fields
+- Existing data **preserved** during updates
+- No manual migrations needed for development
+
+### Manual Schema Changes
 
 ```sql
--- db/init/02-add-column.sql
+-- Connect to database
+psql -U postgres -d dating_users
 
-ALTER TABLE users ADD COLUMN location_latitude FLOAT;
-ALTER TABLE users ADD COLUMN location_longitude FLOAT;
+-- Add column
+ALTER TABLE users ADD COLUMN location_latitude DOUBLE PRECISION;
+ALTER TABLE users ADD COLUMN location_longitude DOUBLE PRECISION;
 
--- Remember to version your migrations!
+-- Verify change
+\d users
+```
+
+### Backup and Restore
+
+```bash
+# Backup
+pg_dump -U postgres dating_users > backup.sql
+
+# Restore
+psql -U postgres dating_users < backup.sql
 ```
 
 ---
@@ -569,51 +666,89 @@ View queues, messages, connections.
 
 ## Troubleshooting
 
-### Service won't start
+### PostgreSQL Connection Issues
 
+**Problem**: `Connection refused` or `could not connect to server`
+
+**Solution**:
 ```bash
-# Check logs
-docker-compose logs user-service
+# Check if PostgreSQL is running
+sudo systemctl status postgresql  # Linux
+brew services list | grep postgresql  # Mac
 
-# Common issues:
-# - Port already in use: change port in docker-compose.yml
-# - Database connection: verify POSTGRES_HOST, POSTGRES_PASSWORD
-# - Out of memory: increase Xmx in Dockerfile or JVM args
+# Start PostgreSQL if needed
+sudo systemctl start postgresql  # Linux
+brew services start postgresql@14  # Mac
 ```
 
-### Frontend won't load
+**Problem**: `password authentication failed`
 
+**Solution**:
 ```bash
-# Check webpack
-npm run dev
+# Set correct password in environment
+export DB_PASSWORD=your_postgres_password
 
-# Clear cache
-rm -rf node_modules/.cache
-npm install
+# Or update application.yml in each service
 ```
 
-### Database connection error
+**Problem**: `database "dating_users" does not exist`
 
+**Solution**:
 ```bash
-# Verify PostgreSQL is running
-docker-compose ps
+# Run setup script again
+sudo -u postgres psql -f backend/setup-databases.sql
 
-# Check credentials in .env
-cat .env | grep POSTGRES
-
-# Test connection
-docker exec dating_postgres psql -U dating_user -c "SELECT 1;"
+# Or create manually
+psql -U postgres -c "CREATE DATABASE dating_users;"
 ```
 
-### WebSocket connection fails
+### Service Won't Start
 
+**Problem**: `Port 8081 already in use`
+
+**Solution**:
 ```bash
-# Check Chat Service logs
-docker-compose logs chat-service
+# Find process using port
+lsof -i :8081  # Mac/Linux
+netstat -ano | findstr :8081  # Windows
 
-# Verify JWT token is valid
-# Check browser console for WebSocket errors
-# Ensure RabbitMQ is running
+# Kill process
+kill -9 <PID>  # Mac/Linux
+taskkill /PID <PID> /F  # Windows
+```
+
+**Problem**: `Schema validation failed`
+
+**Solution**:
+```bash
+# Stop service
+# Drop and recreate database
+psql -U postgres -c "DROP DATABASE dating_users;"
+psql -U postgres -c "CREATE DATABASE dating_users;"
+# Restart service - schema will auto-create
+```
+
+### Service Startup Fails
+
+**Problem**: `Unable to acquire JDBC Connection`
+
+**Solution**:
+1. Verify PostgreSQL is running: `psql -U postgres -c "SELECT 1;"`
+2. Check service can connect: `psql -U postgres -d dating_users`
+3. Verify credentials match in application.yml
+4. Check firewall isn't blocking port 5432
+
+### H2 Console Not Working
+
+**Problem**: H2 console won't load
+
+**Solution**:
+```bash
+# Ensure running with dev profile
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
+
+# Access: http://localhost:8081/h2-console
+# JDBC URL: jdbc:h2:mem:dating_users_dev
 ```
 
 ---

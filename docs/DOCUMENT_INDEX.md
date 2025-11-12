@@ -22,17 +22,18 @@
 #### Getting Started
 | Document | Status | Purpose | Audience |
 |----------|--------|---------|----------|
-| [README.md](../README.md) | ✅ ACTIVE | Project overview, quick start | All developers |
-| [DEVELOPMENT.md](DEVELOPMENT.md) | ✅ ACTIVE | Development setup and workflow | Developers |
-| [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md) | ✅ ACTIVE | Vaadin-specific implementation guide | Frontend developers |
+| [README.md](../README.md) | ✅ ACTIVE | Project overview, PostgreSQL-first quick start | All developers |
+| [backend/QUICKSTART.md](../backend/QUICKSTART.md) | ✅ ACTIVE | Step-by-step PostgreSQL setup and service startup | New developers |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | ✅ ACTIVE | Development workflow (PostgreSQL-first) | Developers |
+| [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md) | ✅ ACTIVE | Vaadin UI implementation guide (no Docker required) | Frontend developers |
 
 #### Architecture & Design
 | Document | Status | Purpose | Audience |
 |----------|--------|---------|----------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | ✅ ACTIVE | System architecture with Vaadin | Architects, developers |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | ✅ ACTIVE | System architecture (PostgreSQL-first, Docker for production) | Architects, developers |
 | [DATABASE-SCHEMA.md](DATABASE-SCHEMA.md) | ✅ ACTIVE | Database design and schema | Backend developers, DBAs |
 | [API-SPECIFICATION.md](API-SPECIFICATION.md) | ✅ ACTIVE | REST API contracts | Full-stack developers |
-| [DEPLOYMENT.md](DEPLOYMENT.md) | ✅ ACTIVE | Deployment procedures | DevOps, SRE |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | ✅ ACTIVE | Production deployment with Docker Compose | DevOps, SRE |
 
 #### Decision Records
 | Document | Status | Purpose | Audience |
@@ -72,9 +73,16 @@
 ### For New Team Members
 **Start here:**
 1. [README.md](../README.md) - Project overview
-2. [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) - Why Vaadin?
-3. [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md) - How to build features
-4. [DEVELOPMENT.md](DEVELOPMENT.md) - Development workflow
+2. [backend/QUICKSTART.md](../backend/QUICKSTART.md) - Setup PostgreSQL and start services
+3. [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) - Why Vaadin?
+4. [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md) - How to build UI features
+5. [DEVELOPMENT.md](DEVELOPMENT.md) - Development workflow
+
+**Key Points:**
+- No Docker required for development
+- PostgreSQL runs on localhost
+- Each service starts with `mvn spring-boot:run`
+- Redis and RabbitMQ are optional
 
 ### For Backend Developers
 1. [ARCHITECTURE.md](ARCHITECTURE.md) - System design
@@ -136,13 +144,17 @@
 
 | Task | Document to Read |
 |------|------------------|
+| **First time setup** | [backend/QUICKSTART.md](../backend/QUICKSTART.md) |
+| Install PostgreSQL and setup databases | [backend/QUICKSTART.md](../backend/QUICKSTART.md) |
 | Set up development environment | [DEVELOPMENT.md](DEVELOPMENT.md) |
+| Start services locally (no Docker) | [backend/QUICKSTART.md](../backend/QUICKSTART.md) |
 | Build a new Vaadin view | [VAADIN_IMPLEMENTATION.md](VAADIN_IMPLEMENTATION.md) |
 | Add new API endpoint | [API-SPECIFICATION.md](API-SPECIFICATION.md) |
 | Understand system architecture | [ARCHITECTURE.md](ARCHITECTURE.md) |
-| Deploy to production | [DEPLOYMENT.md](DEPLOYMENT.md) |
+| Deploy to production (Docker) | [DEPLOYMENT.md](DEPLOYMENT.md) |
 | Add database table | [DATABASE-SCHEMA.md](DATABASE-SCHEMA.md) |
 | Why not React? | [FRONTEND_OPTIONS_ANALYSIS.md](FRONTEND_OPTIONS_ANALYSIS.md) |
+| Troubleshoot PostgreSQL issues | [DEVELOPMENT.md](DEVELOPMENT.md#troubleshooting) |
 
 ### Code Locations
 
@@ -240,39 +252,50 @@ Always include at top of document:
 
 ### Current Status: ✅ HEALTHY
 
-- ✅ All active documents reviewed and updated for Vaadin
+- ✅ All active documents reviewed and updated for PostgreSQL-first approach
+- ✅ Docker clearly marked as production-only
+- ✅ QUICKSTART.md created for easy onboarding
+- ✅ DEPLOYMENT.md created for production deployment
+- ✅ All documentation consistent with PostgreSQL-first workflow
 - ✅ Deprecated documents clearly marked
 - ✅ Decision rationale documented
 - ✅ Clear migration paths defined
 
-### Last Audit: 2025-11-11
+### Last Audit: 2025-11-12
 **Findings:**
-- Transitioned from React to Vaadin approach
-- Created comprehensive frontend options analysis
-- Updated all core documentation
-- Marked React/TypeScript files as deprecated
+- Updated all docs to PostgreSQL-first approach
+- Clarified Docker is for production deployment only
+- Created QUICKSTART.md for simplified onboarding
+- Created DEPLOYMENT.md for production procedures
+- Updated DEVELOPMENT.md with complete PostgreSQL setup
+- Ensured consistency across all documentation
+- No contradictions found
 
-**Next Audit:** 2025-12-11
+**Next Audit:** 2025-12-12
 
 ---
 
 ## 🎯 Document Roadmap
 
-### Phase 1: MVP (Current)
-- ✅ Core architecture docs
-- ✅ Vaadin implementation guide
-- ✅ Development workflow
+### Phase 1: MVP (Current) ✅
+- ✅ Core architecture docs (PostgreSQL-first)
+- ✅ Vaadin implementation guide (no Docker required)
+- ✅ Development workflow (PostgreSQL on localhost)
 - ✅ Frontend options analysis
+- ✅ QUICKSTART.md for easy onboarding
+- ✅ DEPLOYMENT.md for production
 
 ### Phase 2: Beta (Month 2-3)
 - 🚧 Performance tuning guide
-- 🚧 Production deployment checklist
 - 🚧 Monitoring and observability
-- 🚧 Troubleshooting guide
+- 🚧 Advanced troubleshooting guide
+- 🚧 Redis and RabbitMQ integration guide
 
 ### Phase 3: Production (Month 4+)
 - 🚧 SLA documentation
 - 🚧 Incident response playbook
+- 🚧 Kubernetes deployment guide
+- 🚧 Cloud deployment guides (AWS, GCP, Azure)
 - 🚧 Scaling guide
 - 🚧 Security audit documentation
 
@@ -300,6 +323,7 @@ Always include at top of document:
 | Version | Date | Changes | Author |
 |---------|------|---------|--------|
 | 1.0 | 2025-11-11 | Initial creation, Vaadin transition | Architecture Team |
+| 1.1 | 2025-11-12 | PostgreSQL-first update, added QUICKSTART.md and DEPLOYMENT.md | Architecture Team |
 
 ---
 

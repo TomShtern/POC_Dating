@@ -241,9 +241,9 @@ spring:
   application:
     name: vaadin-ui-service
 
-  # Redis session storage
+  # Session storage (in-memory for dev, Redis for prod)
   session:
-    store-type: redis
+    store-type: ${SESSION_STORE:none}  # 'none' for dev, 'redis' for prod
     redis:
       namespace: vaadin:session
 
@@ -257,7 +257,7 @@ vaadin:
   pnpm:
     enable: true
 
-# Backend service URLs
+# Backend service URLs (all on localhost for development)
 services:
   user-service:
     url: http://${USER_SERVICE_HOST:localhost}:8081
@@ -277,6 +277,15 @@ logging:
   level:
     com.dating: DEBUG
     com.vaadin: INFO
+
+# Development profile (no Redis required)
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  session:
+    store-type: none  # In-memory sessions for dev
 ```
 
 ---
@@ -1096,7 +1105,27 @@ class SwipeViewTest {
 
 ## Deployment
 
-### Docker Configuration
+### Local Development (No Docker Required)
+
+```bash
+# Start backend services first
+cd backend/user-service && mvn spring-boot:run &
+cd backend/match-service && mvn spring-boot:run &
+cd backend/chat-service && mvn spring-boot:run &
+cd backend/recommendation-service && mvn spring-boot:run &
+
+# Start Vaadin UI
+cd backend/vaadin-ui-service
+mvn spring-boot:run
+
+# Access: http://localhost:8090
+```
+
+**Note**: Services connect to PostgreSQL on localhost. No Redis or RabbitMQ needed for development.
+
+### Production Deployment (Docker)
+
+**Docker Configuration** (for production only):
 
 `backend/vaadin-ui-service/Dockerfile`:
 
@@ -1112,7 +1141,9 @@ EXPOSE 8090
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
 
-### Add to docker-compose.yml
+### Docker Compose (Production)
+
+Add to `docker-compose.yml` (already included for production deployment):
 
 ```yaml
 vaadin-ui:
@@ -1128,6 +1159,7 @@ vaadin-ui:
     MATCH_SERVICE_HOST: match-service
     CHAT_SERVICE_HOST: chat-service
     RECOMMENDATION_SERVICE_HOST: recommendation-service
+    SESSION_STORE: redis
     REDIS_HOST: redis
     JWT_SECRET: ${JWT_SECRET}
   depends_on:
@@ -1140,6 +1172,8 @@ vaadin-ui:
     - dating_network
   restart: unless-stopped
 ```
+
+**See [docs/DEPLOYMENT.md](DEPLOYMENT.md) for complete deployment instructions.**
 
 ---
 
@@ -1196,17 +1230,35 @@ vaadin-ui:
 
 **Issue: Feign client connection refused**
 ```
-Solution: Ensure backend services are running and URLs are correct in application.yml
+Solution:
+1. Ensure backend services are running (check ports 8081-8084)
+2. Verify service URLs in application.yml point to localhost
+3. Check service health: curl http://localhost:8081/actuator/health
 ```
 
 **Issue: WebSocket connection fails**
 ```
-Solution: Check CORS configuration in chat-service, verify @Push annotation
+Solution:
+1. Verify @Push annotation is present on view
+2. Check CORS configuration in chat-service
+3. Ensure chat-service is running on port 8083
 ```
 
-**Issue: Session not persisting**
+**Issue: Backend service unreachable**
 ```
-Solution: Verify Redis is running, check spring.session configuration
+Solution:
+1. Check all required services are running
+2. Verify PostgreSQL is running and accessible
+3. Check application logs for connection errors
+4. Ensure JWT_SECRET matches across all services
+```
+
+**Issue: Session not persisting (production only)**
+```
+Solution:
+1. For development: Sessions stored in-memory (no Redis needed)
+2. For production: Verify Redis is running and SESSION_STORE=redis
+3. Check spring.session configuration in application.yml
 ```
 
 ---

@@ -1,0 +1,223 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: recommendation-service
+
+  # Default configuration uses PostgreSQL (local installation)
+  # To use H2 in-memory database instead: java -Dspring.profiles.active=dev -jar app.jar
+  # profiles:
+  #   active: dev
+
+  # ========================================
+  # DATABASE CONFIGURATION
+  # ========================================
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_recommendations}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: update  # Auto-create/update schema for development
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  # ========================================
+  # REDIS CONFIGURATION (OPTIONAL - for caching)
+  # Redis is not required for basic functionality
+  # To enable Redis caching, install Redis and configure appropriately
+  # ========================================
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+
+  # ========================================
+  # RABBITMQ CONFIGURATION (OPTIONAL - for event messaging)
+  # RabbitMQ is not required for basic functionality
+  # Install RabbitMQ to enable inter-service event messaging
+  # ========================================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+# JWT Configuration (same as user-service for token validation)
+jwt:
+  secret: your-256-bit-secret-key-here-change-in-production-use-environment-variable
+  expiration: 86400000 # 24 hours in milliseconds
+
+# Feign Client Configuration
+feign:
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+  user-service:
+    url: http://localhost:8081
+  match-service:
+    url: http://localhost:8082
+
+# Recommendation Algorithm Configuration
+recommendation:
+  algorithm:
+    max-results: 50
+    max-distance-km: 100
+    score-weights:
+      age-compatibility: 0.3
+      distance-proximity: 0.4
+      common-interests: 0.3
+    cache-ttl-minutes: 30
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# Logging Configuration
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.dating.recommendation: ${APP_LOG_LEVEL:INFO}
+    org.springframework.cloud.openfeign: ${FEIGN_LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:WARN}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${SQL_BIND_LOG_LEVEL:WARN}
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+# ========================================
+# PROFILE: PROD (PostgreSQL with stricter settings)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_recommendations}
+    username: ${POSTGRES_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Use validate in production (requires manual schema management)
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+logging:
+  level:
+    root: WARN
+    com.dating.recommendation: INFO
+    org.springframework.cloud.openfeign: INFO
+    org.hibernate.SQL: WARN
+
+---
+# ========================================
+# PROFILE: DEV (H2 In-Memory, No Docker Required)
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # H2 In-Memory Database
+  datasource:
+    url: jdbc:h2:mem:dating_recommendations_dev
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        web-allow-others: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop  # Auto-create schema for dev
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+  # Redis Configuration (optional for local dev)
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    timeout: 2000ms
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 2
+
+  # RabbitMQ Configuration (optional for local dev)
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+
+logging:
+  level:
+    root: DEBUG
+    com.dating.recommendation: DEBUG
+    org.springframework.cloud.openfeign: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

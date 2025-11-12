@@ -30,13 +30,17 @@ FROM maven:3.9-eclipse-temurin-21 AS builder
 
 WORKDIR /build
 
-# Copy pom.xml and download dependencies
-# (Separate for better Docker layer caching)
-COPY pom.xml /build/
-COPY ../pom.xml /build/../
-COPY ../common-library /build/../common-library
+# Copy parent pom and common library first for better caching
+COPY ../pom.xml /build/parent-pom.xml
+COPY ../common-library /build/common-library
 
-RUN mvn clean package -DskipTests -q 2>/dev/null
+# Copy service pom and source
+COPY pom.xml /build/
+COPY src /build/src
+
+# Build the service
+RUN mvn -f parent-pom.xml install -DskipTests -pl common-library -am && \
+    mvn clean package -DskipTests
 
 # ========================================
 # STAGE 2: RUNTIME

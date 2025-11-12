@@ -79,6 +79,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- H2 Database for Local Development -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- Redis for Caching -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
