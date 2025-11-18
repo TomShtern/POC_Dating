@@ -256,7 +256,9 @@ CREATE TABLE IF NOT EXISTS notifications (
     CONSTRAINT valid_notification_type CHECK (type IN (
         'NEW_MATCH', 'NEW_MESSAGE', 'SUPER_LIKE',
         'PROFILE_VIEW', 'SYSTEM', 'PROMOTION'
-    ))
+    )),
+    -- Ensure notification is sent before it can be read
+    CONSTRAINT read_after_sent CHECK (is_read = false OR is_sent = true)
 );
 
 COMMENT ON TABLE notifications IS 'Push and in-app notification queue';
@@ -314,7 +316,8 @@ CREATE TABLE IF NOT EXISTS reports (
         'SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT',
         'FAKE_PROFILE', 'SCAM', 'OTHER'
     )),
-    CONSTRAINT valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED'))
+    CONSTRAINT valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
+    CONSTRAINT no_self_report CHECK (reporter_id != reported_user_id)
 );
 
 COMMENT ON TABLE reports IS 'User reports for moderation';

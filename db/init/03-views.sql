@@ -138,23 +138,54 @@ COMMENT ON VIEW conversation_summaries IS 'Match conversations with last message
 
 -- ========================================
 -- USER STATS VIEW
--- User activity statistics
+-- User activity statistics (optimized with JOINs to avoid N+1)
 -- ========================================
 CREATE OR REPLACE VIEW user_stats AS
+WITH swipe_stats AS (
+    SELECT
+        user_id,
+        COUNT(*) AS total_swipes,
+        COUNT(*) FILTER (WHERE action = 'LIKE') AS total_likes,
+        COUNT(*) FILTER (WHERE action = 'SUPER_LIKE') AS super_likes
+    FROM swipes
+    GROUP BY user_id
+),
+match_stats AS (
+    SELECT
+        user_id,
+        COUNT(*) AS total_matches,
+        COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active_matches
+    FROM (
+        SELECT user1_id AS user_id, status FROM matches
+        UNION ALL
+        SELECT user2_id AS user_id, status FROM matches
+    ) m
+    GROUP BY user_id
+),
+message_stats AS (
+    SELECT
+        sender_id AS user_id,
+        COUNT(*) AS messages_sent
+    FROM messages
+    GROUP BY sender_id
+)
 SELECT
     u.id AS user_id,
     u.username,
     u.created_at AS registered_at,
     u.last_active,
-    (SELECT COUNT(*) FROM swipes s WHERE s.user_id = u.id) AS total_swipes,
-    (SELECT COUNT(*) FROM swipes s WHERE s.user_id = u.id AND s.action = 'LIKE') AS total_likes,
-    (SELECT COUNT(*) FROM swipes s WHERE s.user_id = u.id AND s.action = 'SUPER_LIKE') AS super_likes,
-    (SELECT COUNT(*) FROM matches m WHERE m.user1_id = u.id OR m.user2_id = u.id) AS total_matches,
-    (SELECT COUNT(*) FROM matches m WHERE (m.user1_id = u.id OR m.user2_id = u.id) AND m.status = 'ACTIVE') AS active_matches,
-    (SELECT COUNT(*) FROM messages msg WHERE msg.sender_id = u.id) AS messages_sent
-FROM users u;
+    COALESCE(ss.total_swipes, 0) AS total_swipes,
+    COALESCE(ss.total_likes, 0) AS total_likes,
+    COALESCE(ss.super_likes, 0) AS super_likes,
+    COALESCE(ms.total_matches, 0) AS total_matches,
+    COALESCE(ms.active_matches, 0) AS active_matches,
+    COALESCE(msg.messages_sent, 0) AS messages_sent
+FROM users u
+LEFT JOIN swipe_stats ss ON ss.user_id = u.id
+LEFT JOIN match_stats ms ON ms.user_id = u.id
+LEFT JOIN message_stats msg ON msg.user_id = u.id;
 
-COMMENT ON VIEW user_stats IS 'User activity statistics for analytics';
+COMMENT ON VIEW user_stats IS 'User activity statistics for analytics (optimized with CTEs)';
 
 -- ========================================
 -- MATCH STATS VIEW

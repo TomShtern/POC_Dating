@@ -369,6 +369,59 @@ VALUES
     ('22222222-2222-2222-2222-222222222225', '11111111-1111-1111-1111-111111111117', 'PASS', NOW() - INTERVAL '3 days')
 ON CONFLICT (user_id, target_user_id) DO NOTHING;
 
+-- Additional swipes to reach 200+ total
+INSERT INTO swipes (user_id, target_user_id, action, created_at)
+VALUES
+    -- More cross-gender likes
+    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222226', 'LIKE', NOW() - INTERVAL '8 days'),
+    ('11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222227', 'LIKE', NOW() - INTERVAL '9 days'),
+    ('11111111-1111-1111-1111-111111111112', '22222222-2222-2222-2222-222222222226', 'LIKE', NOW() - INTERVAL '7 days'),
+    ('11111111-1111-1111-1111-111111111112', '22222222-2222-2222-2222-222222222227', 'SUPER_LIKE', NOW() - INTERVAL '8 days'),
+    ('11111111-1111-1111-1111-111111111113', '22222222-2222-2222-2222-222222222226', 'LIKE', NOW() - INTERVAL '8 days'),
+    ('11111111-1111-1111-1111-111111111113', '22222222-2222-2222-2222-222222222227', 'LIKE', NOW() - INTERVAL '9 days'),
+    ('11111111-1111-1111-1111-111111111114', '22222222-2222-2222-2222-222222222226', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('11111111-1111-1111-1111-111111111114', '22222222-2222-2222-2222-222222222227', 'LIKE', NOW() - INTERVAL '7 days'),
+    ('11111111-1111-1111-1111-111111111115', '22222222-2222-2222-2222-222222222227', 'SUPER_LIKE', NOW() - INTERVAL '5 days'),
+    ('11111111-1111-1111-1111-111111111115', '22222222-2222-2222-2222-222222222228', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111119', 'LIKE', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111120', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222226', '11111111-1111-1111-1111-111111111121', 'SUPER_LIKE', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222227', '11111111-1111-1111-1111-111111111120', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222227', '11111111-1111-1111-1111-111111111121', 'LIKE', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222227', '11111111-1111-1111-1111-111111111122', 'LIKE', NOW() - INTERVAL '8 days'),
+    ('22222222-2222-2222-2222-222222222228', '11111111-1111-1111-1111-111111111121', 'SUPER_LIKE', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222228', '11111111-1111-1111-1111-111111111122', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222228', '11111111-1111-1111-1111-111111111123', 'LIKE', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222229', '11111111-1111-1111-1111-111111111122', 'LIKE', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222229', '11111111-1111-1111-1111-111111111123', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222229', '11111111-1111-1111-1111-111111111124', 'SUPER_LIKE', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222230', '11111111-1111-1111-1111-111111111123', 'LIKE', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222230', '11111111-1111-1111-1111-111111111124', 'LIKE', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222230', '11111111-1111-1111-1111-111111111125', 'LIKE', NOW() - INTERVAL '7 days'),
+    -- More passes for realistic ratios
+    ('11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222241', 'PASS', NOW() - INTERVAL '5 days'),
+    ('11111111-1111-1111-1111-111111111117', '22222222-2222-2222-2222-222222222242', 'PASS', NOW() - INTERVAL '6 days'),
+    ('11111111-1111-1111-1111-111111111118', '22222222-2222-2222-2222-222222222243', 'PASS', NOW() - INTERVAL '7 days'),
+    ('11111111-1111-1111-1111-111111111119', '22222222-2222-2222-2222-222222222244', 'PASS', NOW() - INTERVAL '8 days'),
+    ('11111111-1111-1111-1111-111111111120', '22222222-2222-2222-2222-222222222245', 'PASS', NOW() - INTERVAL '9 days'),
+    ('22222222-2222-2222-2222-222222222231', '11111111-1111-1111-1111-111111111124', 'PASS', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222232', '11111111-1111-1111-1111-111111111125', 'PASS', NOW() - INTERVAL '6 days'),
+    ('22222222-2222-2222-2222-222222222233', '11111111-1111-1111-1111-111111111126', 'PASS', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222234', '11111111-1111-1111-1111-111111111127', 'PASS', NOW() - INTERVAL '8 days'),
+    ('22222222-2222-2222-2222-222222222235', '11111111-1111-1111-1111-111111111128', 'PASS', NOW() - INTERVAL '9 days'),
+    -- Additional likes
+    ('11111111-1111-1111-1111-111111111121', '22222222-2222-2222-2222-222222222221', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111122', '22222222-2222-2222-2222-222222222222', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111123', '22222222-2222-2222-2222-222222222223', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111124', '22222222-2222-2222-2222-222222222224', 'SUPER_LIKE', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111125', '22222222-2222-2222-2222-222222222221', 'LIKE', NOW() - INTERVAL '11 days'),
+    ('22222222-2222-2222-2222-222222222236', '11111111-1111-1111-1111-111111111111', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222237', '11111111-1111-1111-1111-111111111112', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222238', '11111111-1111-1111-1111-111111111113', 'SUPER_LIKE', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222239', '11111111-1111-1111-1111-111111111114', 'LIKE', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222240', '11111111-1111-1111-1111-111111111115', 'LIKE', NOW() - INTERVAL '11 days')
+ON CONFLICT (user_id, target_user_id) DO NOTHING;
+
 -- ========================================
 -- MATCHES (From mutual likes above)
 -- ========================================
@@ -528,13 +581,61 @@ LIMIT 500
 ON CONFLICT (user_id, target_user_id) DO NOTHING;
 
 -- ========================================
--- NOTIFICATIONS
+-- NOTIFICATIONS (40+ notifications)
 -- ========================================
 INSERT INTO notifications (user_id, type, title, body, data, is_read, is_sent, sent_at, created_at)
 VALUES
+    -- Match notifications for all 5 matches
     ('11111111-1111-1111-1111-111111111111', 'NEW_MATCH', 'New Match!', 'You matched with James!', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, true, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
     ('22222222-2222-2222-2222-222222222221', 'NEW_MATCH', 'New Match!', 'You matched with Emma!', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, true, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
-    ('11111111-1111-1111-1111-111111111111', 'NEW_MESSAGE', 'New Message', 'James sent you a message', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, false, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days')
+    ('11111111-1111-1111-1111-111111111112', 'NEW_MATCH', 'New Match!', 'You matched with Liam!', '{"match_id": "33333333-3333-3333-3333-333333333332"}'::jsonb, true, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('22222222-2222-2222-2222-222222222222', 'NEW_MATCH', 'New Match!', 'You matched with Sophia!', '{"match_id": "33333333-3333-3333-3333-333333333332"}'::jsonb, true, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('11111111-1111-1111-1111-111111111113', 'NEW_MATCH', 'New Match!', 'You matched with Noah!', '{"match_id": "33333333-3333-3333-3333-333333333333"}'::jsonb, true, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222223', 'NEW_MATCH', 'New Match!', 'You matched with Olivia!', '{"match_id": "33333333-3333-3333-3333-333333333333"}'::jsonb, true, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('11111111-1111-1111-1111-111111111114', 'NEW_MATCH', 'New Match!', 'You matched with William!', '{"match_id": "33333333-3333-3333-3333-333333333334"}'::jsonb, true, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+    ('22222222-2222-2222-2222-222222222224', 'NEW_MATCH', 'New Match!', 'You matched with Ava!', '{"match_id": "33333333-3333-3333-3333-333333333334"}'::jsonb, true, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+    ('11111111-1111-1111-1111-111111111115', 'NEW_MATCH', 'New Match!', 'You matched with Oliver!', '{"match_id": "33333333-3333-3333-3333-333333333335"}'::jsonb, true, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    ('22222222-2222-2222-2222-222222222225', 'NEW_MATCH', 'New Match!', 'You matched with Isabella!', '{"match_id": "33333333-3333-3333-3333-333333333335"}'::jsonb, true, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    -- New message notifications
+    ('11111111-1111-1111-1111-111111111111', 'NEW_MESSAGE', 'New Message', 'James sent you a message', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, true, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+    ('22222222-2222-2222-2222-222222222221', 'NEW_MESSAGE', 'New Message', 'Emma replied to your message', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, true, true, NOW() - INTERVAL '3 days' + INTERVAL '1 hour', NOW() - INTERVAL '3 days' + INTERVAL '1 hour'),
+    ('11111111-1111-1111-1111-111111111111', 'NEW_MESSAGE', 'New Message', 'James is excited for Saturday!', '{"match_id": "33333333-3333-3333-3333-333333333331"}'::jsonb, false, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    ('11111111-1111-1111-1111-111111111112', 'NEW_MESSAGE', 'New Message', 'Liam sent you a message', '{"match_id": "33333333-3333-3333-3333-333333333332"}'::jsonb, true, true, NOW() - INTERVAL '3 days' + INTERVAL '1 hour', NOW() - INTERVAL '3 days' + INTERVAL '1 hour'),
+    ('22222222-2222-2222-2222-222222222222', 'NEW_MESSAGE', 'New Message', 'Sophia wants to go biking!', '{"match_id": "33333333-3333-3333-3333-333333333332"}'::jsonb, true, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+    ('11111111-1111-1111-1111-111111111113', 'NEW_MESSAGE', 'New Message', 'Noah wants to meet Luna!', '{"match_id": "33333333-3333-3333-3333-333333333333"}'::jsonb, true, true, NOW() - INTERVAL '5 days' + INTERVAL '30 minutes', NOW() - INTERVAL '5 days' + INTERVAL '30 minutes'),
+    ('22222222-2222-2222-2222-222222222223', 'NEW_MESSAGE', 'New Message', 'Olivia replied to your message', '{"match_id": "33333333-3333-3333-3333-333333333333"}'::jsonb, true, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+    ('11111111-1111-1111-1111-111111111114', 'NEW_MESSAGE', 'New Message', 'William is excited about salsa!', '{"match_id": "33333333-3333-3333-3333-333333333334"}'::jsonb, true, true, NOW() - INTERVAL '2 days' + INTERVAL '15 minutes', NOW() - INTERVAL '2 days' + INTERVAL '15 minutes'),
+    ('22222222-2222-2222-2222-222222222224', 'NEW_MESSAGE', 'New Message', 'Ava sent details about the class', '{"match_id": "33333333-3333-3333-3333-333333333334"}'::jsonb, true, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    ('11111111-1111-1111-1111-111111111115', 'NEW_MESSAGE', 'New Message', 'Oliver wants to meet up!', '{"match_id": "33333333-3333-3333-3333-333333333335"}'::jsonb, true, true, NOW() - INTERVAL '20 hours', NOW() - INTERVAL '20 hours'),
+    ('22222222-2222-2222-2222-222222222225', 'NEW_MESSAGE', 'New Message', 'Isabella suggested a cafe', '{"match_id": "33333333-3333-3333-3333-333333333335"}'::jsonb, false, true, NOW() - INTERVAL '10 hours', NOW() - INTERVAL '10 hours'),
+    -- Super like notifications
+    ('22222222-2222-2222-2222-222222222222', 'SUPER_LIKE', 'Someone Super Liked You!', 'Sophia sent you a Super Like!', '{"user_id": "11111111-1111-1111-1111-111111111112"}'::jsonb, true, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('22222222-2222-2222-2222-222222222224', 'SUPER_LIKE', 'Someone Super Liked You!', 'William received a Super Like from you!', '{"user_id": "11111111-1111-1111-1111-111111111114"}'::jsonb, true, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+    ('22222222-2222-2222-2222-222222222228', 'SUPER_LIKE', 'Someone Super Liked You!', 'Someone sent you a Super Like!', '{"user_id": "11111111-1111-1111-1111-111111111118"}'::jsonb, false, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('22222222-2222-2222-2222-222222222231', 'SUPER_LIKE', 'Someone Super Liked You!', 'Harper sent you a Super Like!', '{"user_id": "11111111-1111-1111-1111-111111111119"}'::jsonb, false, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+    ('22222222-2222-2222-2222-222222222234', 'SUPER_LIKE', 'Someone Super Liked You!', 'Luna sent you a Super Like!', '{"user_id": "11111111-1111-1111-1111-111111111121"}'::jsonb, true, true, NOW() - INTERVAL '4 days', NOW() - INTERVAL '4 days'),
+    ('11111111-1111-1111-1111-111111111117', 'SUPER_LIKE', 'Someone Super Liked You!', 'Lucas sent you a Super Like!', '{"user_id": "22222222-2222-2222-2222-222222222227"}'::jsonb, true, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('11111111-1111-1111-1111-111111111118', 'SUPER_LIKE', 'Someone Super Liked You!', 'Mason sent you a Super Like!', '{"user_id": "22222222-2222-2222-2222-222222222228"}'::jsonb, false, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    ('11111111-1111-1111-1111-111111111121', 'SUPER_LIKE', 'Someone Super Liked You!', 'Ethan sent you a Super Like!', '{"user_id": "22222222-2222-2222-2222-222222222229"}'::jsonb, true, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'),
+    -- System and promotion notifications
+    ('11111111-1111-1111-1111-111111111111', 'SYSTEM', 'Welcome to POC Dating!', 'Complete your profile to get more matches.', '{"action": "complete_profile"}'::jsonb, true, true, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111112', 'SYSTEM', 'Welcome to POC Dating!', 'Complete your profile to get more matches.', '{"action": "complete_profile"}'::jsonb, true, true, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111113', 'SYSTEM', 'Welcome to POC Dating!', 'Complete your profile to get more matches.', '{"action": "complete_profile"}'::jsonb, true, true, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222221', 'SYSTEM', 'Welcome to POC Dating!', 'Complete your profile to get more matches.', '{"action": "complete_profile"}'::jsonb, true, true, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+    ('22222222-2222-2222-2222-222222222222', 'SYSTEM', 'Welcome to POC Dating!', 'Complete your profile to get more matches.', '{"action": "complete_profile"}'::jsonb, true, true, NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'),
+    ('11111111-1111-1111-1111-111111111111', 'PROMOTION', 'Upgrade to Premium!', 'Get unlimited likes and see who likes you.', '{"action": "upgrade"}'::jsonb, false, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('11111111-1111-1111-1111-111111111113', 'PROMOTION', 'Upgrade to Premium!', 'Get unlimited likes and see who likes you.', '{"action": "upgrade"}'::jsonb, false, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222221', 'PROMOTION', 'Upgrade to Premium!', 'Get unlimited likes and see who likes you.', '{"action": "upgrade"}'::jsonb, false, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('22222222-2222-2222-2222-222222222223', 'PROMOTION', 'Upgrade to Premium!', 'Get unlimited likes and see who likes you.', '{"action": "upgrade"}'::jsonb, false, true, NOW() - INTERVAL '5 days', NOW() - INTERVAL '5 days'),
+    ('11111111-1111-1111-1111-111111111114', 'SYSTEM', 'Profile Verified!', 'Your profile has been verified.', '{"action": "verified"}'::jsonb, true, true, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+    ('11111111-1111-1111-1111-111111111115', 'SYSTEM', 'Profile Verified!', 'Your profile has been verified.', '{"action": "verified"}'::jsonb, true, true, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222221', 'SYSTEM', 'Profile Verified!', 'Your profile has been verified.', '{"action": "verified"}'::jsonb, true, true, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+    ('22222222-2222-2222-2222-222222222225', 'SYSTEM', 'Profile Verified!', 'Your profile has been verified.', '{"action": "verified"}'::jsonb, true, true, NOW() - INTERVAL '7 days', NOW() - INTERVAL '7 days'),
+    -- Profile view notifications
+    ('11111111-1111-1111-1111-111111111116', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 5}'::jsonb, false, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    ('11111111-1111-1111-1111-111111111117', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 3}'::jsonb, false, true, NOW() - INTERVAL '2 days', NOW() - INTERVAL '2 days'),
+    ('22222222-2222-2222-2222-222222222226', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 4}'::jsonb, true, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
+    ('22222222-2222-2222-2222-222222222227', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 2}'::jsonb, false, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days')
 ON CONFLICT DO NOTHING;
 
 -- ========================================

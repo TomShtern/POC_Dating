@@ -30,15 +30,51 @@ JOIN users u2 ON u2.id = m.user2_id
 LEFT JOIN match_scores ms ON ms.match_id = m.id
 WHERE m.status = 'ACTIVE';
 
--- User stats view
+-- User stats view (optimized with JOINs to avoid N+1)
 CREATE OR REPLACE VIEW user_stats AS
+WITH swipe_stats AS (
+    SELECT
+        user_id,
+        COUNT(*) AS total_swipes,
+        COUNT(*) FILTER (WHERE action = 'LIKE') AS total_likes,
+        COUNT(*) FILTER (WHERE action = 'SUPER_LIKE') AS super_likes
+    FROM swipes
+    GROUP BY user_id
+),
+match_stats AS (
+    SELECT
+        user_id,
+        COUNT(*) AS total_matches,
+        COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active_matches
+    FROM (
+        SELECT user1_id AS user_id, status FROM matches
+        UNION ALL
+        SELECT user2_id AS user_id, status FROM matches
+    ) m
+    GROUP BY user_id
+),
+message_stats AS (
+    SELECT
+        sender_id AS user_id,
+        COUNT(*) AS messages_sent
+    FROM messages
+    GROUP BY sender_id
+)
 SELECT
-    u.id AS user_id, u.username, u.created_at AS registered_at, u.last_active,
-    (SELECT COUNT(*) FROM swipes s WHERE s.user_id = u.id) AS total_swipes,
-    (SELECT COUNT(*) FROM swipes s WHERE s.user_id = u.id AND s.action = 'LIKE') AS total_likes,
-    (SELECT COUNT(*) FROM matches m WHERE m.user1_id = u.id OR m.user2_id = u.id) AS total_matches,
-    (SELECT COUNT(*) FROM messages msg WHERE msg.sender_id = u.id) AS messages_sent
-FROM users u;
+    u.id AS user_id,
+    u.username,
+    u.created_at AS registered_at,
+    u.last_active,
+    COALESCE(ss.total_swipes, 0) AS total_swipes,
+    COALESCE(ss.total_likes, 0) AS total_likes,
+    COALESCE(ss.super_likes, 0) AS super_likes,
+    COALESCE(ms.total_matches, 0) AS total_matches,
+    COALESCE(ms.active_matches, 0) AS active_matches,
+    COALESCE(msg.messages_sent, 0) AS messages_sent
+FROM users u
+LEFT JOIN swipe_stats ss ON ss.user_id = u.id
+LEFT JOIN match_stats ms ON ms.user_id = u.id
+LEFT JOIN message_stats msg ON msg.user_id = u.id;
 
 -- Match stats view
 CREATE OR REPLACE VIEW match_stats AS

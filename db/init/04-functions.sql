@@ -219,9 +219,12 @@ BEGIN
     LEFT JOIN recommendations r ON r.user_id = p_user_id AND r.target_user_id = fc.id
     WHERE fc.id != p_user_id
       AND fc.id NOT IN (SELECT * FROM excluded_users)
-      AND fc.age BETWEEN COALESCE(v_user_prefs.min_age, 18) AND COALESCE(v_user_prefs.max_age, 99)
+      -- FIX: Handle NULL preferences for new users (return all candidates in age range)
+      AND (v_user_prefs IS NULL OR fc.age BETWEEN COALESCE(v_user_prefs.min_age, 18) AND COALESCE(v_user_prefs.max_age, 99))
       AND (
-          v_user_prefs.interested_in IN ('BOTH', 'EVERYONE')
+          v_user_prefs IS NULL
+          OR v_user_prefs.interested_in IS NULL
+          OR v_user_prefs.interested_in IN ('BOTH', 'EVERYONE')
           OR fc.gender = v_user_prefs.interested_in
       )
     ORDER BY

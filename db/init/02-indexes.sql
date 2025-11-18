@@ -69,6 +69,10 @@ CREATE INDEX IF NOT EXISTS idx_photos_primary ON photos(user_id, is_primary)
 CREATE INDEX IF NOT EXISTS idx_photos_moderation ON photos(moderation_status, created_at)
     WHERE moderation_status = 'PENDING';
 
+-- Ensure only one primary photo per user
+CREATE UNIQUE INDEX IF NOT EXISTS idx_photos_one_primary ON photos(user_id)
+    WHERE is_primary = true;
+
 -- ========================================
 -- SWIPES INDEXES (Critical for performance)
 -- ========================================
@@ -129,13 +133,11 @@ CREATE INDEX IF NOT EXISTS idx_messages_match_time ON messages(match_id, created
 -- Sender's messages
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
 
--- Unread messages count
-CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(match_id, status)
+-- Unread messages count (includes sender_id for efficient unread-by-user queries)
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(match_id, sender_id, status)
     WHERE status != 'READ' AND deleted_at IS NULL;
 
--- Recent messages for conversation list
-CREATE INDEX IF NOT EXISTS idx_messages_recent ON messages(match_id, created_at DESC)
-    WHERE deleted_at IS NULL;
+-- Note: idx_messages_recent removed as it's redundant with idx_messages_match_time
 
 -- ========================================
 -- REFRESH TOKENS INDEXES
