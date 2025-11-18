@@ -1,7 +1,7 @@
 package com.dating.ui.components;
 
-import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -15,6 +15,7 @@ import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.upload.Upload;
 import com.vaadin.flow.component.upload.receivers.MemoryBuffer;
+import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,6 +42,11 @@ public class ImageUploadComponent extends Composite<VerticalLayout> {
     private String fileName;
 
     private Consumer<String> onUploadComplete;
+
+    // Listener registrations for cleanup
+    private Registration succeededRegistration;
+    private Registration rejectedRegistration;
+    private Registration failedRegistration;
 
     public ImageUploadComponent() {
         VerticalLayout layout = getContent();
@@ -85,8 +91,8 @@ public class ImageUploadComponent extends Composite<VerticalLayout> {
         uploadButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         upload.setUploadButton(uploadButton);
 
-        // Success handler
-        upload.addSucceededListener(event -> {
+        // Success handler - store registration for cleanup
+        succeededRegistration = upload.addSucceededListener(event -> {
             try {
                 fileName = event.getFileName();
                 InputStream inputStream = buffer.getInputStream();
@@ -117,14 +123,14 @@ public class ImageUploadComponent extends Composite<VerticalLayout> {
             }
         });
 
-        // Error handlers
-        upload.addFileRejectedListener(event -> {
+        // Error handlers - store registrations for cleanup
+        rejectedRegistration = upload.addFileRejectedListener(event -> {
             Notification.show(event.getErrorMessage(),
                 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
         });
 
-        upload.addFailedListener(event -> {
+        failedRegistration = upload.addFailedListener(event -> {
             log.error("Upload failed", event.getReason());
             Notification.show("Upload failed: " + event.getReason().getMessage(),
                 3000, Notification.Position.TOP_CENTER)
@@ -189,5 +195,31 @@ public class ImageUploadComponent extends Composite<VerticalLayout> {
      */
     public boolean hasImage() {
         return imageDataUrl != null && !imageDataUrl.isEmpty();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+
+        // Remove all listener registrations
+        if (succeededRegistration != null) {
+            succeededRegistration.remove();
+            succeededRegistration = null;
+        }
+        if (rejectedRegistration != null) {
+            rejectedRegistration.remove();
+            rejectedRegistration = null;
+        }
+        if (failedRegistration != null) {
+            failedRegistration.remove();
+            failedRegistration = null;
+        }
+
+        // Clear callback to prevent memory leaks
+        onUploadComplete = null;
+
+        // Clear uploaded data
+        imageDataUrl = null;
+        fileName = null;
     }
 }

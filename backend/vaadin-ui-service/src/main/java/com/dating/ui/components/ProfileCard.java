@@ -1,6 +1,7 @@
 package com.dating.ui.components;
 
 import com.dating.ui.dto.User;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.*;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -223,5 +224,35 @@ public class ProfileCard extends VerticalLayout {
         emptyState.add(title, text);
         contentLayout.add(emptyState);
         contentLayout.setVisible(true);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+
+        // Clean up sub-component references to prevent memory leaks
+        if (profileImage != null) {
+            profileImage.setSrc("");
+        }
+
+        if (interestsLayout != null) {
+            interestsLayout.removeAll();
+        }
+
+        if (contentLayout != null) {
+            contentLayout.removeAll();
+        }
+
+        // Nullify component references
+        profileImage = null;
+        nameLabel = null;
+        ageLocation = null;
+        bio = null;
+        contentLayout = null;
+        loadingOverlay = null;
+        onlineStatus = null;
+        verificationBadge = null;
+        distanceBadge = null;
+        interestsLayout = null;
     }
 }

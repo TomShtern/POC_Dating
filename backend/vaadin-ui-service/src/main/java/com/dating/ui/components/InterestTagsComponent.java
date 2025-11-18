@@ -1,6 +1,7 @@
 package com.dating.ui.components;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.Div;
@@ -10,6 +11,7 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.shared.Registration;
 import lombok.Getter;
 
 import java.util.*;
@@ -39,6 +41,10 @@ public class InterestTagsComponent extends Composite<VerticalLayout> {
     private int maxTags = 10;
     private Consumer<Set<String>> onChangeCallback;
 
+    // Listener registrations for cleanup
+    private Registration keyPressRegistration;
+    private Registration addButtonClickRegistration;
+
     public InterestTagsComponent() {
         VerticalLayout layout = getContent();
         layout.setSpacing(true);
@@ -55,7 +61,7 @@ public class InterestTagsComponent extends Composite<VerticalLayout> {
         customTagField = new TextField();
         customTagField.setPlaceholder("Add custom interest...");
         customTagField.setWidth("200px");
-        customTagField.addKeyPressListener(e -> {
+        keyPressRegistration = customTagField.addKeyPressListener(e -> {
             if (e.getKey().toString().equals("Enter")) {
                 addTag(customTagField.getValue().trim());
                 customTagField.clear();
@@ -64,7 +70,7 @@ public class InterestTagsComponent extends Composite<VerticalLayout> {
 
         Button addButton = new Button(new Icon(VaadinIcon.PLUS));
         addButton.addThemeVariants(ButtonVariant.LUMO_SMALL);
-        addButton.addClickListener(e -> {
+        addButtonClickRegistration = addButton.addClickListener(e -> {
             addTag(customTagField.getValue().trim());
             customTagField.clear();
         });
@@ -222,5 +228,26 @@ public class InterestTagsComponent extends Composite<VerticalLayout> {
     public void clear() {
         selectedInterests.clear();
         refreshTags();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+
+        // Remove listener registrations
+        if (keyPressRegistration != null) {
+            keyPressRegistration.remove();
+            keyPressRegistration = null;
+        }
+        if (addButtonClickRegistration != null) {
+            addButtonClickRegistration.remove();
+            addButtonClickRegistration = null;
+        }
+
+        // Clear callback to prevent memory leaks
+        onChangeCallback = null;
+
+        // Clear selected interests
+        selectedInterests.clear();
     }
 }

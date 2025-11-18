@@ -161,12 +161,29 @@ public class PreferencesView extends VerticalLayout {
             return;
         }
 
+        // Check for null values from getValue() calls
+        Integer minAge = minAgeField.getValue();
+        Integer maxAge = maxAgeField.getValue();
+        String interestedIn = interestedInGenderField.getValue();
+        Integer maxDistance = maxDistanceField.getValue();
+
+        if (minAge == null || maxAge == null || interestedIn == null || maxDistance == null) {
+            Notification.show("Please fill in all fields",
+                3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // Disable button and show loading
+        saveButton.setEnabled(false);
+        saveButton.setText("Saving...");
+
         try {
             User preferences = User.builder()
-                .minAge(minAgeField.getValue())
-                .maxAge(maxAgeField.getValue())
-                .interestedInGender(interestedInGenderField.getValue())
-                .maxDistance(maxDistanceField.getValue())
+                .minAge(minAge)
+                .maxAge(maxAge)
+                .interestedInGender(interestedIn)
+                .maxDistance(maxDistance)
                 .build();
 
             userService.updatePreferences(preferences);
@@ -179,6 +196,10 @@ public class PreferencesView extends VerticalLayout {
             log.error("Failed to save preferences", ex);
             Notification.show("Failed to save preferences", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } finally {
+            // Re-enable button
+            saveButton.setEnabled(true);
+            saveButton.setText("Save Preferences");
         }
     }
 }

@@ -112,10 +112,16 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
         if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
             profileImage.setSrc(user.getPhotoUrl());
         } else {
+            // Use data URI for placeholder instead of external service
             String initial = (user.getFirstName() != null && !user.getFirstName().isEmpty())
-                ? String.valueOf(user.getFirstName().charAt(0))
+                ? String.valueOf(user.getFirstName().charAt(0)).toUpperCase()
                 : "?";
-            profileImage.setSrc("https://via.placeholder.com/400x400?text=" + initial);
+            // Simple SVG placeholder
+            String svg = "<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'>" +
+                "<rect fill='%23f3f4f6' width='400' height='400'/>" +
+                "<text x='50%25' y='50%25' font-size='120' fill='%239ca3af' " +
+                "text-anchor='middle' dy='.35em'>" + initial + "</text></svg>";
+            profileImage.setSrc("data:image/svg+xml," + svg);
         }
         profileImage.setWidth("100%");
         profileImage.setHeight("400px");
@@ -126,7 +132,9 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
         infoSection.getStyle().set("padding", "1.5rem");
 
         // Name and age
-        H2 nameAge = new H2(user.getFirstName() + ", " + user.getAge());
+        String displayName = user.getFirstName() != null ? user.getFirstName() : "Unknown";
+        String ageStr = user.getAge() != null ? String.valueOf(user.getAge()) : "";
+        H2 nameAge = new H2(displayName + (ageStr.isEmpty() ? "" : ", " + ageStr));
         nameAge.getStyle().set("margin", "0 0 0.5rem 0");
 
         // Location

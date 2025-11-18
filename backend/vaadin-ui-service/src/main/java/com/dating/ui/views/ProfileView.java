@@ -162,16 +162,30 @@ public class ProfileView extends VerticalLayout {
             return;
         }
 
+        // Check for null values from getValue() calls
+        Integer age = ageField.getValue();
+        String gender = genderField.getValue();
+        if (age == null || gender == null) {
+            Notification.show("Please fill in all required fields",
+                3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            return;
+        }
+
+        // Disable button and show loading
+        saveButton.setEnabled(false);
+        saveButton.setText("Saving...");
+
         try {
             User user = User.builder()
                 .firstName(firstNameField.getValue())
                 .lastName(lastNameField.getValue())
-                .age(ageField.getValue())
-                .gender(genderField.getValue())
+                .age(age)
+                .gender(gender)
                 .city(cityField.getValue())
-                .country(countryField.getValue())
+                .country(countryField.getValue() != null ? countryField.getValue() : "")
                 .photoUrl(imageUpload.getImageDataUrl())
-                .bio(bioField.getValue())
+                .bio(bioField.getValue() != null ? bioField.getValue() : "")
                 .interests(interestTags.getInterestsAsList())
                 .build();
 
@@ -185,6 +199,10 @@ public class ProfileView extends VerticalLayout {
             log.error("Failed to update profile", ex);
             Notification.show("Failed to update profile", 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        } finally {
+            // Re-enable button
+            saveButton.setEnabled(true);
+            saveButton.setText("Save Changes");
         }
     }
 }

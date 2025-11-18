@@ -177,6 +177,10 @@ public class RegisterView extends VerticalLayout {
             return;
         }
 
+        // Disable button and show loading
+        registerButton.setEnabled(false);
+        registerButton.setText("Creating account...");
+
         try {
             RegisterRequest request = RegisterRequest.builder()
                 .email(emailField.getValue())
@@ -201,6 +205,10 @@ public class RegisterView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Registration failed", ex);
             showError("Registration failed. Email might already be in use.");
+        } finally {
+            // Re-enable button
+            registerButton.setEnabled(true);
+            registerButton.setText("Create Account");
         }
     }
 

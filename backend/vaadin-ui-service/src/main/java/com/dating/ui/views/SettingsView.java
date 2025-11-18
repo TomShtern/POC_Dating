@@ -1,5 +1,6 @@
 package com.dating.ui.views;
 
+import com.dating.ui.dto.User;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -35,6 +36,19 @@ public class SettingsView extends VerticalLayout {
 
     private final UserService userService;
 
+    // Notification preference checkboxes
+    private Checkbox matchNotifications;
+    private Checkbox messageNotifications;
+    private Checkbox likeNotifications;
+    private Checkbox emailNotifications;
+
+    // Privacy setting controls
+    private Select<String> profileVisibility;
+    private Checkbox showOnlineStatus;
+    private Checkbox showLastActive;
+    private Checkbox showDistance;
+    private Checkbox readReceipts;
+
     public SettingsView(UserService userService) {
         this.userService = userService;
 
@@ -43,6 +57,81 @@ public class SettingsView extends VerticalLayout {
         setAlignItems(Alignment.CENTER);
 
         createUI();
+        loadPreferences();
+    }
+
+    /**
+     * Load current user preferences and populate UI controls
+     */
+    private void loadPreferences() {
+        try {
+            User currentUser = userService.getCurrentUser();
+
+            // Load notification preferences (default to true if null)
+            matchNotifications.setValue(currentUser.getMatchNotifications() != null
+                ? currentUser.getMatchNotifications() : true);
+            messageNotifications.setValue(currentUser.getMessageNotifications() != null
+                ? currentUser.getMessageNotifications() : true);
+            likeNotifications.setValue(currentUser.getLikeNotifications() != null
+                ? currentUser.getLikeNotifications() : true);
+            emailNotifications.setValue(currentUser.getEmailNotifications() != null
+                ? currentUser.getEmailNotifications() : false);
+
+            // Load privacy settings
+            profileVisibility.setValue(currentUser.getProfileVisibility() != null
+                ? currentUser.getProfileVisibility() : "Everyone");
+            showOnlineStatus.setValue(currentUser.getShowOnlineStatus() != null
+                ? currentUser.getShowOnlineStatus() : true);
+            showLastActive.setValue(currentUser.getShowLastActive() != null
+                ? currentUser.getShowLastActive() : true);
+            showDistance.setValue(currentUser.getShowDistance() != null
+                ? currentUser.getShowDistance() : true);
+            readReceipts.setValue(currentUser.getReadReceipts() != null
+                ? currentUser.getReadReceipts() : true);
+
+            log.debug("Loaded user preferences successfully");
+        } catch (Exception ex) {
+            log.error("Failed to load user preferences", ex);
+            // Keep default values on error
+        }
+    }
+
+    /**
+     * Save a single preference to the backend
+     */
+    private void savePreference(String preferenceName, Runnable updateAction, Checkbox checkbox) {
+        try {
+            User currentUser = userService.getCurrentUser();
+            updateAction.run();
+            userService.updateProfile(currentUser);
+            Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            log.error("Failed to save preference: {}", preferenceName, ex);
+            Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            // Revert checkbox value
+            checkbox.setValue(!checkbox.getValue());
+        }
+    }
+
+    /**
+     * Save profile visibility preference
+     */
+    private void saveProfileVisibility(String value, String previousValue) {
+        try {
+            User currentUser = userService.getCurrentUser();
+            currentUser.setProfileVisibility(value);
+            userService.updateProfile(currentUser);
+            Notification.show("Profile visibility updated", 2000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            log.error("Failed to save profile visibility", ex);
+            Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            // Revert to previous value
+            profileVisibility.setValue(previousValue);
+        }
     }
 
     private void createUI() {
@@ -75,7 +164,8 @@ public class SettingsView extends VerticalLayout {
             String newPass = newPasswordField.getValue();
             String confirm = confirmPasswordField.getValue();
 
-            if (current.isEmpty() || newPass.isEmpty() || confirm.isEmpty()) {
+            if (current == null || current.isEmpty() || newPass == null || newPass.isEmpty() ||
+                confirm == null || confirm.isEmpty()) {
                 Notification.show("Please fill in all password fields",
                     3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
@@ -96,6 +186,11 @@ public class SettingsView extends VerticalLayout {
                 return;
             }
 
+            // Get button reference and show loading state
+            Button btn = (Button) e.getSource();
+            btn.setEnabled(false);
+            btn.setText("Changing...");
+
             try {
                 userService.changePassword(current, newPass);
 
@@ -113,6 +208,10 @@ public class SettingsView extends VerticalLayout {
                 Notification.show("Failed to change password. Please check your current password.",
                     3000, Notification.Position.TOP_CENTER)
                     .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            } finally {
+                // Re-enable button
+                btn.setEnabled(true);
+                btn.setText("Change Password");
             }
         });
         changePasswordButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -154,29 +253,77 @@ public class SettingsView extends VerticalLayout {
 
         Div notificationsCard = createCard();
 
-        Checkbox matchNotifications = new Checkbox("New match notifications");
+        matchNotifications = new Checkbox("New match notifications");
         matchNotifications.setValue(true);
-        matchNotifications.addValueChangeListener(e ->
-            Notification.show("Notification preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        matchNotifications.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return; // Skip programmatic changes
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setMatchNotifications(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save match notifications preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue()); // Revert
+            }
+        });
 
-        Checkbox messageNotifications = new Checkbox("New message notifications");
+        messageNotifications = new Checkbox("New message notifications");
         messageNotifications.setValue(true);
-        messageNotifications.addValueChangeListener(e ->
-            Notification.show("Notification preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        messageNotifications.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setMessageNotifications(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save message notifications preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
-        Checkbox likeNotifications = new Checkbox("Someone liked you notifications");
+        likeNotifications = new Checkbox("Someone liked you notifications");
         likeNotifications.setValue(true);
-        likeNotifications.addValueChangeListener(e ->
-            Notification.show("Notification preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        likeNotifications.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setLikeNotifications(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save like notifications preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
-        Checkbox emailNotifications = new Checkbox("Email notifications");
+        emailNotifications = new Checkbox("Email notifications");
         emailNotifications.setValue(false);
-        emailNotifications.addValueChangeListener(e ->
-            Notification.show("Email preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        emailNotifications.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setEmailNotifications(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save email notifications preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
         notificationsCard.add(matchNotifications, messageNotifications,
             likeNotifications, emailNotifications);
@@ -191,38 +338,88 @@ public class SettingsView extends VerticalLayout {
 
         Div privacyCard = createCard();
 
-        Select<String> profileVisibility = new Select<>();
+        profileVisibility = new Select<>();
         profileVisibility.setLabel("Profile Visibility");
         profileVisibility.setItems("Everyone", "Matches Only", "Hidden");
         profileVisibility.setValue("Everyone");
         profileVisibility.setWidthFull();
-        profileVisibility.addValueChangeListener(e ->
-            Notification.show("Profile visibility updated",
-                2000, Notification.Position.TOP_CENTER));
+        profileVisibility.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            String previousValue = e.getOldValue() != null ? e.getOldValue() : "Everyone";
+            saveProfileVisibility(e.getValue(), previousValue);
+        });
 
-        Checkbox showOnlineStatus = new Checkbox("Show when I'm online");
+        showOnlineStatus = new Checkbox("Show when I'm online");
         showOnlineStatus.setValue(true);
-        showOnlineStatus.addValueChangeListener(e ->
-            Notification.show("Online status preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        showOnlineStatus.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setShowOnlineStatus(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save online status preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
-        Checkbox showLastActive = new Checkbox("Show last active time");
+        showLastActive = new Checkbox("Show last active time");
         showLastActive.setValue(true);
-        showLastActive.addValueChangeListener(e ->
-            Notification.show("Last active preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        showLastActive.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setShowLastActive(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save last active preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
-        Checkbox showDistance = new Checkbox("Show my distance to others");
+        showDistance = new Checkbox("Show my distance to others");
         showDistance.setValue(true);
-        showDistance.addValueChangeListener(e ->
-            Notification.show("Distance preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        showDistance.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setShowDistance(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save distance preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
-        Checkbox readReceipts = new Checkbox("Show read receipts");
+        readReceipts = new Checkbox("Show read receipts");
         readReceipts.setValue(true);
-        readReceipts.addValueChangeListener(e ->
-            Notification.show("Read receipts preference updated",
-                2000, Notification.Position.TOP_CENTER));
+        readReceipts.addValueChangeListener(e -> {
+            if (!e.isFromClient()) return;
+            try {
+                User currentUser = userService.getCurrentUser();
+                currentUser.setReadReceipts(e.getValue());
+                userService.updateProfile(currentUser);
+                Notification.show("Preference saved", 2000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            } catch (Exception ex) {
+                log.error("Failed to save read receipts preference", ex);
+                Notification.show("Failed to save preference", 3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                e.getSource().setValue(!e.getValue());
+            }
+        });
 
         privacyCard.add(profileVisibility, showOnlineStatus, showLastActive,
             showDistance, readReceipts);
@@ -261,6 +458,8 @@ public class SettingsView extends VerticalLayout {
         dangerCard.getStyle().set("border-color", "#fecaca");
 
         Button deleteAccountButton = new Button("Delete Account", e -> {
+            Button btn = (Button) e.getSource();
+
             ConfirmDialog dialog = new ConfirmDialog();
             dialog.setHeader("Delete Account");
             dialog.setText("Are you sure you want to delete your account? " +
@@ -270,6 +469,10 @@ public class SettingsView extends VerticalLayout {
             dialog.setConfirmButtonTheme("error primary");
 
             dialog.addConfirmListener(event -> {
+                // Disable button and show loading state
+                btn.setEnabled(false);
+                btn.setText("Deleting...");
+
                 try {
                     userService.deleteAccount();
 
@@ -286,6 +489,10 @@ public class SettingsView extends VerticalLayout {
                     Notification.show("Failed to delete account",
                         3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
+
+                    // Re-enable button on failure
+                    btn.setEnabled(true);
+                    btn.setText("Delete Account");
                 }
             });
 

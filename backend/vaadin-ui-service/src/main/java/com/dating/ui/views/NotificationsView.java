@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +39,20 @@ public class NotificationsView extends VerticalLayout {
 
     private final MatchService matchService;
     private VerticalLayout notificationsList;
-    private Set<String> readNotifications = new HashSet<>();
+
+    // Track read notifications with size limit to prevent memory issues
+    // Uses LinkedHashSet to maintain insertion order for LRU-style eviction
+    private static final int MAX_READ_NOTIFICATIONS = 100;
+    private final Set<String> readNotifications = new LinkedHashSet<>() {
+        @Override
+        public boolean add(String e) {
+            if (size() >= MAX_READ_NOTIFICATIONS) {
+                // Remove oldest entry when at capacity
+                remove(iterator().next());
+            }
+            return super.add(e);
+        }
+    };
 
     private static final DateTimeFormatter TIME_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, HH:mm");
@@ -78,17 +91,33 @@ public class NotificationsView extends VerticalLayout {
     }
 
     private void markAllAsRead() {
-        // Mark all notifications as read
-        notificationsList.getChildren().forEach(component -> {
-            if (component instanceof Div card) {
-                card.removeClassName("unread");
-                card.addClassName("read");
-            }
-        });
+        try {
+            // TODO: Backend API needed - MatchService should have a method like:
+            // matchService.markAllNotificationsAsRead()
+            // This would call an endpoint like POST /api/matches/notifications/read-all
+            // Currently only updating UI state locally
 
-        Notification.show("All notifications marked as read",
-            2000, Notification.Position.TOP_CENTER)
-            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+            // Mark all notifications as read in UI
+            notificationsList.getChildren().forEach(component -> {
+                if (component instanceof Div card) {
+                    card.removeClassName("unread");
+                    card.addClassName("read");
+                    // Extract match ID from card if stored as data attribute
+                    // and add to readNotifications set
+                }
+            });
+
+            log.info("Marked all notifications as read (UI only - backend persistence not implemented)");
+
+            Notification.show("All notifications marked as read",
+                2000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+        } catch (Exception ex) {
+            log.error("Failed to mark notifications as read", ex);
+            Notification.show("Failed to mark notifications as read",
+                3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 
     private void loadNotifications() {
@@ -110,8 +139,27 @@ public class NotificationsView extends VerticalLayout {
 
             // Add clear all button
             Button clearAllButton = new Button("Clear All", e -> {
-                notificationsList.removeAll();
-                showEmptyState();
+                try {
+                    // TODO: Backend API needed - MatchService should have a method like:
+                    // matchService.clearAllNotifications()
+                    // This would call an endpoint like DELETE /api/matches/notifications
+                    // Currently only clearing UI state locally
+
+                    notificationsList.removeAll();
+                    readNotifications.clear();
+                    showEmptyState();
+
+                    log.info("Cleared all notifications (UI only - backend persistence not implemented)");
+
+                    Notification.show("All notifications cleared",
+                        2000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+                } catch (Exception ex) {
+                    log.error("Failed to clear notifications", ex);
+                    Notification.show("Failed to clear notifications",
+                        3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
             });
             clearAllButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
             add(clearAllButton);

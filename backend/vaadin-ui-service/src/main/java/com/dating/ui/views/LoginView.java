@@ -108,7 +108,7 @@ public class LoginView extends VerticalLayout {
         String password = passwordField.getValue();
 
         // Validation
-        if (email.isEmpty() || password.isEmpty()) {
+        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
             showError("Please fill in all fields");
             return;
         }
@@ -118,6 +118,10 @@ public class LoginView extends VerticalLayout {
             emailField.setErrorMessage("Please enter a valid email");
             return;
         }
+
+        // Disable button and show loading
+        loginButton.setEnabled(false);
+        loginButton.setText("Logging in...");
 
         try {
             // Call user service to login
@@ -143,6 +147,10 @@ public class LoginView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Login failed", ex);
             showError("Invalid email or password");
+        } finally {
+            // Re-enable button
+            loginButton.setEnabled(true);
+            loginButton.setText("Login");
         }
     }
 

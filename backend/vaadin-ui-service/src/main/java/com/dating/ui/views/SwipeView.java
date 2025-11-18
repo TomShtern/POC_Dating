@@ -120,6 +120,10 @@ public class SwipeView extends VerticalLayout {
     private void handleLike() {
         if (currentUser == null) return;
 
+        // Disable buttons and show loading
+        setSwipeButtonsEnabled(false);
+        likeButton.setText("...");
+
         try {
             previousUser = currentUser;
             SwipeResponse response = matchService.recordSwipe(currentUser.getId(), SwipeType.LIKE);
@@ -134,11 +138,19 @@ public class SwipeView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Failed to record swipe", ex);
             showError("Failed to record swipe");
+        } finally {
+            // Re-enable buttons
+            setSwipeButtonsEnabled(true);
+            likeButton.setText("\u2764\uFE0F Like");
         }
     }
 
     private void handleSuperLike() {
         if (currentUser == null) return;
+
+        // Disable buttons and show loading
+        setSwipeButtonsEnabled(false);
+        superLikeButton.setText("...");
 
         try {
             previousUser = currentUser;
@@ -154,11 +166,19 @@ public class SwipeView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Failed to record swipe", ex);
             showError("Failed to record swipe");
+        } finally {
+            // Re-enable buttons
+            setSwipeButtonsEnabled(true);
+            superLikeButton.setText("\u2B50 Super Like");
         }
     }
 
     private void handlePass() {
         if (currentUser == null) return;
+
+        // Disable buttons and show loading
+        setSwipeButtonsEnabled(false);
+        passButton.setText("...");
 
         try {
             previousUser = currentUser;
@@ -169,10 +189,18 @@ public class SwipeView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Failed to record swipe", ex);
             showError("Failed to record swipe");
+        } finally {
+            // Re-enable buttons
+            setSwipeButtonsEnabled(true);
+            passButton.setText("\u2716\uFE0F Pass");
         }
     }
 
     private void handleUndo() {
+        // Disable undo button and show loading
+        undoButton.setEnabled(false);
+        undoButton.setText("...");
+
         try {
             matchService.undoLastSwipe();
 
@@ -183,8 +211,6 @@ public class SwipeView extends VerticalLayout {
                 previousUser = null;
             }
 
-            undoButton.setEnabled(false);
-
             Notification.show("Last swipe undone",
                 2000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
@@ -192,6 +218,11 @@ public class SwipeView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Failed to undo swipe", ex);
             showError("Failed to undo swipe");
+            // Re-enable if undo failed
+            undoButton.setEnabled(true);
+        } finally {
+            // Reset button text
+            undoButton.setText("\u21A9\uFE0F Undo");
         }
     }
 
@@ -214,6 +245,12 @@ public class SwipeView extends VerticalLayout {
         content.add(chatButton);
         notification.add(content);
         notification.open();
+    }
+
+    private void setSwipeButtonsEnabled(boolean enabled) {
+        passButton.setEnabled(enabled);
+        superLikeButton.setEnabled(enabled);
+        likeButton.setEnabled(enabled);
     }
 
     private void disableButtons() {
