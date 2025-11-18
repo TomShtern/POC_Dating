@@ -6,7 +6,9 @@ import com.dating.ui.dto.LoginRequest;
 import com.dating.ui.dto.RegisterRequest;
 import com.dating.ui.dto.User;
 import com.dating.ui.security.SecurityUtils;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -15,11 +17,27 @@ import org.springframework.stereotype.Service;
  * Wraps UserServiceClient and handles authentication
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
     private final UserServiceClient userClient;
+    private final Counter loginCounter;
+    private final Counter registrationCounter;
+    private final Timer apiCallTimer;
+
+    public UserService(UserServiceClient userClient, MeterRegistry meterRegistry) {
+        this.userClient = userClient;
+        this.loginCounter = Counter.builder("ui.logins.total")
+            .description("Total number of successful logins")
+            .register(meterRegistry);
+        this.registrationCounter = Counter.builder("ui.registrations.total")
+            .description("Total number of successful registrations")
+            .register(meterRegistry);
+        this.apiCallTimer = Timer.builder("ui.api.call.time")
+            .description("Time spent calling backend services")
+            .tag("service", "user-service")
+            .register(meterRegistry);
+    }
 
     /**
      * Login user
@@ -27,7 +45,8 @@ public class UserService {
     public AuthResponse login(String email, String password) {
         log.debug("Attempting login for email: {}", email);
         LoginRequest request = new LoginRequest(email, password);
-        AuthResponse response = userClient.login(request);
+
+        AuthResponse response = apiCallTimer.record(() -> userClient.login(request));
 
         // Store auth info in session
         SecurityUtils.setAuthenticationInfo(
@@ -36,6 +55,7 @@ public class UserService {
             response.getUser().getFirstName()
         );
 
+        loginCounter.increment();
         log.info("User logged in successfully: {}", email);
         return response;
     }
@@ -45,7 +65,8 @@ public class UserService {
      */
     public AuthResponse register(RegisterRequest request) {
         log.debug("Attempting registration for email: {}", request.getEmail());
-        AuthResponse response = userClient.register(request);
+
+        AuthResponse response = apiCallTimer.record(() -> userClient.register(request));
 
         // Store auth info in session
         SecurityUtils.setAuthenticationInfo(
@@ -54,6 +75,7 @@ public class UserService {
             response.getUser().getFirstName()
         );
 
+        registrationCounter.increment();
         log.info("User registered successfully: {}", request.getEmail());
         return response;
     }
@@ -69,7 +91,7 @@ public class UserService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return userClient.getUser(userId, "Bearer " + token);
+        return apiCallTimer.record(() -> userClient.getUser(userId, "Bearer " + token));
     }
 
     /**
@@ -83,7 +105,7 @@ public class UserService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return userClient.updateUser(userId, user, "Bearer " + token);
+        return apiCallTimer.record(() -> userClient.updateUser(userId, user, "Bearer " + token));
     }
 
     /**

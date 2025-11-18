@@ -7,7 +7,9 @@ import com.dating.ui.dto.SwipeResponse;
 import com.dating.ui.dto.SwipeType;
 import com.dating.ui.dto.User;
 import com.dating.ui.security.SecurityUtils;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,11 +20,27 @@ import java.util.List;
  * Handles swiping, matching, and profile discovery
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MatchService {
 
     private final MatchServiceClient matchClient;
+    private final Timer apiCallTimer;
+    private final Counter swipeCounter;
+    private final Counter matchCounter;
+
+    public MatchService(MatchServiceClient matchClient, MeterRegistry meterRegistry) {
+        this.matchClient = matchClient;
+        this.apiCallTimer = Timer.builder("ui.api.call.time")
+            .description("Time spent calling backend services")
+            .tag("service", "match-service")
+            .register(meterRegistry);
+        this.swipeCounter = Counter.builder("ui.swipes.total")
+            .description("Total number of swipes")
+            .register(meterRegistry);
+        this.matchCounter = Counter.builder("ui.matches.total")
+            .description("Total number of matches created")
+            .register(meterRegistry);
+    }
 
     /**
      * Get next profile to swipe on
@@ -34,7 +52,7 @@ public class MatchService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return matchClient.getNextProfile("Bearer " + token);
+        return apiCallTimer.record(() -> matchClient.getNextProfile("Bearer " + token));
     }
 
     /**
@@ -48,9 +66,12 @@ public class MatchService {
         }
 
         SwipeRequest request = new SwipeRequest(targetUserId, swipeType);
-        SwipeResponse response = matchClient.recordSwipe(request, "Bearer " + token);
+        SwipeResponse response = apiCallTimer.record(() -> matchClient.recordSwipe(request, "Bearer " + token));
+
+        swipeCounter.increment();
 
         if (response.isMatch()) {
+            matchCounter.increment();
             log.info("Match created! User: {} matched with: {}",
                 SecurityUtils.getCurrentUserId(), targetUserId);
         }
@@ -68,7 +89,7 @@ public class MatchService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return matchClient.getMyMatches("Bearer " + token);
+        return apiCallTimer.record(() -> matchClient.getMyMatches("Bearer " + token));
     }
 
     /**
@@ -81,6 +102,6 @@ public class MatchService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return matchClient.getMatch(matchId, "Bearer " + token);
+        return apiCallTimer.record(() -> matchClient.getMatch(matchId, "Bearer " + token));
     }
 }

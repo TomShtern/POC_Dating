@@ -5,7 +5,9 @@ import com.dating.recommendation.exception.UserNotFoundException;
 import com.dating.recommendation.model.User;
 import com.dating.recommendation.repository.SwipeRepository;
 import com.dating.recommendation.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -59,7 +61,6 @@ import java.util.*;
  * ============================================================================
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RecommendationService {
 
@@ -81,6 +82,48 @@ public class RecommendationService {
      * Aggregator that combines scores from all registered scorers.
      */
     private final ScoreAggregator scoreAggregator;
+
+    // -------------------------------------------------------------------------
+    // METRICS
+    // -------------------------------------------------------------------------
+
+    /**
+     * MeterRegistry for custom metrics.
+     */
+    private final MeterRegistry meterRegistry;
+
+    /**
+     * Counter for tracking total recommendations generated.
+     */
+    private final Counter recommendationsGenerated;
+
+    /**
+     * Timer for tracking recommendation generation time.
+     */
+    private final Timer recommendationTimer;
+
+    // -------------------------------------------------------------------------
+    // CONSTRUCTOR
+    // -------------------------------------------------------------------------
+
+    public RecommendationService(UserRepository userRepository,
+                                  SwipeRepository swipeRepository,
+                                  ScoreAggregator scoreAggregator,
+                                  MeterRegistry meterRegistry) {
+        this.userRepository = userRepository;
+        this.swipeRepository = swipeRepository;
+        this.scoreAggregator = scoreAggregator;
+        this.meterRegistry = meterRegistry;
+
+        // Initialize metrics
+        this.recommendationsGenerated = Counter.builder("recommendations.generated.total")
+            .description("Total number of recommendation batches generated")
+            .register(meterRegistry);
+
+        this.recommendationTimer = Timer.builder("recommendations.generation.time")
+            .description("Time taken to generate recommendations")
+            .register(meterRegistry);
+    }
 
     // -------------------------------------------------------------------------
     // CONFIGURATION
@@ -137,7 +180,7 @@ public class RecommendationService {
     @Cacheable(value = "recommendations", key = "#userId")
     public List<ScoredCandidate> getRecommendations(UUID userId) {
         log.info("Generating recommendations for user: {}", userId);
-        long startTime = System.currentTimeMillis();
+        Timer.Sample sample = Timer.start(meterRegistry);
 
         // =====================================================================
         // STEP 1: Load the requesting user
@@ -182,7 +225,10 @@ public class RecommendationService {
                 .limit(batchSize)
                 .toList();
 
-        long elapsedMs = System.currentTimeMillis() - startTime;
+        // Record metrics
+        long elapsedMs = sample.stop(recommendationTimer) / 1_000_000; // Convert nanoseconds to ms
+        recommendationsGenerated.increment();
+
         log.info("Generated {} recommendations for user {} in {}ms (from {} candidates)",
                 scored.size(), userId, elapsedMs, candidates.size());
 

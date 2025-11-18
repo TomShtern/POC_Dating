@@ -234,13 +234,30 @@ logging:
     org.hibernate.SQL: WARN
 
 # ------------------------------------------------------------------------------
-# Actuator Configuration (Health Checks)
+# Actuator Configuration (Health Checks & Monitoring)
 # ------------------------------------------------------------------------------
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health, info, metrics, prometheus
+      base-path: /actuator
   endpoint:
     health:
-      show-details: when_authorized
+      show-details: always
+      probes:
+        enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+  info:
+    env:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: ML-powered recommendation engine

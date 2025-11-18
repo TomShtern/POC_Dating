@@ -124,9 +124,6 @@ logging:
     com.dating: DEBUG
     org.springframework.web: INFO
     org.hibernate: WARN
-  pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/user-service.log
     max-size: 10MB
@@ -139,15 +136,26 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics,info
+        include: health, info, metrics, prometheus
       base-path: /actuator
   endpoint:
     health:
       show-details: always
-  metrics:
-    export:
-      simple:
+      probes:
         enabled: true
+  health:
+    db:
+      enabled: true
+    redis:
+      enabled: true
+    rabbit:
+      enabled: true
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: User authentication and profile management service
 
 ---
 # ========================================
