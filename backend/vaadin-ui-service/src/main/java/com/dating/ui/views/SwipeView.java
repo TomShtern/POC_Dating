@@ -5,6 +5,7 @@ import com.dating.ui.dto.SwipeResponse;
 import com.dating.ui.dto.SwipeType;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -37,8 +38,11 @@ public class SwipeView extends VerticalLayout {
     private Button superLikeButton;
     private Button likeButton;
 
-    public SwipeView(MatchService matchService) {
+    public SwipeView(MatchService matchService, PageViewMetricsService pageViewMetrics) {
         this.matchService = matchService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("discover");
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);

@@ -22,6 +22,7 @@ public class UserService {
 
     private final UserServiceClient userClient;
     private final Counter loginCounter;
+    private final Counter loginFailureCounter;
     private final Counter registrationCounter;
     private final Timer apiCallTimer;
 
@@ -30,6 +31,9 @@ public class UserService {
         this.loginCounter = Counter.builder("ui.logins.total")
             .description("Total number of successful logins")
             .register(meterRegistry);
+        this.loginFailureCounter = Counter.builder("ui.login.failures.total")
+            .description("Total number of failed login attempts")
+            .register(meterRegistry);
         this.registrationCounter = Counter.builder("ui.registrations.total")
             .description("Total number of successful registrations")
             .register(meterRegistry);
@@ -37,6 +41,14 @@ public class UserService {
             .description("Time spent calling backend services")
             .tag("service", "user-service")
             .register(meterRegistry);
+    }
+
+    /**
+     * Increment the login failure counter.
+     * Call this when login fails for security monitoring.
+     */
+    public void recordLoginFailure() {
+        loginFailureCounter.increment();
     }
 
     /**

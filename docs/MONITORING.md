@@ -75,6 +75,7 @@ Each service checks different components:
 | Metric | Type | Description |
 |--------|------|-------------|
 | `ui.logins.total` | Counter | Total successful logins |
+| `ui.login.failures.total` | Counter | Total failed login attempts (security monitoring) |
 | `ui.registrations.total` | Counter | Total successful registrations |
 | `ui.swipes.total` | Counter | Total swipe actions |
 | `ui.matches.total` | Counter | Total matches created |
