@@ -103,16 +103,24 @@ public class ConversationService {
                     .findFirst()
                     .orElse(null);
         }
-        // TODO: For production, get participant info from Match Service
+        // TODO: For production, get participant info from Match Service and User Service
+        // For now, build a placeholder MatchedUser
+        ConversationResponse.MatchedUser matchedUser = null;
+        if (participantId != null) {
+            matchedUser = ConversationResponse.MatchedUser.builder()
+                    .id(participantId)
+                    .name(null)  // Would be fetched from User Service
+                    .profilePictureUrl(null)  // Would be fetched from User Service
+                    .build();
+        }
 
         return ConversationResponse.builder()
                 .id(matchId)
-                .participantId(participantId)
-                // Note: participantFirstName and participantPhotoUrl would be fetched from User Service
-                // For this POC, we'll leave them null and let the UI handle it
-                .lastMessage(lastMessage)
+                .matchedUser(matchedUser)
+                .lastMessage(lastMessage != null ? lastMessage.getContent() : null)
                 .unreadCount((int) unreadCount)
-                .lastMessageAt(lastMessage != null ? lastMessage.getSentAt() : null)
+                .lastMessageTime(lastMessage != null ? lastMessage.getCreatedAt() : null)
+                .createdAt(null)  // Would be fetched from Match Service
                 .build();
     }
 }

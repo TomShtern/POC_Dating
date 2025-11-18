@@ -23,24 +23,19 @@ public class ConversationResponse {
     private UUID id;
 
     /**
-     * The other participant's user ID.
+     * The matched user information.
      */
-    private UUID participantId;
+    private MatchedUser matchedUser;
 
     /**
-     * The other participant's first name.
+     * Last message content.
      */
-    private String participantFirstName;
+    private String lastMessage;
 
     /**
-     * The other participant's profile picture URL.
+     * When the last message was sent.
      */
-    private String participantPhotoUrl;
-
-    /**
-     * Last message in the conversation.
-     */
-    private MessageResponse lastMessage;
+    private Instant lastMessageTime;
 
     /**
      * Number of unread messages for the current user.
@@ -53,7 +48,15 @@ public class ConversationResponse {
     private Instant createdAt;
 
     /**
-     * When the last message was sent.
+     * Nested class for matched user info.
      */
-    private Instant lastMessageAt;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class MatchedUser {
+        private UUID id;
+        private String name;
+        private String profilePictureUrl;
+    }
 }
