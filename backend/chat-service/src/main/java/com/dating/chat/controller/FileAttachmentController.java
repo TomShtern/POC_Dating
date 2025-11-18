@@ -84,8 +84,8 @@ public class FileAttachmentController {
             return ResponseEntity.badRequest().build();
         }
 
-        // Get attachment and verify status
-        FileAttachment attachment = attachmentService.getAttachment(attachmentId);
+        // Get attachment and verify ownership - only uploader can download
+        FileAttachment attachment = attachmentService.getAttachmentForUser(attachmentId, userId);
 
         // Verify status is READY before serving
         if (attachment.getStatus() != FileAttachment.AttachmentStatus.READY) {
