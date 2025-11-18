@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 public class UserService {
 
     private final UserServiceClient userClient;
+    private final Counter loginAttemptsCounter;
     private final Counter loginCounter;
     private final Counter loginFailureCounter;
     private final Counter registrationCounter;
@@ -28,6 +29,9 @@ public class UserService {
 
     public UserService(UserServiceClient userClient, MeterRegistry meterRegistry) {
         this.userClient = userClient;
+        this.loginAttemptsCounter = Counter.builder("ui.login.attempts.total")
+            .description("Total number of login attempts")
+            .register(meterRegistry);
         this.loginCounter = Counter.builder("ui.logins.total")
             .description("Total number of successful logins")
             .register(meterRegistry);
@@ -56,6 +60,7 @@ public class UserService {
      */
     public AuthResponse login(String email, String password) {
         log.debug("Attempting login for email: {}", email);
+        loginAttemptsCounter.increment();
         LoginRequest request = new LoginRequest(email, password);
 
         AuthResponse response = apiCallTimer.record(() -> userClient.login(request));

@@ -30,6 +30,7 @@
     </springProfile>
 
     <logger name="org.springframework" level="WARN"/>
+    <logger name="org.hibernate" level="WARN"/>
     <logger name="com.vaadin" level="INFO"/>
     <logger name="org.atmosphere" level="WARN"/>
 </configuration>

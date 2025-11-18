@@ -16,23 +16,23 @@
 # - test: Integration tests (TestContainers)
 # - prod: Production (secure defaults)
 
+# ========================================
+# SERVER CONFIGURATION
+# ========================================
+server:
+  port: 8081
+  servlet:
+    context-path: /api
+  shutdown: graceful
+  error:
+    include-message: always
+    include-stacktrace: on-param
+    include-exception: false
+
 spring:
   application:
     name: user-service
     version: 1.0.0
-
-  # ========================================
-  # SERVER CONFIGURATION
-  # ========================================
-  server:
-    port: 8081
-    servlet:
-      context-path: /api
-    shutdown: graceful
-    error:
-      include-message: always
-      include-stacktrace: on-param
-      include-exception: false
 
   # ========================================
   # DATABASE CONFIGURATION

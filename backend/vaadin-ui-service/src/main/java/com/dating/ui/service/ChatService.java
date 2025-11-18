@@ -25,6 +25,7 @@ public class ChatService {
     private final ChatServiceClient chatClient;
     private final Timer apiCallTimer;
     private final Counter messagesSentCounter;
+    private final Counter messagesReadCounter;
 
     public ChatService(ChatServiceClient chatClient, MeterRegistry meterRegistry) {
         this.chatClient = chatClient;
@@ -34,6 +35,9 @@ public class ChatService {
             .register(meterRegistry);
         this.messagesSentCounter = Counter.builder("ui.messages.sent.total")
             .description("Total number of messages sent")
+            .register(meterRegistry);
+        this.messagesReadCounter = Counter.builder("ui.messages.read.total")
+            .description("Total number of messages read/retrieved")
             .register(meterRegistry);
     }
 
@@ -60,7 +64,14 @@ public class ChatService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return apiCallTimer.record(() -> chatClient.getMessages(conversationId, "Bearer " + token));
+        List<Message> messages = apiCallTimer.record(() -> chatClient.getMessages(conversationId, "Bearer " + token));
+
+        // Track messages read
+        if (messages != null && !messages.isEmpty()) {
+            messagesReadCounter.increment(messages.size());
+        }
+
+        return messages;
     }
 
     /**

@@ -25,6 +25,7 @@ public class MatchService {
 
     private final MatchServiceClient matchClient;
     private final Timer apiCallTimer;
+    private final Timer feedGenerationTimer;
     private final Counter swipeCounter;
     private final Counter matchCounter;
 
@@ -33,6 +34,9 @@ public class MatchService {
         this.apiCallTimer = Timer.builder("ui.api.call.time")
             .description("Time spent calling backend services")
             .tag("service", "match-service")
+            .register(meterRegistry);
+        this.feedGenerationTimer = Timer.builder("ui.feed.generation.time")
+            .description("Time spent generating/fetching user feed")
             .register(meterRegistry);
         this.swipeCounter = Counter.builder("ui.swipes.total")
             .description("Total number of swipes")
@@ -52,7 +56,7 @@ public class MatchService {
             throw new IllegalStateException("User not authenticated");
         }
 
-        return apiCallTimer.record(() -> matchClient.getNextProfile("Bearer " + token));
+        return feedGenerationTimer.record(() -> matchClient.getNextProfile("Bearer " + token));
     }
 
     /**

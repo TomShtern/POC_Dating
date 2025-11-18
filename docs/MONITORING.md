@@ -74,12 +74,15 @@ Each service checks different components:
 
 | Metric | Type | Description |
 |--------|------|-------------|
+| `ui.login.attempts.total` | Counter | Total login attempts |
 | `ui.logins.total` | Counter | Total successful logins |
 | `ui.login.failures.total` | Counter | Total failed login attempts (security monitoring) |
 | `ui.registrations.total` | Counter | Total successful registrations |
 | `ui.swipes.total` | Counter | Total swipe actions |
 | `ui.matches.total` | Counter | Total matches created |
+| `ui.feed.generation.time` | Timer | Time spent generating/fetching user feed |
 | `ui.messages.sent.total` | Counter | Total messages sent |
+| `ui.messages.read.total` | Counter | Total messages read/retrieved |
 | `ui.page.views.total` | Counter | Page views (tagged by page name) |
 | `ui.api.call.time` | Timer | API call duration (tagged by service) |
 
