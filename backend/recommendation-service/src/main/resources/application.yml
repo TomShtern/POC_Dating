@@ -1,0 +1,246 @@
+# ==============================================================================
+# RECOMMENDATION SERVICE CONFIGURATION
+# ==============================================================================
+#
+# This file configures the Recommendation Service, including the pluggable
+# scoring algorithm weights and thresholds.
+#
+# HOW TO MODIFY ALGORITHM:
+# - To make a factor more important: increase its weight
+# - To disable a factor: set weight to 0
+# - Weights don't need to sum to 1.0 (they're normalized automatically)
+#
+# EXAMPLE PROFILES:
+#
+# Profile: "Location First" (for users who want nearby matches)
+#   location.weight: 0.5
+#   age.weight: 0.2
+#   interests.weight: 0.2
+#   activity.weight: 0.1
+#
+# Profile: "Interests First" (for users who want compatible matches)
+#   interests.weight: 0.5
+#   age.weight: 0.2
+#   location.weight: 0.2
+#   activity.weight: 0.1
+#
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# Server Configuration
+# ------------------------------------------------------------------------------
+server:
+  port: 8084  # Recommendation service port
+
+# ------------------------------------------------------------------------------
+# Spring Configuration
+# ------------------------------------------------------------------------------
+spring:
+  application:
+    name: recommendation-service
+
+  # ----------------------------------------------------------------------------
+  # Database Configuration (PostgreSQL)
+  # ----------------------------------------------------------------------------
+  # Connects to shared database with User Service
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/dating_db}
+    username: ${DATABASE_USERNAME:dating_user}
+    password: ${DATABASE_PASSWORD:dating_password}
+    driver-class-name: org.postgresql.Driver
+
+    # Connection pool settings
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  # ----------------------------------------------------------------------------
+  # JPA Configuration
+  # ----------------------------------------------------------------------------
+  jpa:
+    hibernate:
+      ddl-auto: validate  # Don't auto-create tables (User Service manages schema)
+    show-sql: false       # Set to true for debugging
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # ----------------------------------------------------------------------------
+  # Redis Configuration (Caching)
+  # ----------------------------------------------------------------------------
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    timeout: 5000ms
+
+  # ----------------------------------------------------------------------------
+  # Cache Configuration
+  # ----------------------------------------------------------------------------
+  cache:
+    type: redis
+    redis:
+      time-to-live: 86400000  # 24 hours in milliseconds
+      cache-null-values: false
+
+# ==============================================================================
+# RECOMMENDATION ALGORITHM CONFIGURATION
+# ==============================================================================
+# This section controls the scoring algorithm behavior.
+# Modify these values to tune recommendations without code changes.
+# ==============================================================================
+
+recommendation:
+  # ----------------------------------------------------------------------------
+  # General Settings
+  # ----------------------------------------------------------------------------
+
+  # Number of recommendations to return per request
+  # Range: 10-50, Default: 20
+  # CONSIDERATIONS:
+  # - Too few: User runs out quickly
+  # - Too many: UI performance issues
+  batch-size: 20
+
+  # Minimum score to include in results (0.0 to 1.0)
+  # Candidates below this score are filtered out
+  # Range: 0.1-0.5, Default: 0.3
+  # CONSIDERATIONS:
+  # - Too low: Shows poor matches
+  # - Too high: May not have enough candidates
+  minimum-score: 0.3
+
+  # How often to refresh recommendations (in hours)
+  # Cache TTL for recommendations
+  refresh-interval-hours: 24
+
+  # ----------------------------------------------------------------------------
+  # Scorer Weights
+  # ----------------------------------------------------------------------------
+  # Each scorer contributes to the final score based on its weight.
+  # Weights are normalized, so they don't need to sum to 1.0.
+  #
+  # To disable a scorer: set its weight to 0
+  # To emphasize a scorer: increase its weight relative to others
+  # ----------------------------------------------------------------------------
+
+  scorers:
+    # --------------------------------------------------------------------------
+    # AGE COMPATIBILITY SCORER
+    # --------------------------------------------------------------------------
+    # Checks if users are within each other's preferred age ranges.
+    #
+    # SCORING:
+    # - 1.0: Both users are in each other's preferred range
+    # - 0.5: One user is in the other's range
+    # - 0.0: Neither user is in range
+    #
+    # WEIGHT GUIDANCE:
+    # - High (0.3+): Age is critical, strict matching
+    # - Medium (0.2): Age matters but flexible
+    # - Low (0.1): Age is minor factor
+    # --------------------------------------------------------------------------
+    age:
+      weight: 0.2  # 20% of total score
+
+    # --------------------------------------------------------------------------
+    # LOCATION SCORER
+    # --------------------------------------------------------------------------
+    # Scores based on distance between users.
+    # Uses Haversine formula for accurate Earth-surface distance.
+    #
+    # SCORING (linear decay):
+    # - 0 km: 1.0 (same location)
+    # - max-distance-km/2: 0.5 (halfway)
+    # - max-distance-km: 0.0 (too far)
+    #
+    # WEIGHT GUIDANCE:
+    # - High (0.4+): Location is critical (local dating)
+    # - Medium (0.3): Location matters but not everything
+    # - Low (0.1): Long-distance is acceptable
+    # --------------------------------------------------------------------------
+    location:
+      weight: 0.3  # 30% of total score
+      max-distance-km: 50  # Default max distance if user hasn't set preference
+
+    # --------------------------------------------------------------------------
+    # INTEREST SCORER
+    # --------------------------------------------------------------------------
+    # Scores based on shared interests using Jaccard similarity.
+    #
+    # FORMULA: |intersection| / |union|
+    # - 1.0: Identical interests
+    # - 0.5: Half of interests shared
+    # - 0.0: No shared interests
+    #
+    # WEIGHT GUIDANCE:
+    # - High (0.4+): Compatibility is key
+    # - Medium (0.25): Good for conversation starters
+    # - Low (0.1): Physical attraction matters more
+    # --------------------------------------------------------------------------
+    interests:
+      weight: 0.25  # 25% of total score
+      minimum-shared: 0  # Minimum shared interests (0 = any overlap counts)
+
+    # --------------------------------------------------------------------------
+    # ACTIVITY SCORER
+    # --------------------------------------------------------------------------
+    # Scores based on how recently the user was active.
+    # Prefers users who will actually respond.
+    #
+    # SCORING (linear decay):
+    # - Active today: 1.0
+    # - Active at threshold days: 0.0
+    # - Beyond threshold: 0.0
+    #
+    # WEIGHT GUIDANCE:
+    # - High (0.3): Only show active users
+    # - Medium (0.15): Prefer active but show others
+    # - Low (0.05): Activity doesn't matter much
+    # --------------------------------------------------------------------------
+    activity:
+      weight: 0.15  # 15% of total score
+      inactive-days-threshold: 30  # Days until considered inactive
+
+    # --------------------------------------------------------------------------
+    # GENDER PREFERENCE SCORER
+    # --------------------------------------------------------------------------
+    # Hard filter based on gender preferences.
+    # Returns 1.0 for mutual match, 0.0 otherwise.
+    #
+    # NOTE: Even with low weight, 0.0 score significantly affects total.
+    # This effectively acts as a filter.
+    #
+    # WEIGHT GUIDANCE:
+    # - Any (0.1+): Acts as filter due to binary scoring
+    # - Higher weight = stronger filter effect
+    # --------------------------------------------------------------------------
+    gender:
+      weight: 0.1  # 10% of total score
+
+# ------------------------------------------------------------------------------
+# Logging Configuration
+# ------------------------------------------------------------------------------
+logging:
+  level:
+    root: INFO
+    com.dating.recommendation: DEBUG
+    com.dating.recommendation.scorer: DEBUG  # Set to TRACE for detailed scoring logs
+    org.springframework.cache: DEBUG
+    org.hibernate.SQL: WARN
+
+# ------------------------------------------------------------------------------
+# Actuator Configuration (Health Checks)
+# ------------------------------------------------------------------------------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
