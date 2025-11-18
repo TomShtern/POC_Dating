@@ -4,13 +4,11 @@ import com.dating.user.dto.request.LoginRequest;
 import com.dating.user.dto.request.RefreshTokenRequest;
 import com.dating.user.dto.request.RegisterRequest;
 import com.dating.user.dto.response.AuthResponse;
-import com.dating.user.dto.response.UserResponse;
 import com.dating.user.event.UserEventPublisher;
 import com.dating.user.exception.InvalidCredentialsException;
 import com.dating.user.exception.InvalidTokenException;
 import com.dating.user.exception.UserAlreadyExistsException;
 import com.dating.user.exception.UserNotFoundException;
-import com.dating.user.mapper.UserMapper;
 import com.dating.user.model.User;
 import com.dating.user.model.UserPreference;
 import com.dating.user.repository.UserPreferenceRepository;
@@ -36,7 +34,6 @@ public class AuthService {
     private final UserPreferenceRepository userPreferenceRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
-    private final UserMapper userMapper;
     private final UserEventPublisher eventPublisher;
 
     /**
@@ -91,8 +88,14 @@ public class AuthService {
         // Publish event
         eventPublisher.publishUserRegistered(savedUser);
 
-        UserResponse userResponse = userMapper.toUserResponse(savedUser);
-        return AuthResponse.of(userResponse, accessToken, refreshToken, tokenService.getAccessTokenExpirationSeconds());
+        return AuthResponse.of(
+                savedUser.getId(),
+                savedUser.getEmail(),
+                savedUser.getUsername(),
+                accessToken,
+                refreshToken,
+                tokenService.getAccessTokenExpirationSeconds()
+        );
     }
 
     /**
@@ -128,8 +131,14 @@ public class AuthService {
 
         log.info("User logged in: {}", user.getId());
 
-        UserResponse userResponse = userMapper.toUserResponse(user);
-        return AuthResponse.of(userResponse, accessToken, refreshToken, tokenService.getAccessTokenExpirationSeconds());
+        return AuthResponse.of(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                accessToken,
+                refreshToken,
+                tokenService.getAccessTokenExpirationSeconds()
+        );
     }
 
     /**
@@ -160,8 +169,14 @@ public class AuthService {
 
         log.info("Token refreshed for user: {}", userId);
 
-        UserResponse userResponse = userMapper.toUserResponse(user);
-        return AuthResponse.of(userResponse, accessToken, refreshToken, tokenService.getAccessTokenExpirationSeconds());
+        return AuthResponse.of(
+                user.getId(),
+                user.getEmail(),
+                user.getUsername(),
+                accessToken,
+                refreshToken,
+                tokenService.getAccessTokenExpirationSeconds()
+        );
     }
 
     /**

@@ -3,11 +3,9 @@ package com.dating.user.service;
 import com.dating.user.dto.request.LoginRequest;
 import com.dating.user.dto.request.RegisterRequest;
 import com.dating.user.dto.response.AuthResponse;
-import com.dating.user.dto.response.UserResponse;
 import com.dating.user.event.UserEventPublisher;
 import com.dating.user.exception.InvalidCredentialsException;
 import com.dating.user.exception.UserAlreadyExistsException;
-import com.dating.user.mapper.UserMapper;
 import com.dating.user.model.User;
 import com.dating.user.repository.UserPreferenceRepository;
 import com.dating.user.repository.UserRepository;
@@ -47,9 +45,6 @@ class AuthServiceTest {
     private TokenService tokenService;
 
     @Mock
-    private UserMapper userMapper;
-
-    @Mock
     private UserEventPublisher eventPublisher;
 
     @InjectMocks
@@ -58,7 +53,6 @@ class AuthServiceTest {
     private RegisterRequest registerRequest;
     private LoginRequest loginRequest;
     private User testUser;
-    private UserResponse userResponse;
 
     @BeforeEach
     void setUp() {
@@ -86,14 +80,6 @@ class AuthServiceTest {
                 .lastName("Doe")
                 .status("ACTIVE")
                 .build();
-
-        userResponse = UserResponse.builder()
-                .id(testUser.getId().toString())
-                .email("test@example.com")
-                .username("testuser")
-                .firstName("John")
-                .lastName("Doe")
-                .build();
     }
 
     @Test
@@ -108,16 +94,17 @@ class AuthServiceTest {
         when(tokenService.generateAccessToken(testUser.getId())).thenReturn("access_token");
         when(tokenService.createRefreshToken(testUser)).thenReturn("refresh_token");
         when(tokenService.getAccessTokenExpirationSeconds()).thenReturn(900L);
-        when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
 
         // Act
         AuthResponse response = authService.register(registerRequest);
 
         // Assert
         assertNotNull(response);
-        assertEquals("access_token", response.getAccessToken());
+        assertEquals("access_token", response.getToken());
         assertEquals("refresh_token", response.getRefreshToken());
-        assertEquals("test@example.com", response.getUser().getEmail());
+        assertEquals("test@example.com", response.getEmail());
+        assertEquals("testuser", response.getUsername());
+        assertEquals(testUser.getId(), response.getUserId());
 
         verify(userRepository).save(any(User.class));
         verify(userPreferenceRepository).save(any());
@@ -165,16 +152,17 @@ class AuthServiceTest {
         when(tokenService.generateAccessToken(testUser.getId())).thenReturn("access_token");
         when(tokenService.createRefreshToken(testUser)).thenReturn("refresh_token");
         when(tokenService.getAccessTokenExpirationSeconds()).thenReturn(900L);
-        when(userMapper.toUserResponse(testUser)).thenReturn(userResponse);
 
         // Act
         AuthResponse response = authService.login(loginRequest);
 
         // Assert
         assertNotNull(response);
-        assertEquals("access_token", response.getAccessToken());
+        assertEquals("access_token", response.getToken());
         assertEquals("refresh_token", response.getRefreshToken());
-        assertEquals("test@example.com", response.getUser().getEmail());
+        assertEquals("test@example.com", response.getEmail());
+        assertEquals("testuser", response.getUsername());
+        assertEquals(testUser.getId(), response.getUserId());
     }
 
     @Test

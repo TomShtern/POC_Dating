@@ -92,13 +92,18 @@ public class ConversationService {
         MessageResponse lastMessage = messageService.getLastMessage(matchId);
         long unreadCount = messageService.countUnread(matchId, userId);
 
-        // Determine the other participant
+        // Determine the other participant by looking at messages
+        // Find a message from someone other than the current user
         UUID participantId = null;
-        if (lastMessage != null) {
-            participantId = lastMessage.getSenderId().equals(userId)
-                    ? lastMessage.getReceiverId()
-                    : lastMessage.getSenderId();
+        var messages = messageService.getMessages(matchId, 50, 0);
+        if (!messages.isEmpty()) {
+            participantId = messages.stream()
+                    .map(MessageResponse::getSenderId)
+                    .filter(senderId -> !senderId.equals(userId))
+                    .findFirst()
+                    .orElse(null);
         }
+        // TODO: For production, get participant info from Match Service
 
         return ConversationResponse.builder()
                 .id(matchId)

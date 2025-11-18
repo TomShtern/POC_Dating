@@ -20,7 +20,8 @@ import java.util.UUID;
 @Table(name = "users", indexes = {
     @Index(name = "idx_users_email", columnList = "email"),
     @Index(name = "idx_users_username", columnList = "username"),
-    @Index(name = "idx_users_status", columnList = "status")
+    @Index(name = "idx_users_status", columnList = "status"),
+    @Index(name = "idx_users_created_at", columnList = "created_at")
 })
 @Data
 @NoArgsConstructor

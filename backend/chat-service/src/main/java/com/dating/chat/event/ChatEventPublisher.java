@@ -24,15 +24,20 @@ public class ChatEventPublisher {
 
     /**
      * Publish event when a message is sent.
+     * Note: The receiverId is not stored in Message entity.
+     * TODO: For proper notifications, look up match participants to get receiverId.
      *
      * @param message The sent message
      */
     public void publishMessageSent(Message message) {
+        // Note: receiverId is null because Message entity doesn't store it
+        // The receiver is implicitly the other participant in the match
+        // Notification service would need to look up match participants
         MessageSentEvent event = MessageSentEvent.create(
                 message.getId(),
                 message.getMatchId(),
                 message.getSenderId(),
-                message.getReceiverId(),
+                null, // receiverId - not stored in Message, derive from match
                 message.getContent()
         );
 

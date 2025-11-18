@@ -18,10 +18,9 @@ import java.util.UUID;
 @Entity
 @Table(name = "messages", indexes = {
     @Index(name = "idx_messages_match_id", columnList = "match_id"),
-    @Index(name = "idx_messages_sender_id", columnList = "sender_id"),
-    @Index(name = "idx_messages_receiver_id", columnList = "receiver_id"),
-    @Index(name = "idx_messages_match_created", columnList = "match_id, created_at"),
-    @Index(name = "idx_messages_status", columnList = "status")
+    @Index(name = "idx_messages_sender", columnList = "sender_id"),
+    @Index(name = "idx_messages_status", columnList = "status"),
+    @Index(name = "idx_messages_created", columnList = "created_at")
 })
 @Data
 @NoArgsConstructor
@@ -44,12 +43,6 @@ public class Message {
      */
     @Column(name = "sender_id", nullable = false)
     private UUID senderId;
-
-    /**
-     * ID of the user who receives the message.
-     */
-    @Column(name = "receiver_id", nullable = false)
-    private UUID receiverId;
 
     /**
      * Message content.

@@ -19,7 +19,8 @@ import java.util.UUID;
 @Table(name = "swipes", indexes = {
     @Index(name = "idx_swipes_user_id", columnList = "user_id"),
     @Index(name = "idx_swipes_target_user_id", columnList = "target_user_id"),
-    @Index(name = "idx_swipes_user_created", columnList = "user_id, created_at")
+    @Index(name = "idx_swipes_user_created", columnList = "user_id, created_at"),
+    @Index(name = "idx_swipes_created_at", columnList = "created_at")
 }, uniqueConstraints = {
     @UniqueConstraint(name = "uk_swipes_user_target", columnNames = {"user_id", "target_user_id"})
 })

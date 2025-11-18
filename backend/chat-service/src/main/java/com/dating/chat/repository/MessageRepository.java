@@ -36,27 +36,34 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
 
     /**
      * Count unread messages for a user in a specific conversation.
+     * Unread messages are those sent by the OTHER user (not the current user).
      *
      * @param matchId Match/conversation ID
-     * @param receiverId The user who should receive the messages
+     * @param userId The current user (receiver of messages from others)
      * @return Count of unread messages
      */
     @Query("SELECT COUNT(m) FROM Message m WHERE m.matchId = :matchId " +
-           "AND m.receiverId = :receiverId AND m.status != 'READ' " +
+           "AND m.senderId != :userId AND m.status != 'READ' " +
            "AND m.deletedAt IS NULL")
-    long countUnreadByMatchIdAndReceiverId(
+    long countUnreadByMatchIdAndUserId(
             @Param("matchId") UUID matchId,
-            @Param("receiverId") UUID receiverId);
+            @Param("userId") UUID userId);
 
     /**
      * Count total unread messages for a user across all conversations.
+     * Since we don't store receiverId, this counts messages where the user is NOT the sender.
+     * Note: This requires knowing which matchIds the user is a participant of.
+     * For a proper implementation, we need to join with match participants data.
      *
-     * @param receiverId The user who should receive the messages
+     * @param userId The current user
+     * @param matchIds List of match IDs the user participates in
      * @return Count of unread messages
      */
-    @Query("SELECT COUNT(m) FROM Message m WHERE m.receiverId = :receiverId " +
-           "AND m.status != 'READ' AND m.deletedAt IS NULL")
-    long countUnreadByReceiverId(@Param("receiverId") UUID receiverId);
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.matchId IN :matchIds " +
+           "AND m.senderId != :userId AND m.status != 'READ' AND m.deletedAt IS NULL")
+    long countUnreadByUserIdAndMatchIds(
+            @Param("userId") UUID userId,
+            @Param("matchIds") List<UUID> matchIds);
 
     /**
      * Find the last message in a conversation.
@@ -69,31 +76,33 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     Message findLastMessageByMatchId(@Param("matchId") UUID matchId);
 
     /**
-     * Find all match IDs where a user has messages (for conversation list).
+     * Find all match IDs where a user has sent messages.
+     * Note: Without receiverId stored, this only finds conversations where the user sent at least one message.
+     * TODO: For a complete conversation list, match participant data should be fetched from Match Service.
      *
      * @param userId User ID
      * @return List of match IDs
      */
     @Query("SELECT DISTINCT m.matchId FROM Message m " +
-           "WHERE (m.senderId = :userId OR m.receiverId = :userId) " +
-           "AND m.deletedAt IS NULL")
+           "WHERE m.senderId = :userId AND m.deletedAt IS NULL")
     List<UUID> findMatchIdsByUserId(@Param("userId") UUID userId);
 
     /**
      * Mark all messages as read for a user in a conversation.
+     * Marks messages sent by OTHERS (not the current user) as read.
      *
      * @param matchId Match/conversation ID
-     * @param receiverId User who reads the messages
+     * @param userId User who is reading the messages (marks messages from others as read)
      * @param readAt Timestamp when marked as read
      * @return Number of updated messages
      */
     @Modifying
     @Query("UPDATE Message m SET m.status = 'READ', m.readAt = :readAt " +
-           "WHERE m.matchId = :matchId AND m.receiverId = :receiverId " +
+           "WHERE m.matchId = :matchId AND m.senderId != :userId " +
            "AND m.status != 'READ' AND m.deletedAt IS NULL")
     int markAllAsRead(
             @Param("matchId") UUID matchId,
-            @Param("receiverId") UUID receiverId,
+            @Param("userId") UUID userId,
             @Param("readAt") Instant readAt);
 
     /**
@@ -112,6 +121,15 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
      * @return true if messages exist
      */
     boolean existsByMatchId(UUID matchId);
+
+    /**
+     * Count total messages in a conversation.
+     *
+     * @param matchId Match/conversation ID
+     * @return Total count of messages
+     */
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.matchId = :matchId AND m.deletedAt IS NULL")
+    long countByMatchId(@Param("matchId") UUID matchId);
 
     /**
      * Find messages created after a specific time in a conversation.

@@ -92,11 +92,12 @@ public class ChatWebSocketHandler {
         try {
             MessageResponse response = chatService.sendWebSocketMessage(chatMessage);
 
+            // Use receiverId from the incoming chatMessage since MessageResponse doesn't store it
             return ChatMessage.messageReceived(
                     response.getId(),
                     response.getConversationId(),
                     response.getSenderId(),
-                    response.getReceiverId(),
+                    chatMessage.getReceiverId(), // receiverId from WebSocket message
                     response.getContent(),
                     response.getStatus()
             );

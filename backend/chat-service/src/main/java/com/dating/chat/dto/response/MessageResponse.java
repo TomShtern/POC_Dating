@@ -34,9 +34,9 @@ public class MessageResponse {
     private UUID senderId;
 
     /**
-     * Receiver user ID.
+     * Sender's display name.
      */
-    private UUID receiverId;
+    private String senderName;
 
     /**
      * Message content.

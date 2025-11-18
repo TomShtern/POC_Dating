@@ -23,14 +23,12 @@ class MessageMapperTest {
         UUID messageId = UUID.randomUUID();
         UUID conversationId = UUID.randomUUID();
         UUID senderId = UUID.randomUUID();
-        UUID receiverId = UUID.randomUUID();
         Instant now = Instant.now();
 
         Message message = Message.builder()
                 .id(messageId)
                 .matchId(conversationId)
                 .senderId(senderId)
-                .receiverId(receiverId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
                 .createdAt(now)
@@ -46,7 +44,6 @@ class MessageMapperTest {
         assertEquals(messageId, response.getId());
         assertEquals(conversationId, response.getConversationId());
         assertEquals(senderId, response.getSenderId());
-        assertEquals(receiverId, response.getReceiverId());
         assertEquals("Hello!", response.getContent());
         assertEquals(MessageStatus.SENT, response.getStatus());
         assertEquals(now, response.getSentAt());
@@ -65,7 +62,6 @@ class MessageMapperTest {
                 .id(UUID.randomUUID())
                 .matchId(UUID.randomUUID())
                 .senderId(UUID.randomUUID())
-                .receiverId(UUID.randomUUID())
                 .content("Test")
                 .status(MessageStatus.READ)
                 .createdAt(sentAt)

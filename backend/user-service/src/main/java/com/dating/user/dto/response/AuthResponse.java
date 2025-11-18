@@ -5,8 +5,11 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.UUID;
+
 /**
  * Response DTO for authentication operations (login, register, refresh).
+ * Flat structure matching API specification.
  */
 @Data
 @NoArgsConstructor
@@ -14,21 +17,24 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AuthResponse {
 
-    private UserResponse user;
-    private String accessToken;
+    private UUID userId;
+    private String email;
+    private String username;
+    private String token;
     private String refreshToken;
-    private String tokenType;
     private Long expiresIn;
 
     /**
-     * Create an AuthResponse with default token type.
+     * Create an AuthResponse with user details and tokens.
      */
-    public static AuthResponse of(UserResponse user, String accessToken, String refreshToken, Long expiresIn) {
+    public static AuthResponse of(UUID userId, String email, String username,
+                                   String token, String refreshToken, Long expiresIn) {
         return AuthResponse.builder()
-                .user(user)
-                .accessToken(accessToken)
+                .userId(userId)
+                .email(email)
+                .username(username)
+                .token(token)
                 .refreshToken(refreshToken)
-                .tokenType("Bearer")
                 .expiresIn(expiresIn)
                 .build();
     }

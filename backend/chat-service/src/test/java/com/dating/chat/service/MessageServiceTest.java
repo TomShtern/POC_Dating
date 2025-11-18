@@ -1,6 +1,7 @@
 package com.dating.chat.service;
 
 import com.dating.chat.dto.request.SendMessageRequest;
+import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.event.ChatEventPublisher;
 import com.dating.chat.mapper.MessageMapper;
@@ -47,7 +48,7 @@ class MessageServiceTest {
     private MessageService messageService;
 
     private UUID senderId;
-    private UUID receiverId;
+    private UUID otherUserId;
     private UUID conversationId;
     private UUID messageId;
     private Message testMessage;
@@ -56,7 +57,7 @@ class MessageServiceTest {
     @BeforeEach
     void setUp() {
         senderId = UUID.randomUUID();
-        receiverId = UUID.randomUUID();
+        otherUserId = UUID.randomUUID();
         conversationId = UUID.randomUUID();
         messageId = UUID.randomUUID();
 
@@ -64,7 +65,6 @@ class MessageServiceTest {
                 .id(messageId)
                 .matchId(conversationId)
                 .senderId(senderId)
-                .receiverId(receiverId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
                 .createdAt(Instant.now())
@@ -74,7 +74,6 @@ class MessageServiceTest {
                 .id(messageId)
                 .conversationId(conversationId)
                 .senderId(senderId)
-                .receiverId(receiverId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
                 .sentAt(Instant.now())
@@ -89,14 +88,13 @@ class MessageServiceTest {
         when(messageMapper.toMessageResponse(testMessage)).thenReturn(testMessageResponse);
 
         // Act
-        MessageResponse response = messageService.sendMessage(senderId, receiverId, request);
+        MessageResponse response = messageService.sendMessage(senderId, request);
 
         // Assert
         assertNotNull(response);
         assertEquals(messageId, response.getId());
         assertEquals(conversationId, response.getConversationId());
         assertEquals(senderId, response.getSenderId());
-        assertEquals(receiverId, response.getReceiverId());
         assertEquals("Hello!", response.getContent());
         assertEquals(MessageStatus.SENT, response.getStatus());
 
@@ -114,13 +112,12 @@ class MessageServiceTest {
         when(messageMapper.toMessageResponse(any())).thenReturn(testMessageResponse);
 
         // Act
-        messageService.sendMessage(senderId, receiverId, request);
+        messageService.sendMessage(senderId, request);
 
         // Assert
         Message savedMessage = messageCaptor.getValue();
         assertEquals(conversationId, savedMessage.getMatchId());
         assertEquals(senderId, savedMessage.getSenderId());
-        assertEquals(receiverId, savedMessage.getReceiverId());
         assertEquals("Test message", savedMessage.getContent());
     }
 
@@ -140,6 +137,46 @@ class MessageServiceTest {
         assertNotNull(responses);
         assertEquals(1, responses.size());
         assertEquals(messageId, responses.get(0).getId());
+    }
+
+    @Test
+    void testGetMessagesWithMetadata_Success() {
+        // Arrange
+        List<Message> messages = List.of(testMessage);
+        Page<Message> page = new PageImpl<>(messages);
+        when(messageRepository.findByMatchIdOrderByCreatedAtDesc(eq(conversationId), any(PageRequest.class)))
+                .thenReturn(page);
+        when(messageMapper.toMessageResponse(testMessage)).thenReturn(testMessageResponse);
+        when(messageRepository.countByMatchId(conversationId)).thenReturn(10L);
+
+        // Act
+        MessageListResponse response = messageService.getMessagesWithMetadata(conversationId, 50, 0);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(conversationId, response.getConversationId());
+        assertEquals(1, response.getMessages().size());
+        assertEquals(10, response.getTotal());
+        assertTrue(response.isHasMore());
+    }
+
+    @Test
+    void testGetMessagesWithMetadata_NoMoreMessages() {
+        // Arrange
+        List<Message> messages = List.of(testMessage);
+        Page<Message> page = new PageImpl<>(messages);
+        when(messageRepository.findByMatchIdOrderByCreatedAtDesc(eq(conversationId), any(PageRequest.class)))
+                .thenReturn(page);
+        when(messageMapper.toMessageResponse(testMessage)).thenReturn(testMessageResponse);
+        when(messageRepository.countByMatchId(conversationId)).thenReturn(1L);
+
+        // Act
+        MessageListResponse response = messageService.getMessagesWithMetadata(conversationId, 50, 0);
+
+        // Assert
+        assertNotNull(response);
+        assertEquals(1, response.getTotal());
+        assertFalse(response.isHasMore());
     }
 
     @Test
@@ -170,25 +207,25 @@ class MessageServiceTest {
     @Test
     void testMarkAllAsRead_Success() {
         // Arrange
-        when(messageRepository.markAllAsRead(eq(conversationId), eq(receiverId), any(Instant.class)))
+        when(messageRepository.markAllAsRead(eq(conversationId), eq(otherUserId), any(Instant.class)))
                 .thenReturn(5);
 
         // Act
-        int count = messageService.markAllAsRead(conversationId, receiverId);
+        int count = messageService.markAllAsRead(conversationId, otherUserId);
 
         // Assert
         assertEquals(5, count);
-        verify(eventPublisher, times(1)).publishMessagesRead(conversationId, receiverId, 5);
+        verify(eventPublisher, times(1)).publishMessagesRead(conversationId, otherUserId, 5);
     }
 
     @Test
     void testMarkAllAsRead_NoMessages() {
         // Arrange
-        when(messageRepository.markAllAsRead(eq(conversationId), eq(receiverId), any(Instant.class)))
+        when(messageRepository.markAllAsRead(eq(conversationId), eq(otherUserId), any(Instant.class)))
                 .thenReturn(0);
 
         // Act
-        int count = messageService.markAllAsRead(conversationId, receiverId);
+        int count = messageService.markAllAsRead(conversationId, otherUserId);
 
         // Assert
         assertEquals(0, count);
@@ -198,11 +235,11 @@ class MessageServiceTest {
     @Test
     void testCountUnread_Success() {
         // Arrange
-        when(messageRepository.countUnreadByMatchIdAndReceiverId(conversationId, receiverId))
+        when(messageRepository.countUnreadByMatchIdAndUserId(conversationId, otherUserId))
                 .thenReturn(3L);
 
         // Act
-        long count = messageService.countUnread(conversationId, receiverId);
+        long count = messageService.countUnread(conversationId, otherUserId);
 
         // Assert
         assertEquals(3L, count);
@@ -211,10 +248,12 @@ class MessageServiceTest {
     @Test
     void testCountTotalUnread_Success() {
         // Arrange
-        when(messageRepository.countUnreadByReceiverId(receiverId)).thenReturn(10L);
+        List<UUID> matchIds = List.of(conversationId);
+        when(messageRepository.findMatchIdsByUserId(otherUserId)).thenReturn(matchIds);
+        when(messageRepository.countUnreadByUserIdAndMatchIds(otherUserId, matchIds)).thenReturn(10L);
 
         // Act
-        long count = messageService.countTotalUnread(receiverId);
+        long count = messageService.countTotalUnread(otherUserId);
 
         // Assert
         assertEquals(10L, count);

@@ -2,6 +2,8 @@ package com.dating.chat.service;
 
 import com.dating.chat.dto.request.SendMessageRequest;
 import com.dating.chat.dto.response.ConversationResponse;
+import com.dating.chat.dto.response.ConversationsListResponse;
+import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.dto.websocket.ChatMessage;
 import com.dating.chat.dto.websocket.TypingIndicator;
@@ -33,16 +35,18 @@ public class ChatService {
      * Also broadcasts to WebSocket if receiver is online.
      *
      * @param senderId Sender user ID
-     * @param receiverId Receiver user ID
      * @param request Message request
      * @return Created message response
      */
-    public MessageResponse sendMessage(UUID senderId, UUID receiverId, SendMessageRequest request) {
+    public MessageResponse sendMessage(UUID senderId, SendMessageRequest request) {
         // Save message
-        MessageResponse message = messageService.sendMessage(senderId, receiverId, request);
+        MessageResponse message = messageService.sendMessage(senderId, request);
+
+        // Get the other participant for WebSocket broadcast
+        UUID receiverId = getOtherParticipant(request.conversationId(), senderId);
 
         // Broadcast via WebSocket
-        broadcastNewMessage(message);
+        broadcastNewMessage(message, receiverId);
 
         return message;
     }
@@ -59,11 +63,7 @@ public class ChatService {
                 chatMessage.getContent()
         );
 
-        return sendMessage(
-                chatMessage.getSenderId(),
-                chatMessage.getReceiverId(),
-                request
-        );
+        return sendMessage(chatMessage.getSenderId(), request);
     }
 
     /**
@@ -71,10 +71,14 @@ public class ChatService {
      *
      * @param userId User ID
      * @param limit Maximum number
-     * @return List of conversations
+     * @return Wrapped list of conversations with total count
      */
-    public List<ConversationResponse> getConversations(UUID userId, int limit) {
-        return conversationService.getConversations(userId, limit);
+    public ConversationsListResponse getConversations(UUID userId, int limit) {
+        List<ConversationResponse> conversations = conversationService.getConversations(userId, limit);
+        return ConversationsListResponse.builder()
+                .conversations(conversations)
+                .total(conversations.size())
+                .build();
     }
 
     /**
@@ -83,10 +87,10 @@ public class ChatService {
      * @param conversationId Conversation ID
      * @param limit Number of messages
      * @param offset Offset
-     * @return List of messages
+     * @return MessageListResponse with messages and metadata
      */
-    public List<MessageResponse> getMessages(UUID conversationId, int limit, int offset) {
-        return messageService.getMessages(conversationId, limit, offset);
+    public MessageListResponse getMessages(UUID conversationId, int limit, int offset) {
+        return messageService.getMessagesWithMetadata(conversationId, limit, offset);
     }
 
     /**
@@ -129,13 +133,19 @@ public class ChatService {
      * Broadcast a new message to participants via WebSocket.
      *
      * @param message Message to broadcast
+     * @param receiverId The receiver user ID
      */
-    private void broadcastNewMessage(MessageResponse message) {
+    private void broadcastNewMessage(MessageResponse message, UUID receiverId) {
+        if (receiverId == null) {
+            log.warn("Cannot broadcast message {} - receiver unknown", message.getId());
+            return;
+        }
+
         ChatMessage chatMessage = ChatMessage.messageReceived(
                 message.getId(),
                 message.getConversationId(),
                 message.getSenderId(),
-                message.getReceiverId(),
+                receiverId,
                 message.getContent(),
                 message.getStatus()
         );
@@ -144,13 +154,13 @@ public class ChatService {
         String destination = "/queue/messages";
 
         // Notify receiver
-        if (sessionManager.isUserOnline(message.getReceiverId())) {
+        if (sessionManager.isUserOnline(receiverId)) {
             messagingTemplate.convertAndSendToUser(
-                    message.getReceiverId().toString(),
+                    receiverId.toString(),
                     destination,
                     chatMessage
             );
-            log.debug("Broadcasted message {} to user {}", message.getId(), message.getReceiverId());
+            log.debug("Broadcasted message {} to user {}", message.getId(), receiverId);
         }
 
         // Also notify sender (for multi-device sync)
@@ -192,22 +202,22 @@ public class ChatService {
 
     /**
      * Get the other participant in a conversation.
-     * This is a simplified version - in production, would need to look up the match.
+     * This looks at messages in the conversation to find a sender other than the current user.
+     * TODO: For production, this should look up match participants from Match Service.
      *
      * @param conversationId Conversation ID
      * @param userId Known user ID
-     * @return Other participant ID
+     * @return Other participant ID, or null if not determinable
      */
     private UUID getOtherParticipant(UUID conversationId, UUID userId) {
-        // In a real implementation, we would look up the match to get both user IDs
-        // For this POC, we'll need to get this from the last message
-        MessageResponse lastMessage = messageService.getLastMessage(conversationId);
-        if (lastMessage == null) {
-            return null;
-        }
+        // Look at messages to find the other participant
+        // This works if the other participant has sent at least one message
+        var messages = messageService.getMessages(conversationId, 50, 0);
 
-        return lastMessage.getSenderId().equals(userId)
-                ? lastMessage.getReceiverId()
-                : lastMessage.getSenderId();
+        return messages.stream()
+                .map(MessageResponse::getSenderId)
+                .filter(senderId -> !senderId.equals(userId))
+                .findFirst()
+                .orElse(null);
     }
 }

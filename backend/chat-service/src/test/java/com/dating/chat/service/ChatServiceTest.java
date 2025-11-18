@@ -2,6 +2,8 @@ package com.dating.chat.service;
 
 import com.dating.chat.dto.request.SendMessageRequest;
 import com.dating.chat.dto.response.ConversationResponse;
+import com.dating.chat.dto.response.ConversationsListResponse;
+import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.dto.websocket.ChatMessage;
 import com.dating.chat.dto.websocket.TypingIndicator;
@@ -50,6 +52,7 @@ class ChatServiceTest {
     private UUID conversationId;
     private UUID messageId;
     private MessageResponse testMessageResponse;
+    private MessageResponse otherUserMessageResponse;
 
     @BeforeEach
     void setUp() {
@@ -62,10 +65,19 @@ class ChatServiceTest {
                 .id(messageId)
                 .conversationId(conversationId)
                 .senderId(senderId)
-                .receiverId(receiverId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
                 .sentAt(Instant.now())
+                .build();
+
+        // Message from the other user (to help determine participant)
+        otherUserMessageResponse = MessageResponse.builder()
+                .id(UUID.randomUUID())
+                .conversationId(conversationId)
+                .senderId(receiverId)
+                .content("Hi there!")
+                .status(MessageStatus.SENT)
+                .sentAt(Instant.now().minusSeconds(60))
                 .build();
     }
 
@@ -73,29 +85,35 @@ class ChatServiceTest {
     void testSendMessage_Success() {
         // Arrange
         SendMessageRequest request = new SendMessageRequest(conversationId, "Hello!");
-        when(messageService.sendMessage(senderId, receiverId, request)).thenReturn(testMessageResponse);
+        when(messageService.sendMessage(senderId, request)).thenReturn(testMessageResponse);
+        // Return a message from the other user to determine receiver
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
         when(sessionManager.isUserOnline(receiverId)).thenReturn(false);
         when(sessionManager.isUserOnline(senderId)).thenReturn(false);
 
         // Act
-        MessageResponse response = chatService.sendMessage(senderId, receiverId, request);
+        MessageResponse response = chatService.sendMessage(senderId, request);
 
         // Assert
         assertNotNull(response);
         assertEquals(messageId, response.getId());
-        verify(messageService, times(1)).sendMessage(senderId, receiverId, request);
+        verify(messageService, times(1)).sendMessage(senderId, request);
     }
 
     @Test
     void testSendMessage_BroadcastsToOnlineReceiver() {
         // Arrange
         SendMessageRequest request = new SendMessageRequest(conversationId, "Hello!");
-        when(messageService.sendMessage(senderId, receiverId, request)).thenReturn(testMessageResponse);
+        when(messageService.sendMessage(senderId, request)).thenReturn(testMessageResponse);
+        // Return a message from the other user to determine receiver
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
         when(sessionManager.isUserOnline(receiverId)).thenReturn(true);
         when(sessionManager.isUserOnline(senderId)).thenReturn(false);
 
         // Act
-        chatService.sendMessage(senderId, receiverId, request);
+        chatService.sendMessage(senderId, request);
 
         // Assert
         verify(messagingTemplate, times(1)).convertAndSendToUser(
@@ -109,9 +127,11 @@ class ChatServiceTest {
     void testSendWebSocketMessage_Success() {
         // Arrange
         ChatMessage chatMessage = ChatMessage.newMessage(conversationId, senderId, receiverId, "Hello!");
-        SendMessageRequest expectedRequest = new SendMessageRequest(conversationId, "Hello!");
-        when(messageService.sendMessage(eq(senderId), eq(receiverId), any(SendMessageRequest.class)))
+        when(messageService.sendMessage(eq(senderId), any(SendMessageRequest.class)))
                 .thenReturn(testMessageResponse);
+        // Return a message from the other user to determine receiver
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
         when(sessionManager.isUserOnline(any())).thenReturn(false);
 
         // Act
@@ -131,32 +151,44 @@ class ChatServiceTest {
         when(conversationService.getConversations(senderId, 20)).thenReturn(conversations);
 
         // Act
-        List<ConversationResponse> result = chatService.getConversations(senderId, 20);
+        ConversationsListResponse result = chatService.getConversations(senderId, 20);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(1, result.getConversations().size());
+        assertEquals(1, result.getTotal());
     }
 
     @Test
     void testGetMessages_Success() {
         // Arrange
         List<MessageResponse> messages = List.of(testMessageResponse);
-        when(messageService.getMessages(conversationId, 50, 0)).thenReturn(messages);
+        MessageListResponse expectedResponse = MessageListResponse.builder()
+                .conversationId(conversationId)
+                .messages(messages)
+                .total(1)
+                .hasMore(false)
+                .build();
+        when(messageService.getMessagesWithMetadata(conversationId, 50, 0)).thenReturn(expectedResponse);
 
         // Act
-        List<MessageResponse> result = chatService.getMessages(conversationId, 50, 0);
+        MessageListResponse result = chatService.getMessages(conversationId, 50, 0);
 
         // Assert
         assertNotNull(result);
-        assertEquals(1, result.size());
+        assertEquals(1, result.getMessages().size());
+        assertEquals(conversationId, result.getConversationId());
+        assertEquals(1, result.getTotal());
+        assertFalse(result.isHasMore());
     }
 
     @Test
     void testMarkAsRead_Success() {
         // Arrange
         when(messageService.markAllAsRead(conversationId, receiverId)).thenReturn(5);
-        when(messageService.getLastMessage(conversationId)).thenReturn(testMessageResponse);
+        // Return messages to determine other participant
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
         when(sessionManager.isUserOnline(senderId)).thenReturn(false);
 
         // Act
@@ -171,7 +203,9 @@ class ChatServiceTest {
     void testMarkAsRead_BroadcastsToSender() {
         // Arrange
         when(messageService.markAllAsRead(conversationId, receiverId)).thenReturn(3);
-        when(messageService.getLastMessage(conversationId)).thenReturn(testMessageResponse);
+        // Return messages to determine other participant
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
         when(sessionManager.isUserOnline(senderId)).thenReturn(true);
 
         // Act
@@ -201,7 +235,9 @@ class ChatServiceTest {
     void testHandleTypingIndicator_BroadcastsToOtherParticipant() {
         // Arrange
         TypingIndicator indicator = TypingIndicator.start(conversationId, senderId);
-        when(messageService.getLastMessage(conversationId)).thenReturn(testMessageResponse);
+        // Return messages to determine other participant
+        when(messageService.getMessages(conversationId, 50, 0))
+                .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
 
         // Act
         chatService.handleTypingIndicator(indicator);

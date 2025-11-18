@@ -2,6 +2,7 @@ package com.dating.chat.service;
 
 import com.dating.chat.config.CacheConfig;
 import com.dating.chat.dto.request.SendMessageRequest;
+import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.event.ChatEventPublisher;
 import com.dating.chat.mapper.MessageMapper;
@@ -37,27 +38,26 @@ public class MessageService {
 
     /**
      * Send a message.
+     * Note: The receiver is implicitly the other participant in the match (not stored).
      *
      * @param senderId ID of the sender
-     * @param receiverId ID of the receiver
+     * @param matchId Match/conversation ID
      * @param request Message request
      * @return Created message response
      */
     @Caching(evict = {
         @CacheEvict(value = CacheConfig.CONVERSATION_MESSAGES_CACHE, key = "#request.conversationId()"),
         @CacheEvict(value = CacheConfig.CONVERSATIONS_CACHE, key = "#senderId"),
-        @CacheEvict(value = CacheConfig.CONVERSATIONS_CACHE, key = "#receiverId"),
-        @CacheEvict(value = CacheConfig.UNREAD_COUNT_CACHE, key = "#receiverId")
+        @CacheEvict(value = CacheConfig.UNREAD_COUNT_CACHE, allEntries = true)
     })
     @Transactional
-    public MessageResponse sendMessage(UUID senderId, UUID receiverId, SendMessageRequest request) {
-        log.debug("Sending message from {} to {} in conversation {}",
-                senderId, receiverId, request.conversationId());
+    public MessageResponse sendMessage(UUID senderId, SendMessageRequest request) {
+        log.debug("Sending message from {} in conversation {}",
+                senderId, request.conversationId());
 
         Message message = Message.builder()
                 .matchId(request.conversationId())
                 .senderId(senderId)
-                .receiverId(receiverId)
                 .content(request.content())
                 .build();
 
@@ -95,6 +95,36 @@ public class MessageService {
     }
 
     /**
+     * Get messages for a conversation with metadata.
+     *
+     * @param conversationId Match/conversation ID
+     * @param limit Number of messages to return
+     * @param offset Offset for pagination
+     * @return MessageListResponse with messages and metadata
+     */
+    @Transactional(readOnly = true)
+    public MessageListResponse getMessagesWithMetadata(UUID conversationId, int limit, int offset) {
+        log.debug("Getting messages with metadata for conversation {}, limit={}, offset={}",
+                conversationId, limit, offset);
+
+        // Get messages
+        List<MessageResponse> messages = getMessages(conversationId, limit, offset);
+
+        // Get total count
+        long totalCount = messageRepository.countByMatchId(conversationId);
+
+        // Calculate hasMore
+        boolean hasMore = (offset + messages.size()) < totalCount;
+
+        return MessageListResponse.builder()
+                .conversationId(conversationId)
+                .messages(messages)
+                .total((int) totalCount)
+                .hasMore(hasMore)
+                .build();
+    }
+
+    /**
      * Get a message by ID.
      *
      * @param messageId Message ID
@@ -113,25 +143,26 @@ public class MessageService {
 
     /**
      * Mark all messages as read in a conversation.
+     * This marks messages sent by others (not the current user) as read.
      *
      * @param conversationId Match/conversation ID
-     * @param receiverId User marking messages as read
+     * @param userId User marking messages as read
      * @return Number of messages marked as read
      */
     @Caching(evict = {
         @CacheEvict(value = CacheConfig.CONVERSATION_MESSAGES_CACHE, key = "#conversationId"),
-        @CacheEvict(value = CacheConfig.UNREAD_COUNT_CACHE, key = "#receiverId")
+        @CacheEvict(value = CacheConfig.UNREAD_COUNT_CACHE, allEntries = true)
     })
     @Transactional
-    public int markAllAsRead(UUID conversationId, UUID receiverId) {
+    public int markAllAsRead(UUID conversationId, UUID userId) {
         log.debug("Marking all messages as read in conversation {} for user {}",
-                conversationId, receiverId);
+                conversationId, userId);
 
-        int updated = messageRepository.markAllAsRead(conversationId, receiverId, Instant.now());
+        int updated = messageRepository.markAllAsRead(conversationId, userId, Instant.now());
         log.info("Marked {} messages as read in conversation {}", updated, conversationId);
 
         if (updated > 0) {
-            eventPublisher.publishMessagesRead(conversationId, receiverId, updated);
+            eventPublisher.publishMessagesRead(conversationId, userId, updated);
         }
 
         return updated;
@@ -139,6 +170,7 @@ public class MessageService {
 
     /**
      * Count unread messages for a user in a conversation.
+     * Counts messages sent by others (not the current user) that are not read.
      *
      * @param conversationId Match/conversation ID
      * @param userId User ID
@@ -148,18 +180,25 @@ public class MessageService {
                key = "#conversationId + '-' + #userId")
     @Transactional(readOnly = true)
     public long countUnread(UUID conversationId, UUID userId) {
-        return messageRepository.countUnreadByMatchIdAndReceiverId(conversationId, userId);
+        return messageRepository.countUnreadByMatchIdAndUserId(conversationId, userId);
     }
 
     /**
-     * Count total unread messages for a user.
+     * Count total unread messages for a user across all their conversations.
+     * Note: This requires knowing all matchIds the user participates in.
+     * TODO: For proper implementation, get matchIds from Match Service.
      *
      * @param userId User ID
      * @return Total number of unread messages
      */
     @Transactional(readOnly = true)
     public long countTotalUnread(UUID userId) {
-        return messageRepository.countUnreadByReceiverId(userId);
+        // Get all matchIds where user has sent messages
+        List<UUID> matchIds = messageRepository.findMatchIdsByUserId(userId);
+        if (matchIds.isEmpty()) {
+            return 0L;
+        }
+        return messageRepository.countUnreadByUserIdAndMatchIds(userId, matchIds);
     }
 
     /**

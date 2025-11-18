@@ -1,14 +1,13 @@
 package com.dating.chat.controller;
 
-import com.dating.chat.dto.response.ConversationResponse;
-import com.dating.chat.dto.response.MessageResponse;
+import com.dating.chat.dto.response.ConversationsListResponse;
+import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
@@ -28,18 +27,18 @@ public class ConversationController {
      *
      * @param userId User ID from X-User-Id header (set by API Gateway)
      * @param limit Maximum number of conversations (default 20)
-     * @return List of conversations
+     * @return Wrapped list of conversations with total count
      */
     @GetMapping
-    public ResponseEntity<List<ConversationResponse>> getConversations(
+    public ResponseEntity<ConversationsListResponse> getConversations(
             @RequestHeader("X-User-Id") UUID userId,
             @RequestParam(defaultValue = "20") int limit) {
 
         log.debug("Get conversations request for user {}, limit={}", userId, limit);
 
-        List<ConversationResponse> conversations = chatService.getConversations(userId, limit);
+        ConversationsListResponse response = chatService.getConversations(userId, limit);
 
-        return ResponseEntity.ok(conversations);
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -49,10 +48,10 @@ public class ConversationController {
      * @param userId User ID from X-User-Id header
      * @param limit Maximum number of messages (default 50)
      * @param offset Offset for pagination (default 0)
-     * @return List of messages
+     * @return Messages with metadata
      */
     @GetMapping("/{conversationId}/messages")
-    public ResponseEntity<List<MessageResponse>> getMessages(
+    public ResponseEntity<MessageListResponse> getMessages(
             @PathVariable UUID conversationId,
             @RequestHeader("X-User-Id") UUID userId,
             @RequestParam(defaultValue = "50") int limit,
@@ -61,9 +60,9 @@ public class ConversationController {
         log.debug("Get messages request for conversation {}, user {}, limit={}, offset={}",
                 conversationId, userId, limit, offset);
 
-        List<MessageResponse> messages = chatService.getMessages(conversationId, limit, offset);
+        MessageListResponse response = chatService.getMessages(conversationId, limit, offset);
 
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(response);
     }
 
     /**

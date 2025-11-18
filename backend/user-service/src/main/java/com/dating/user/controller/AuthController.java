@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -70,14 +71,14 @@ public class AuthController {
      * Logout user by revoking all refresh tokens.
      *
      * @param request HTTP request containing user ID
-     * @return 204 No Content
+     * @return 200 OK with success message
      */
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(HttpServletRequest request) {
+    public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
         UUID userId = (UUID) request.getAttribute("userId");
         if (userId != null) {
             authService.logout(userId);
         }
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 }
