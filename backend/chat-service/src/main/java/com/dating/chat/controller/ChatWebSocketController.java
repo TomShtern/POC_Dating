@@ -9,6 +9,9 @@ import com.dating.chat.dto.websocket.TypingEvent;
 import com.dating.chat.dto.websocket.TypingIndicator;
 import com.dating.chat.security.StompPrincipal;
 import com.dating.chat.service.ChatMessageService;
+import com.dating.chat.service.IdempotencyService;
+import com.dating.chat.service.PresenceService;
+import com.dating.chat.service.PushNotificationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +48,9 @@ public class ChatWebSocketController {
 
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final IdempotencyService idempotencyService;
+    private final PresenceService presenceService;
+    private final PushNotificationService pushNotificationService;
 
     /**
      * Handle sending a chat message.
@@ -63,6 +69,15 @@ public class ChatWebSocketController {
         String senderName = getSenderName(principal);
 
         log.info("Message received: matchId={}, senderId={}", request.matchId(), senderId);
+
+        // Check for duplicate message using idempotency key
+        if (request.idempotencyKey() != null && !request.idempotencyKey().isEmpty()) {
+            if (!idempotencyService.checkAndSet(senderId.toString(), request.idempotencyKey())) {
+                log.warn("Duplicate message detected: userId={}, idempotencyKey={}",
+                        senderId, request.idempotencyKey());
+                return; // Silently ignore duplicate
+            }
+        }
 
         // Validate sender is part of this match
         if (!chatMessageService.isUserInMatch(senderId, request.matchId())) {
@@ -90,6 +105,14 @@ public class ChatWebSocketController {
                 savedMessage
         );
 
+        // Mark message as delivered if recipient is online
+        if (presenceService.isOnline(recipientId.toString())) {
+            chatMessageService.markMessageAsDelivered(savedMessage.messageId());
+        } else {
+            // Send push notification to offline user
+            pushNotificationService.sendMessageNotification(recipientId, savedMessage);
+        }
+
         // Send delivery confirmation back to sender
         messagingTemplate.convertAndSendToUser(
                 senderId.toString(),
@@ -101,7 +124,8 @@ public class ChatWebSocketController {
                 )
         );
 
-        log.info("Message delivered: messageId={}, to={}", savedMessage.messageId(), recipientId);
+        log.info("Message delivered: messageId={}, to={}, recipientOnline={}",
+                savedMessage.messageId(), recipientId, presenceService.isOnline(recipientId.toString()));
     }
 
     /**

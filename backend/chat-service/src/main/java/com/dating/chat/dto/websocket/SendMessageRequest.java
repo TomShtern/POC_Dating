@@ -19,5 +19,12 @@ public record SendMessageRequest(
         String content,
 
         @NotNull(message = "Message type is required")
-        MessageType type
+        MessageType type,
+
+        // Optional idempotency key to prevent duplicate message processing
+        @Size(max = 64, message = "Idempotency key cannot exceed 64 characters")
+        String idempotencyKey,
+
+        // Optional attachment ID for file attachments
+        UUID attachmentId
 ) {}

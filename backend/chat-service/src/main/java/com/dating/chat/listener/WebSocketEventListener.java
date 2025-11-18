@@ -1,5 +1,7 @@
 package com.dating.chat.listener;
 
+import com.dating.chat.security.StompPrincipal;
+import com.dating.chat.service.PresenceService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -15,11 +17,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
  * WebSocket Event Listener
  *
  * Handles WebSocket lifecycle events (connect, disconnect, subscribe).
- *
- * USE CASES:
- * - Track online users
- * - Clean up on disconnect
- * - Log for debugging
+ * Integrates with PresenceService for online/offline tracking.
  */
 @Component
 @RequiredArgsConstructor
@@ -27,6 +25,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 public class WebSocketEventListener {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final PresenceService presenceService;
 
     /**
      * Handle WebSocket connection event.
@@ -34,13 +33,24 @@ public class WebSocketEventListener {
     @EventListener
     public void handleConnect(SessionConnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        String userId = accessor.getUser() != null ? accessor.getUser().getName() : "unknown";
+        String userId = "unknown";
+        String username = "unknown";
         String sessionId = accessor.getSessionId();
+
+        if (accessor.getUser() instanceof StompPrincipal principal) {
+            userId = principal.userId();
+            username = principal.username();
+        } else if (accessor.getUser() != null) {
+            userId = accessor.getUser().getName();
+        }
 
         log.info("WebSocket connected: userId={}, sessionId={}", userId, sessionId);
 
-        // Future: Track user as online in Redis
-        // presenceService.setOnline(userId, sessionId);
+        // Track user as online in Redis
+        boolean wasOffline = presenceService.setOnline(userId, sessionId, username);
+        if (wasOffline) {
+            log.info("User came online: userId={}", userId);
+        }
     }
 
     /**
@@ -49,13 +59,24 @@ public class WebSocketEventListener {
     @EventListener
     public void handleDisconnect(SessionDisconnectEvent event) {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
-        String userId = accessor.getUser() != null ? accessor.getUser().getName() : "unknown";
+        String userId = "unknown";
         String sessionId = accessor.getSessionId();
 
-        log.info("WebSocket disconnected: userId={}, sessionId={}", userId, sessionId);
+        if (accessor.getUser() instanceof StompPrincipal principal) {
+            userId = principal.userId();
+        } else if (accessor.getUser() != null) {
+            userId = accessor.getUser().getName();
+        }
 
-        // Future: Track user as offline in Redis
-        // presenceService.setOffline(userId, sessionId);
+        // Track user as offline in Redis
+        boolean fullyOffline = presenceService.setOffline(userId, sessionId);
+
+        if (fullyOffline) {
+            log.info("User went offline: userId={}", userId);
+        } else {
+            log.debug("Session removed, user still online: userId={}, sessions={}",
+                    userId, presenceService.getSessionCount(userId));
+        }
     }
 
     /**
