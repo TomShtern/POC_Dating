@@ -83,4 +83,11 @@ public class MatchService {
 
         return matchClient.getMatch(matchId, "Bearer " + token);
     }
+
+    /**
+     * Get match details - alias for getMatch
+     */
+    public Match getMatchDetails(String matchId) {
+        return getMatch(matchId);
+    }
 }

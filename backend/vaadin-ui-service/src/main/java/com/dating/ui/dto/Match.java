@@ -16,6 +16,14 @@ public class Match {
     private String user1Id;
     private String user2Id;
     private User otherUser;
+    private String conversationId;
     private LocalDateTime createdAt;
     private boolean hasUnreadMessages;
+
+    /**
+     * Alias for otherUser for compatibility
+     */
+    public User getMatchedUser() {
+        return otherUser;
+    }
 }

@@ -93,4 +93,32 @@ public class UserService {
         log.info("User logged out: {}", SecurityUtils.getCurrentUserId());
         SecurityUtils.clearAuthentication();
     }
+
+    /**
+     * Get user preferences
+     */
+    public User getPreferences() {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        return userClient.getPreferences(userId, "Bearer " + token);
+    }
+
+    /**
+     * Update user preferences
+     */
+    public User updatePreferences(User preferences) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        return userClient.updatePreferences(userId, preferences, "Bearer " + token);
+    }
 }
