@@ -239,9 +239,12 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
     }
 
     private void showBlockDialog(User user) {
+        String displayName = (user.getFirstName() != null && !user.getFirstName().isEmpty())
+            ? user.getFirstName() : "this user";
+
         ConfirmDialog dialog = new ConfirmDialog();
-        dialog.setHeader("Block " + user.getFirstName());
-        dialog.setText("Are you sure you want to block " + user.getFirstName() + "? " +
+        dialog.setHeader("Block " + displayName);
+        dialog.setText("Are you sure you want to block " + displayName + "? " +
             "They won't be able to see your profile or message you. " +
             "This will also unmatch you if you're currently matched.");
         dialog.setCancelable(true);

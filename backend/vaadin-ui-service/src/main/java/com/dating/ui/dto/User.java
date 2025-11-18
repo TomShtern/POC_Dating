@@ -21,6 +21,7 @@ public class User {
     @NotBlank(message = "User ID is required")
     private String id;
 
+    @NotBlank(message = "Email is required")
     @Email(message = "Invalid email format")
     private String email;
 
@@ -28,9 +29,11 @@ public class User {
     @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
     private String username;
 
+    @NotBlank(message = "First name is required")
     @Size(max = 50, message = "First name must not exceed 50 characters")
     private String firstName;
 
+    @NotBlank(message = "Last name is required")
     @Size(max = 50, message = "Last name must not exceed 50 characters")
     private String lastName;
 
@@ -53,6 +56,7 @@ public class User {
     private String country;
 
     // Interests and additional info
+    @Size(max = 20, message = "Cannot have more than 20 interests")
     private java.util.List<String> interests;
     private Boolean isVerified;
     private Boolean isOnline;

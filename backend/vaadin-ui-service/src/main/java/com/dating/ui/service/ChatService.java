@@ -150,9 +150,6 @@ public class ChatService {
         } catch (FeignException e) {
             // Log but don't throw - typing indicators are not critical
             log.debug("Failed to send typing indicator for conversation: {}", conversationId, e);
-        } catch (Exception ex) {
-            // Ignore typing indicator errors - they're not critical
-            log.debug("Failed to send typing indicator: {}", ex.getMessage());
         }
     }
 }

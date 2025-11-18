@@ -227,6 +227,9 @@ public class SwipeView extends VerticalLayout {
     }
 
     private void showMatchNotification(User user) {
+        String displayName = (user.getFirstName() != null && !user.getFirstName().isEmpty())
+            ? user.getFirstName() : "Someone";
+
         Notification notification = new Notification();
         notification.addThemeVariants(NotificationVariant.LUMO_SUCCESS);
         notification.setDuration(5000);
@@ -234,7 +237,7 @@ public class SwipeView extends VerticalLayout {
 
         VerticalLayout content = new VerticalLayout();
         content.add(new H2("🎉 It's a Match!"));
-        content.add(new Paragraph("You and " + user.getFirstName() + " liked each other!"));
+        content.add(new Paragraph("You and " + displayName + " liked each other!"));
 
         Button chatButton = new Button("Send Message", e -> {
             UI.getCurrent().navigate(MessagesView.class);

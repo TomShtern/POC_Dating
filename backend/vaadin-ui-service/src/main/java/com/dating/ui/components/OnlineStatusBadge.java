@@ -1,6 +1,7 @@
 package com.dating.ui.components;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexLayout;
@@ -107,5 +108,11 @@ public class OnlineStatusBadge extends Composite<FlexLayout> {
      */
     public void show() {
         getContent().setVisible(true);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple component - no listeners to clean up
     }
 }

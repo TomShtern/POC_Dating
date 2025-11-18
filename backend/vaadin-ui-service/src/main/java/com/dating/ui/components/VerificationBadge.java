@@ -1,6 +1,7 @@
 package com.dating.ui.components;
 
 import com.vaadin.flow.component.Composite;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
@@ -47,5 +48,11 @@ public class VerificationBadge extends Composite<FlexLayout> {
      */
     public void setCompact(boolean compact) {
         label.setVisible(!compact);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple component - no listeners to clean up
     }
 }

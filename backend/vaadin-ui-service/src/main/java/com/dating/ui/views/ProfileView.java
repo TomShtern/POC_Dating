@@ -177,6 +177,8 @@ public class ProfileView extends VerticalLayout {
         saveButton.setText("Saving...");
 
         try {
+            java.util.List<String> interests = interestTags.getInterestsAsList();
+
             User user = User.builder()
                 .firstName(firstNameField.getValue())
                 .lastName(lastNameField.getValue())
@@ -186,7 +188,7 @@ public class ProfileView extends VerticalLayout {
                 .country(countryField.getValue() != null ? countryField.getValue() : "")
                 .photoUrl(imageUpload.getImageDataUrl())
                 .bio(bioField.getValue() != null ? bioField.getValue() : "")
-                .interests(interestTags.getInterestsAsList())
+                .interests(interests != null ? interests : java.util.Collections.emptyList())
                 .build();
 
             userService.updateProfile(user);

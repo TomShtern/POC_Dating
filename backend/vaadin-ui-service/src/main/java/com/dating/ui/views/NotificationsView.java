@@ -77,7 +77,18 @@ public class NotificationsView extends VerticalLayout {
         toolbar.setMaxWidth("600px");
         toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
 
-        Button markAllReadButton = new Button("Mark all as read", e -> markAllAsRead());
+        Button markAllReadButton = new Button("Mark all as read", e -> {
+            Button btn = (Button) e.getSource();
+            btn.setEnabled(false);
+            btn.setText("Marking...");
+
+            try {
+                markAllAsRead();
+            } finally {
+                btn.setEnabled(true);
+                btn.setText("Mark all as read");
+            }
+        });
         markAllReadButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
 
         toolbar.add(markAllReadButton);
@@ -139,6 +150,10 @@ public class NotificationsView extends VerticalLayout {
 
             // Add clear all button
             Button clearAllButton = new Button("Clear All", e -> {
+                Button btn = (Button) e.getSource();
+                btn.setEnabled(false);
+                btn.setText("Clearing...");
+
                 try {
                     // TODO: Backend API needed - MatchService should have a method like:
                     // matchService.clearAllNotifications()
@@ -159,6 +174,9 @@ public class NotificationsView extends VerticalLayout {
                     Notification.show("Failed to clear notifications",
                         3000, Notification.Position.TOP_CENTER)
                         .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                } finally {
+                    btn.setEnabled(true);
+                    btn.setText("Clear All");
                 }
             });
             clearAllButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
