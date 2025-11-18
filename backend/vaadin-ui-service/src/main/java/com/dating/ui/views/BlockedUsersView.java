@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.BlockedUser;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
@@ -89,9 +90,11 @@ public class BlockedUsersView extends VerticalLayout {
                 ConfirmDialog dialog = new ConfirmDialog();
                 dialog.setHeader("Unblock User");
 
-                String userName = blocked.getBlockedUser() != null
-                    ? blocked.getBlockedUser().getFirstName()
-                    : "this user";
+                String userName = "this user";
+                if (blocked.getBlockedUser() != null && blocked.getBlockedUser().getFirstName() != null
+                    && !blocked.getBlockedUser().getFirstName().isEmpty()) {
+                    userName = blocked.getBlockedUser().getFirstName();
+                }
 
                 dialog.setText("Are you sure you want to unblock " + userName + "? " +
                     "They will be able to see your profile and potentially match with you again.");
@@ -167,5 +170,11 @@ public class BlockedUsersView extends VerticalLayout {
 
         emptyState.add(icon, emptyTitle, emptyText);
         add(emptyState);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

@@ -4,6 +4,7 @@ import com.dating.ui.components.ImageUploadComponent;
 import com.dating.ui.components.InterestTagsComponent;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -206,5 +207,11 @@ public class ProfileView extends VerticalLayout {
             saveButton.setEnabled(true);
             saveButton.setText("Save Changes");
         }
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

@@ -151,15 +151,19 @@ public class ProfileCard extends VerticalLayout {
             return;
         }
 
+        // Get first name with null safety
+        String firstName = (user.getFirstName() != null && !user.getFirstName().isEmpty())
+            ? user.getFirstName() : "Unknown";
+
         // Set image
         String photoUrl = user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()
             ? user.getPhotoUrl()
-            : "https://via.placeholder.com/400x400?text=" + user.getFirstName();
+            : "https://via.placeholder.com/400x400?text=" + firstName;
         profileImage.setSrc(photoUrl);
-        profileImage.setAlt(user.getFirstName());
+        profileImage.setAlt(firstName);
 
         // Set name and age
-        nameLabel.setText(user.getFirstName() + ", " + (user.getAge() != null ? user.getAge() : "?"));
+        nameLabel.setText(firstName + ", " + (user.getAge() != null ? user.getAge() : "?"));
 
         // Set verification badge
         verificationBadge.setVerified(user.getIsVerified());

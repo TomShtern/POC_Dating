@@ -5,6 +5,7 @@ import com.dating.ui.dto.SwipeResponse;
 import com.dating.ui.dto.SwipeType;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -269,5 +270,11 @@ public class SwipeView extends VerticalLayout {
 
     public User getCurrentUser() {
         return currentUser;
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

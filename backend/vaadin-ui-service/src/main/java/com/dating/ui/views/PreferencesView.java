@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.User;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
@@ -201,5 +202,11 @@ public class PreferencesView extends VerticalLayout {
             saveButton.setEnabled(true);
             saveButton.setText("Save Preferences");
         }
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

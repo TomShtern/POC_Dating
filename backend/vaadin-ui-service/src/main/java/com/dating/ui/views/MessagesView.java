@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Conversation;
 import com.dating.ui.service.ChatService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -79,7 +80,8 @@ public class MessagesView extends VerticalLayout {
         // User name column
         conversationGrid.addColumn(conv -> {
             if (conv.getOtherUser() != null) {
-                String name = conv.getOtherUser().getFirstName();
+                String firstName = conv.getOtherUser().getFirstName();
+                String name = (firstName != null && !firstName.isEmpty()) ? firstName : "Unknown";
                 if (conv.getOtherUser().getLastName() != null) {
                     name += " " + conv.getOtherUser().getLastName();
                 }
@@ -149,7 +151,8 @@ public class MessagesView extends VerticalLayout {
             List<Conversation> filtered = allConversations.stream()
                 .filter(conv -> {
                     if (conv.getOtherUser() != null) {
-                        String name = conv.getOtherUser().getFirstName();
+                        String firstName = conv.getOtherUser().getFirstName();
+                        String name = (firstName != null && !firstName.isEmpty()) ? firstName : "";
                         if (conv.getOtherUser().getLastName() != null) {
                             name += " " + conv.getOtherUser().getLastName();
                         }
@@ -214,5 +217,11 @@ public class MessagesView extends VerticalLayout {
             add(emptyState);
         }
         emptyState.setVisible(true);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

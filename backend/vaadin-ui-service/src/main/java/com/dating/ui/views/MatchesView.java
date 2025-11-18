@@ -28,6 +28,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Div;
 
 /**
@@ -176,9 +177,11 @@ public class MatchesView extends VerticalLayout {
             reportButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
             reportButton.getElement().setAttribute("title", "Report User");
             reportButton.addClickListener(e -> {
-                String userName = match.getOtherUser() != null
-                    ? match.getOtherUser().getFirstName()
-                    : "User";
+                String userName = "User";
+                if (match.getOtherUser() != null && match.getOtherUser().getFirstName() != null
+                    && !match.getOtherUser().getFirstName().isEmpty()) {
+                    userName = match.getOtherUser().getFirstName();
+                }
                 String userId = match.getOtherUser() != null
                     ? match.getOtherUser().getId()
                     : null;
@@ -285,9 +288,11 @@ public class MatchesView extends VerticalLayout {
     }
 
     private void showUnmatchDialog(Match match) {
-        String userName = match.getOtherUser() != null
-            ? match.getOtherUser().getFirstName()
-            : "this user";
+        String userName = "this user";
+        if (match.getOtherUser() != null && match.getOtherUser().getFirstName() != null
+            && !match.getOtherUser().getFirstName().isEmpty()) {
+            userName = match.getOtherUser().getFirstName();
+        }
 
         ConfirmDialog dialog = new ConfirmDialog();
         dialog.setHeader("Unmatch");
@@ -317,5 +322,11 @@ public class MatchesView extends VerticalLayout {
         });
 
         dialog.open();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

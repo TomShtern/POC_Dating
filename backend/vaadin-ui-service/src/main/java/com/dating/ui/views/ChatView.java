@@ -151,7 +151,8 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
         // User name
         String otherUserName = "Chat";
         if (conversation != null && conversation.getOtherUser() != null) {
-            otherUserName = conversation.getOtherUser().getFirstName();
+            String firstName = conversation.getOtherUser().getFirstName();
+            otherUserName = (firstName != null && !firstName.isEmpty()) ? firstName : "User";
             if (conversation.getOtherUser().getLastName() != null) {
                 otherUserName += " " + conversation.getOtherUser().getLastName();
             }
@@ -367,7 +368,8 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
 
         String otherUserName = "Someone";
         if (conversation != null && conversation.getOtherUser() != null) {
-            otherUserName = conversation.getOtherUser().getFirstName();
+            String firstName = conversation.getOtherUser().getFirstName();
+            otherUserName = (firstName != null && !firstName.isEmpty()) ? firstName : "Someone";
         }
 
         // Animated typing dots
