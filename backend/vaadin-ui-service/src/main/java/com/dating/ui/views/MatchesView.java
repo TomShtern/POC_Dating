@@ -92,11 +92,14 @@ public class MatchesView extends VerticalLayout {
             userIcon.setSize("16px");
             userIcon.getStyle().set("color", "#667eea");
 
-            String name = match.getOtherUser() != null
-                ? match.getOtherUser().getFirstName()
-                : "Unknown";
-            if (match.getOtherUser() != null && match.getOtherUser().getLastName() != null) {
-                name += " " + match.getOtherUser().getLastName();
+            String name = "Unknown";
+            if (match.getOtherUser() != null) {
+                String firstName = match.getOtherUser().getFirstName();
+                name = (firstName != null && !firstName.isEmpty()) ? firstName : "Unknown";
+                String lastName = match.getOtherUser().getLastName();
+                if (lastName != null && !lastName.isEmpty()) {
+                    name += " " + lastName;
+                }
             }
             Span nameSpan = new Span(name);
             nameSpan.getStyle().set("font-weight", "500");

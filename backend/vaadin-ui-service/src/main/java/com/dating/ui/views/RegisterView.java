@@ -116,7 +116,7 @@ public class RegisterView extends VerticalLayout {
         // Add real-time password validation
         passwordField.addValueChangeListener(e -> {
             String password = e.getValue();
-            if (password.length() > 0 && password.length() < 8) {
+            if (password != null && password.length() > 0 && password.length() < 8) {
                 passwordField.setInvalid(true);
                 passwordField.setErrorMessage("Password must be at least 8 characters");
             } else {
@@ -126,7 +126,9 @@ public class RegisterView extends VerticalLayout {
 
         // Add real-time confirm password validation
         confirmPasswordField.addValueChangeListener(e -> {
-            if (!e.getValue().equals(passwordField.getValue())) {
+            String confirmValue = e.getValue();
+            String passwordValue = passwordField.getValue();
+            if (confirmValue != null && passwordValue != null && !confirmValue.equals(passwordValue)) {
                 confirmPasswordField.setInvalid(true);
                 confirmPasswordField.setErrorMessage("Passwords don't match");
             } else {
@@ -211,29 +213,35 @@ public class RegisterView extends VerticalLayout {
             return false;
         }
 
+        String email = emailField.getValue();
+        String username = usernameField.getValue();
+        String password = passwordField.getValue();
+        String confirmPassword = confirmPasswordField.getValue();
+        Integer age = ageField.getValue();
+
         // Validate email format
-        if (!emailField.getValue().contains("@")) {
+        if (email == null || !email.contains("@")) {
             showError("Please enter a valid email address");
             return false;
         }
 
         // Validate username length
-        if (usernameField.getValue().length() < 3) {
+        if (username == null || username.length() < 3) {
             showError("Username must be at least 3 characters");
             return false;
         }
 
-        if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
+        if (password == null || confirmPassword == null || !password.equals(confirmPassword)) {
             showError("Passwords don't match");
             return false;
         }
 
-        if (passwordField.getValue().length() < 8) {
+        if (password.length() < 8) {
             showError("Password must be at least 8 characters");
             return false;
         }
 
-        if (ageField.getValue() < 18) {
+        if (age == null || age < 18) {
             showError("You must be at least 18 years old");
             return false;
         }

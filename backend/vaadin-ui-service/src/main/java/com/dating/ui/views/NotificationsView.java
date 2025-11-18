@@ -164,7 +164,8 @@ public class NotificationsView extends VerticalLayout {
         textContent.setPadding(false);
         textContent.setSpacing(false);
 
-        String name = match.getOtherUser().getFirstName();
+        String firstName = match.getOtherUser().getFirstName();
+        String name = (firstName != null && !firstName.isEmpty()) ? firstName : "Someone";
         Span title = new Span("New match with " + name + "!");
         title.getStyle()
             .set("font-weight", "500")

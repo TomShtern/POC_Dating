@@ -60,9 +60,11 @@ public class BlockedUsersView extends VerticalLayout {
         // Name column
         blockedUsersGrid.addColumn(blocked -> {
             if (blocked.getBlockedUser() != null) {
-                String name = blocked.getBlockedUser().getFirstName();
-                if (blocked.getBlockedUser().getLastName() != null) {
-                    name += " " + blocked.getBlockedUser().getLastName();
+                String firstName = blocked.getBlockedUser().getFirstName();
+                String lastName = blocked.getBlockedUser().getLastName();
+                String name = (firstName != null && !firstName.isEmpty()) ? firstName : "Unknown";
+                if (lastName != null && !lastName.isEmpty()) {
+                    name += " " + lastName;
                 }
                 return name;
             }

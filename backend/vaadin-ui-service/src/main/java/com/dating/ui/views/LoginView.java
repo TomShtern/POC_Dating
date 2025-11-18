@@ -113,7 +113,7 @@ public class LoginView extends VerticalLayout {
             return;
         }
 
-        if (!emailField.isInvalid() && !email.contains("@")) {
+        if (!email.contains("@")) {
             emailField.setInvalid(true);
             emailField.setErrorMessage("Please enter a valid email");
             return;
@@ -123,10 +123,17 @@ public class LoginView extends VerticalLayout {
             // Call user service to login
             AuthResponse response = userService.login(email, password);
 
+            if (response == null || response.getUser() == null) {
+                showError("Login failed - invalid response");
+                return;
+            }
+
             log.info("Login successful for user: {}", response.getUser().getId());
 
             // Show success message
-            Notification.show("Welcome back, " + response.getUser().getFirstName() + "!",
+            String firstName = response.getUser().getFirstName();
+            String welcomeName = (firstName != null && !firstName.isEmpty()) ? firstName : "User";
+            Notification.show("Welcome back, " + welcomeName + "!",
                 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
