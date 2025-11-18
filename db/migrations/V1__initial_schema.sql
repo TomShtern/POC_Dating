@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS matches (
 CREATE TABLE IF NOT EXISTS match_scores (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id UUID NOT NULL UNIQUE REFERENCES matches(id) ON DELETE CASCADE,
-    score NUMERIC(5, 2) CHECK (score >= 0 AND score <= 100),
+    score NUMERIC(5, 2) NOT NULL DEFAULT 50.0 CHECK (score >= 0 AND score <= 100),
     factors JSONB,
     calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS match_scores (
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
     content TEXT NOT NULL,
     message_type VARCHAR(20) DEFAULT 'TEXT',
     status VARCHAR(20) DEFAULT 'SENT',

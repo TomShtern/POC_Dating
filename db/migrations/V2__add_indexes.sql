@@ -16,6 +16,9 @@ CREATE INDEX IF NOT EXISTS idx_users_location ON users(location_lat, location_ln
     WHERE location_lat IS NOT NULL AND location_lng IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_users_premium ON users(is_premium)
     WHERE is_premium = true;
+CREATE INDEX IF NOT EXISTS idx_users_premium_active ON users(id)
+    WHERE is_premium = true AND status = 'ACTIVE';
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 CREATE INDEX IF NOT EXISTS idx_users_bio_trgm ON users USING gin(bio gin_trgm_ops)
     WHERE bio IS NOT NULL;
 
@@ -28,6 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_user_preferences_interests ON user_preferences US
 -- ========================================
 -- PHOTOS INDEXES
 -- ========================================
+CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id);
 CREATE INDEX IF NOT EXISTS idx_photos_user_order ON photos(user_id, display_order);
 CREATE INDEX IF NOT EXISTS idx_photos_primary ON photos(user_id, is_primary)
     WHERE is_primary = true;
@@ -57,6 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_matches_active_user1 ON matches(user1_id, matched
 CREATE INDEX IF NOT EXISTS idx_matches_active_user2 ON matches(user2_id, matched_at DESC)
     WHERE status = 'ACTIVE';
 CREATE INDEX IF NOT EXISTS idx_matches_time ON matches(matched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_matches_ended_by ON matches(ended_by)
+    WHERE ended_by IS NOT NULL;
 
 -- Note: idx_matches_status removed as redundant with idx_matches_active_user1/user2
 
@@ -70,6 +76,8 @@ CREATE INDEX IF NOT EXISTS idx_match_scores_score ON match_scores(score DESC);
 -- MESSAGES INDEXES
 -- ========================================
 CREATE INDEX IF NOT EXISTS idx_messages_match_time ON messages(match_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_match_covering ON messages(match_id, created_at DESC)
+    INCLUDE (sender_id, content, status);
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
 -- Unread messages count (includes sender_id for efficient unread-by-user queries)
 CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(match_id, sender_id, status)
@@ -125,6 +133,7 @@ CREATE INDEX IF NOT EXISTS idx_verification_expires ON verification_codes(expire
 -- INTERACTION HISTORY INDEXES
 -- ========================================
 CREATE INDEX IF NOT EXISTS idx_interaction_user ON interaction_history(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_interaction_history_target ON interaction_history(target_id);
 CREATE INDEX IF NOT EXISTS idx_interaction_action ON interaction_history(action, created_at DESC);
 
 -- ========================================
@@ -134,6 +143,8 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status, created_at)
     WHERE status IN ('PENDING', 'REVIEWING');
 CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
 CREATE INDEX IF NOT EXISTS idx_reports_reported ON reports(reported_user_id);
+CREATE INDEX IF NOT EXISTS idx_reports_resolved_by ON reports(resolved_by)
+    WHERE resolved_by IS NOT NULL;
 
 -- ========================================
 -- AUDIT LOGS INDEXES
