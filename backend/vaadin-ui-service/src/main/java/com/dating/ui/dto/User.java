@@ -25,6 +25,12 @@ public class User {
     private String city;
     private String country;
 
+    // Interests and additional info
+    private java.util.List<String> interests;
+    private Boolean isVerified;
+    private Boolean isOnline;
+    private java.time.Instant lastActiveAt;
+
     // Preferences
     private Integer minAge;
     private Integer maxAge;

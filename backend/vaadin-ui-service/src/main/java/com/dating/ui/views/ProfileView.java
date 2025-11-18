@@ -1,5 +1,7 @@
 package com.dating.ui.views;
 
+import com.dating.ui.components.ImageUploadComponent;
+import com.dating.ui.components.InterestTagsComponent;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.button.Button;
@@ -7,7 +9,7 @@ import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.formlayout.FormLayout;
 import com.vaadin.flow.component.html.H2;
-import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -37,10 +39,10 @@ public class ProfileView extends VerticalLayout {
     private ComboBox<String> genderField;
     private TextField cityField;
     private TextField countryField;
-    private TextField photoUrlField;
+    private ImageUploadComponent imageUpload;
     private TextArea bioField;
+    private InterestTagsComponent interestTags;
     private Button saveButton;
-    private Image profileImage;
 
     public ProfileView(UserService userService) {
         this.userService = userService;
@@ -56,15 +58,8 @@ public class ProfileView extends VerticalLayout {
     private void createUI() {
         H2 title = new H2("My Profile");
 
-        // Profile image preview
-        profileImage = new Image();
-        profileImage.setWidth("150px");
-        profileImage.setHeight("150px");
-        profileImage.getStyle()
-            .set("border-radius", "50%")
-            .set("object-fit", "cover")
-            .set("border", "3px solid #667eea")
-            .set("margin-bottom", "1rem");
+        // Profile image upload
+        imageUpload = new ImageUploadComponent();
 
         FormLayout formLayout = new FormLayout();
         formLayout.setWidth("600px");
@@ -93,21 +88,18 @@ public class ProfileView extends VerticalLayout {
 
         countryField = new TextField("Country");
 
-        photoUrlField = new TextField("Photo URL");
-        photoUrlField.setPlaceholder("https://example.com/photo.jpg");
-        photoUrlField.setHelperText("Enter URL of your profile photo");
-        photoUrlField.addValueChangeListener(e -> {
-            String url = e.getValue();
-            if (url != null && !url.isEmpty()) {
-                profileImage.setSrc(url);
-            } else {
-                profileImage.setSrc("https://via.placeholder.com/150x150?text=No+Photo");
-            }
-        });
-
         bioField = new TextArea("Bio");
         bioField.setMaxLength(500);
         bioField.setHelperText("Tell others about yourself (max 500 characters)");
+
+        // Interests section
+        H3 interestsTitle = new H3("Interests & Hobbies");
+        interestsTitle.getStyle()
+            .set("margin-top", "1rem")
+            .set("margin-bottom", "0.5rem");
+
+        interestTags = new InterestTagsComponent();
+        interestTags.setMaxTags(10);
 
         saveButton = new Button("Save Changes", e -> handleSave());
         saveButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
@@ -119,8 +111,7 @@ public class ProfileView extends VerticalLayout {
             ageField,
             genderField,
             cityField,
-            countryField,
-            photoUrlField
+            countryField
         );
         formLayout.setColspan(bioField, 2);
         formLayout.add(bioField);
@@ -129,7 +120,7 @@ public class ProfileView extends VerticalLayout {
         buttonLayout.setJustifyContentMode(JustifyContentMode.CENTER);
         buttonLayout.setWidthFull();
 
-        add(title, profileImage, formLayout, buttonLayout);
+        add(title, imageUpload, formLayout, interestsTitle, interestTags, buttonLayout);
     }
 
     private void loadProfile() {
@@ -142,14 +133,16 @@ public class ProfileView extends VerticalLayout {
             genderField.setValue(user.getGender() != null ? user.getGender() : "");
             cityField.setValue(user.getCity() != null ? user.getCity() : "");
             countryField.setValue(user.getCountry() != null ? user.getCountry() : "");
-            photoUrlField.setValue(user.getPhotoUrl() != null ? user.getPhotoUrl() : "");
             bioField.setValue(user.getBio() != null ? user.getBio() : "");
 
             // Set profile image
             if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
-                profileImage.setSrc(user.getPhotoUrl());
-            } else {
-                profileImage.setSrc("https://via.placeholder.com/150x150?text=No+Photo");
+                imageUpload.setImageUrl(user.getPhotoUrl());
+            }
+
+            // Set interests
+            if (user.getInterests() != null) {
+                interestTags.setInterests(user.getInterests());
             }
 
         } catch (Exception ex) {
@@ -177,8 +170,9 @@ public class ProfileView extends VerticalLayout {
                 .gender(genderField.getValue())
                 .city(cityField.getValue())
                 .country(countryField.getValue())
-                .photoUrl(photoUrlField.getValue())
+                .photoUrl(imageUpload.getImageDataUrl())
                 .bio(bioField.getValue())
+                .interests(interestTags.getInterestsAsList())
                 .build();
 
             userService.updateProfile(user);
