@@ -37,6 +37,18 @@ public class IdempotencyService {
             return true; // No idempotency key provided, allow
         }
 
+        // Validate key format to prevent injection and DoS
+        if (idempotencyKey.length() > 64) {
+            log.warn("Idempotency key too long: userId={}, length={}", userId, idempotencyKey.length());
+            throw new IllegalArgumentException("Idempotency key exceeds maximum length of 64 characters");
+        }
+
+        // Only allow alphanumeric, dash, and underscore characters
+        if (!idempotencyKey.matches("^[a-zA-Z0-9_-]+$")) {
+            log.warn("Invalid idempotency key format: userId={}", userId);
+            throw new IllegalArgumentException("Invalid idempotency key format");
+        }
+
         String key = buildRedisKey(userId, idempotencyKey);
 
         try {

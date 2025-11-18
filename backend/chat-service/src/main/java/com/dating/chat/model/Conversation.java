@@ -28,7 +28,8 @@ import java.util.UUID;
 @Table(name = "conversations", indexes = {
         @Index(name = "idx_conversation_match", columnList = "match_id"),
         @Index(name = "idx_conversation_user1", columnList = "user1_id"),
-        @Index(name = "idx_conversation_user2", columnList = "user2_id")
+        @Index(name = "idx_conversation_user2", columnList = "user2_id"),
+        @Index(name = "idx_conversation_users", columnList = "user1_id, user2_id")
 })
 @Getter
 @Setter

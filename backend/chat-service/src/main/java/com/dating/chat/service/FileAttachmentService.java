@@ -185,11 +185,45 @@ public class FileAttachmentService {
                     String.format("Content type '%s' is not allowed. Allowed types: %s", contentType, allowedTypes));
         }
 
-        // Validate filename
+        // Validate filename with strict pattern
         String filename = file.getOriginalFilename();
-        if (filename == null || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            throw new FileValidationException("Invalid filename");
+        if (filename == null || filename.isEmpty()) {
+            throw new FileValidationException("Filename is required");
         }
+
+        // Check for path traversal attempts (including URL-encoded variants)
+        String decodedFilename = filename.replace("%2e", ".")
+                .replace("%2f", "/")
+                .replace("%5c", "\\")
+                .replace("%2E", ".")
+                .replace("%2F", "/")
+                .replace("%5C", "\\");
+
+        if (decodedFilename.contains("..") || decodedFilename.contains("/") ||
+                decodedFilename.contains("\\") || decodedFilename.contains("\0")) {
+            throw new FileValidationException("Invalid filename - path traversal detected");
+        }
+
+        // Validate extension matches content type
+        String extension = getFileExtension(filename).toLowerCase();
+        if (!isExtensionValidForContentType(extension, contentType)) {
+            throw new FileValidationException("File extension does not match content type");
+        }
+    }
+
+    private boolean isExtensionValidForContentType(String extension, String contentType) {
+        if (extension.isEmpty() || contentType == null) {
+            return false;
+        }
+
+        return switch (contentType.toLowerCase()) {
+            case "image/jpeg" -> extension.equals(".jpg") || extension.equals(".jpeg");
+            case "image/png" -> extension.equals(".png");
+            case "image/gif" -> extension.equals(".gif");
+            case "video/mp4" -> extension.equals(".mp4");
+            case "audio/mpeg" -> extension.equals(".mp3") || extension.equals(".mpeg");
+            default -> false;
+        };
     }
 
     private String getFileExtension(String filename) {
