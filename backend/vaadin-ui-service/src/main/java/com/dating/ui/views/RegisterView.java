@@ -38,6 +38,7 @@ public class RegisterView extends VerticalLayout {
     private TextField lastNameField;
     private IntegerField ageField;
     private ComboBox<String> genderField;
+    private TextField cityField;
     private Button registerButton;
     private Button backButton;
 
@@ -102,6 +103,32 @@ public class RegisterView extends VerticalLayout {
         genderField.setRequiredIndicatorVisible(true);
         genderField.setWidthFull();
 
+        cityField = new TextField("City");
+        cityField.setRequiredIndicatorVisible(true);
+        cityField.setWidthFull();
+        cityField.setPlaceholder("e.g., New York");
+
+        // Add real-time password validation
+        passwordField.addValueChangeListener(e -> {
+            String password = e.getValue();
+            if (password.length() > 0 && password.length() < 8) {
+                passwordField.setInvalid(true);
+                passwordField.setErrorMessage("Password must be at least 8 characters");
+            } else {
+                passwordField.setInvalid(false);
+            }
+        });
+
+        // Add real-time confirm password validation
+        confirmPasswordField.addValueChangeListener(e -> {
+            if (!e.getValue().equals(passwordField.getValue())) {
+                confirmPasswordField.setInvalid(true);
+                confirmPasswordField.setErrorMessage("Passwords don't match");
+            } else {
+                confirmPasswordField.setInvalid(false);
+            }
+        });
+
         registerButton = new Button("Create Account", e -> handleRegister());
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         registerButton.setWidthFull();
@@ -114,6 +141,7 @@ public class RegisterView extends VerticalLayout {
             passwordField, confirmPasswordField,
             firstNameField, lastNameField,
             ageField, genderField,
+            cityField,
             registerButton, backButton
         );
 
@@ -135,6 +163,7 @@ public class RegisterView extends VerticalLayout {
                 .lastName(lastNameField.getValue())
                 .age(ageField.getValue())
                 .gender(genderField.getValue())
+                .city(cityField.getValue())
                 .build();
 
             userService.register(request);
@@ -156,8 +185,20 @@ public class RegisterView extends VerticalLayout {
         if (emailField.isEmpty() || usernameField.isEmpty() ||
             passwordField.isEmpty() || confirmPasswordField.isEmpty() ||
             firstNameField.isEmpty() || lastNameField.isEmpty() ||
-            ageField.isEmpty() || genderField.isEmpty()) {
+            ageField.isEmpty() || genderField.isEmpty() || cityField.isEmpty()) {
             showError("Please fill in all fields");
+            return false;
+        }
+
+        // Validate email format
+        if (!emailField.getValue().contains("@")) {
+            showError("Please enter a valid email address");
+            return false;
+        }
+
+        // Validate username length
+        if (usernameField.getValue().length() < 3) {
+            showError("Username must be at least 3 characters");
             return false;
         }
 

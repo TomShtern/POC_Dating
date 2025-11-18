@@ -68,6 +68,7 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Discover", SwipeView.class, VaadinIcon.HEART.create()));
         nav.addItem(new SideNavItem("Matches", MatchesView.class, VaadinIcon.USERS.create()));
         nav.addItem(new SideNavItem("Messages", MessagesView.class, VaadinIcon.CHAT.create()));
+        nav.addItem(new SideNavItem("Notifications", NotificationsView.class, VaadinIcon.BELL.create()));
         nav.addItem(new SideNavItem("Profile", ProfileView.class, VaadinIcon.USER.create()));
         nav.addItem(new SideNavItem("Preferences", PreferencesView.class, VaadinIcon.SLIDER.create()));
         nav.addItem(new SideNavItem("Settings", SettingsView.class, VaadinIcon.COG.create()));

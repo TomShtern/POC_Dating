@@ -5,11 +5,13 @@ import com.dating.ui.dto.SwipeResponse;
 import com.dating.ui.dto.SwipeType;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
+import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -71,7 +73,19 @@ public class SwipeView extends VerticalLayout {
         buttons.setSpacing(true);
         buttons.setJustifyContentMode(JustifyContentMode.CENTER);
 
-        add(title, profileCard, buttons);
+        // Keyboard shortcuts hint
+        Span shortcutHint = new Span("Keyboard shortcuts: ← Pass | ↑ Super Like | → Like");
+        shortcutHint.getStyle()
+            .set("color", "#999")
+            .set("font-size", "0.85rem")
+            .set("margin-top", "1rem");
+
+        // Add keyboard shortcuts
+        passButton.addClickShortcut(Key.ARROW_LEFT);
+        superLikeButton.addClickShortcut(Key.ARROW_UP);
+        likeButton.addClickShortcut(Key.ARROW_RIGHT);
+
+        add(title, profileCard, buttons, shortcutHint);
     }
 
     private void loadNextProfile() {

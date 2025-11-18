@@ -15,6 +15,7 @@ public class ProfileCard extends VerticalLayout {
     private Paragraph ageLocation;
     private Paragraph bio;
     private VerticalLayout contentLayout;
+    private Div loadingOverlay;
 
     public ProfileCard() {
         setSpacing(false);
@@ -26,9 +27,45 @@ public class ProfileCard extends VerticalLayout {
             .set("border-radius", "12px")
             .set("box-shadow", "0 4px 16px rgba(0,0,0,0.1)")
             .set("overflow", "hidden")
-            .set("background", "white");
+            .set("background", "white")
+            .set("position", "relative");
 
         createContent();
+        createLoadingOverlay();
+    }
+
+    private void createLoadingOverlay() {
+        loadingOverlay = new Div();
+        loadingOverlay.getStyle()
+            .set("position", "absolute")
+            .set("top", "0")
+            .set("left", "0")
+            .set("right", "0")
+            .set("bottom", "0")
+            .set("background", "rgba(255, 255, 255, 0.9)")
+            .set("display", "none")
+            .set("justify-content", "center")
+            .set("align-items", "center")
+            .set("z-index", "10");
+
+        Div spinner = new Div();
+        spinner.getStyle()
+            .set("width", "40px")
+            .set("height", "40px")
+            .set("border", "4px solid #f3f3f3")
+            .set("border-top", "4px solid #667eea")
+            .set("border-radius", "50%")
+            .set("animation", "spin 1s linear infinite");
+
+        loadingOverlay.add(spinner);
+        add(loadingOverlay);
+    }
+
+    /**
+     * Show loading state
+     */
+    public void setLoading(boolean loading) {
+        loadingOverlay.getStyle().set("display", loading ? "flex" : "none");
     }
 
     private void createContent() {
