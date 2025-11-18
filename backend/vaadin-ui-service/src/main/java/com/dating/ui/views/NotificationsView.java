@@ -11,6 +11,9 @@ import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -20,7 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * NotificationsView - View match and message notifications
@@ -34,6 +39,7 @@ public class NotificationsView extends VerticalLayout {
 
     private final MatchService matchService;
     private VerticalLayout notificationsList;
+    private Set<String> readNotifications = new HashSet<>();
 
     private static final DateTimeFormatter TIME_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, HH:mm");
@@ -52,12 +58,37 @@ public class NotificationsView extends VerticalLayout {
     private void createUI() {
         H2 title = new H2("Notifications");
 
+        // Toolbar with mark all as read
+        HorizontalLayout toolbar = new HorizontalLayout();
+        toolbar.setWidthFull();
+        toolbar.setMaxWidth("600px");
+        toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+
+        Button markAllReadButton = new Button("Mark all as read", e -> markAllAsRead());
+        markAllReadButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+
+        toolbar.add(markAllReadButton);
+
         notificationsList = new VerticalLayout();
         notificationsList.setWidth("600px");
         notificationsList.setPadding(false);
         notificationsList.setSpacing(true);
 
-        add(title, notificationsList);
+        add(title, toolbar, notificationsList);
+    }
+
+    private void markAllAsRead() {
+        // Mark all notifications as read
+        notificationsList.getChildren().forEach(component -> {
+            if (component instanceof Div card) {
+                card.removeClassName("unread");
+                card.addClassName("read");
+            }
+        });
+
+        Notification.show("All notifications marked as read",
+            2000, Notification.Position.TOP_CENTER)
+            .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
     }
 
     private void loadNotifications() {
@@ -94,16 +125,30 @@ public class NotificationsView extends VerticalLayout {
     private Div createMatchNotification(Match match) {
         Div card = new Div();
         card.setWidthFull();
+        card.addClassName("notification-card");
+
+        // Set unread state if has unread messages
+        if (match.isHasUnreadMessages() && !readNotifications.contains(match.getId())) {
+            card.addClassName("unread");
+        } else {
+            card.addClassName("read");
+        }
+
         card.getStyle()
-            .set("background", "white")
             .set("border-radius", "8px")
             .set("padding", "1rem")
             .set("box-shadow", "0 1px 3px rgba(0,0,0,0.1)")
-            .set("border-left", "4px solid #f093fb")
             .set("cursor", "pointer");
 
-        card.addClickListener(e ->
-            UI.getCurrent().navigate(UserDetailView.class, match.getId()));
+        card.addClickListener(e -> {
+            // Mark as read
+            card.removeClassName("unread");
+            card.addClassName("read");
+            readNotifications.add(match.getId());
+
+            // Navigate to user detail
+            UI.getCurrent().navigate(UserDetailView.class, match.getId());
+        });
 
         HorizontalLayout content = new HorizontalLayout();
         content.setAlignItems(Alignment.CENTER);

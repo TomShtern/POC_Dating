@@ -225,3 +225,136 @@ vaadin-button:focus {
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+
+/* Typing indicator animation */
+@keyframes typing-dots {
+    0%, 20% { content: '.'; }
+    40% { content: '..'; }
+    60%, 100% { content: '...'; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.typing-dots {
+    animation: blink 1.4s infinite;
+}
+
+/* Online status indicator */
+.online-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+}
+
+.online-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.online-dot.online {
+    background: var(--dating-success-color);
+    box-shadow: 0 0 6px var(--dating-success-color);
+}
+
+.online-dot.offline {
+    background: #9ca3af;
+}
+
+/* Verification badge */
+.verified-badge {
+    color: #3b82f6;
+    font-size: 14px;
+}
+
+/* Distance indicator */
+.distance-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+/* Pulse animation for notifications */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.notification-pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Read/unread state for notifications */
+.notification-card.unread {
+    background: #f0f7ff;
+    border-left: 4px solid var(--dating-primary-color);
+}
+
+.notification-card.read {
+    background: white;
+    opacity: 0.8;
+}
+
+/* Interest tag styles */
+.interest-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    background: linear-gradient(135deg, var(--dating-primary-color) 0%, var(--dating-secondary-color) 100%);
+    color: white;
+    border-radius: 16px;
+    font-size: 0.85rem;
+    margin: 2px;
+}
+
+/* Swipe card animations */
+.swipe-left {
+    animation: swipeLeft 0.3s ease-out forwards;
+}
+
+.swipe-right {
+    animation: swipeRight 0.3s ease-out forwards;
+}
+
+@keyframes swipeLeft {
+    to {
+        transform: translateX(-150%) rotate(-20deg);
+        opacity: 0;
+    }
+}
+
+@keyframes swipeRight {
+    to {
+        transform: translateX(150%) rotate(20deg);
+        opacity: 0;
+    }
+}
+
+/* Modal backdrop */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+}
+
+/* Undo button styling */
+.undo-button {
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.undo-button:hover {
+    opacity: 1;
+}
+
