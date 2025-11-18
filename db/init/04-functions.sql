@@ -74,14 +74,14 @@ BEGIN
         RETURN FALSE;
     END IF;
 
-    -- Check gender preferences (both ways)
-    IF u1_prefs.interested_in NOT IN ('BOTH', 'EVERYONE')
-       AND u1_prefs.interested_in != u2_gender THEN
+    -- Check gender preferences (both ways) - COALESCE to 'BOTH' for NULL preferences
+    IF COALESCE(u1_prefs.interested_in, 'BOTH') NOT IN ('BOTH', 'EVERYONE')
+       AND COALESCE(u1_prefs.interested_in, 'BOTH') != u2_gender THEN
         RETURN FALSE;
     END IF;
 
-    IF u2_prefs.interested_in NOT IN ('BOTH', 'EVERYONE')
-       AND u2_prefs.interested_in != u1_gender THEN
+    IF COALESCE(u2_prefs.interested_in, 'BOTH') NOT IN ('BOTH', 'EVERYONE')
+       AND COALESCE(u2_prefs.interested_in, 'BOTH') != u1_gender THEN
         RETURN FALSE;
     END IF;
 
@@ -112,6 +112,32 @@ DECLARE
     v_user1 UUID;
     v_user2 UUID;
 BEGIN
+    -- Validate users exist and are active
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_user_id AND status = 'ACTIVE') THEN
+        RAISE EXCEPTION 'User % not found or not active', p_user_id;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_target_user_id AND status = 'ACTIVE') THEN
+        RAISE EXCEPTION 'Target user % not found or not active', p_target_user_id;
+    END IF;
+
+    -- Check if users are blocked (either direction)
+    IF EXISTS (
+        SELECT 1 FROM user_blocks
+        WHERE (blocker_id = p_user_id AND blocked_id = p_target_user_id)
+           OR (blocker_id = p_target_user_id AND blocked_id = p_user_id)
+    ) THEN
+        RAISE EXCEPTION 'Cannot swipe on blocked user';
+    END IF;
+
+    -- Check if already swiped
+    IF EXISTS (
+        SELECT 1 FROM swipes
+        WHERE user_id = p_user_id AND target_user_id = p_target_user_id
+    ) THEN
+        RAISE EXCEPTION 'Already swiped on this user';
+    END IF;
+
     -- Insert swipe
     INSERT INTO swipes (user_id, target_user_id, action)
     VALUES (p_user_id, p_target_user_id, p_action)
@@ -318,6 +344,8 @@ DECLARE
     v_u2_interests TEXT[];
     v_common_interests INT;
     v_age_diff INT;
+    v_u1_age INT;
+    v_u2_age INT;
 BEGIN
     -- Get interests
     SELECT interests INTO v_u1_interests
@@ -335,16 +363,20 @@ BEGIN
         v_score := v_score + LEAST(v_common_interests * 6, 30);
     END IF;
 
-    -- Age compatibility (max 20 points)
-    SELECT ABS(
-        calculate_age((SELECT date_of_birth FROM users WHERE id = p_user1_id)) -
-        calculate_age((SELECT date_of_birth FROM users WHERE id = p_user2_id))
-    ) INTO v_age_diff;
+    -- Age compatibility (max 20 points) - FIX: Use single CROSS JOIN instead of two scalar subqueries
+    SELECT
+        ABS(calculate_age(u1.date_of_birth) - calculate_age(u2.date_of_birth))
+    INTO v_age_diff
+    FROM users u1
+    CROSS JOIN users u2
+    WHERE u1.id = p_user1_id AND u2.id = p_user2_id;
 
-    IF v_age_diff <= 5 THEN
-        v_score := v_score + 20;
-    ELSIF v_age_diff <= 10 THEN
-        v_score := v_score + 10;
+    IF v_age_diff IS NOT NULL THEN
+        IF v_age_diff <= 5 THEN
+            v_score := v_score + 20;
+        ELSIF v_age_diff <= 10 THEN
+            v_score := v_score + 10;
+        END IF;
     END IF;
 
     RETURN LEAST(v_score, 100.0);
@@ -439,6 +471,218 @@ BEGIN
       AND relnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
     ORDER BY pg_total_relation_size(oid) DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql STABLE;
 
 COMMENT ON FUNCTION get_database_stats() IS 'Get table sizes and row counts for monitoring';
+
+-- ========================================
+-- FUNCTION: Unmatch Users
+-- Atomic unmatch with validation and notifications
+-- ========================================
+CREATE OR REPLACE FUNCTION unmatch_users(
+    p_user_id UUID,
+    p_match_id UUID
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_other_user_id UUID;
+    v_user1_id UUID;
+    v_user2_id UUID;
+BEGIN
+    -- Get match details and validate user is part of match
+    SELECT user1_id, user2_id INTO v_user1_id, v_user2_id
+    FROM matches
+    WHERE id = p_match_id AND status = 'ACTIVE';
+
+    IF v_user1_id IS NULL THEN
+        RAISE EXCEPTION 'Match % not found or not active', p_match_id;
+    END IF;
+
+    -- Verify user is part of the match
+    IF p_user_id != v_user1_id AND p_user_id != v_user2_id THEN
+        RAISE EXCEPTION 'User % is not part of match %', p_user_id, p_match_id;
+    END IF;
+
+    -- Determine the other user
+    IF p_user_id = v_user1_id THEN
+        v_other_user_id := v_user2_id;
+    ELSE
+        v_other_user_id := v_user1_id;
+    END IF;
+
+    -- Update match status
+    UPDATE matches
+    SET status = 'UNMATCHED',
+        ended_by = p_user_id,
+        ended_at = NOW(),
+        updated_at = NOW()
+    WHERE id = p_match_id;
+
+    -- Create notifications for both users
+    INSERT INTO notifications (user_id, type, title, body, data)
+    VALUES
+        (p_user_id, 'MATCH_ENDED', 'Match Ended', 'You have unmatched with a user',
+         jsonb_build_object('match_id', p_match_id, 'ended_by', p_user_id)),
+        (v_other_user_id, 'MATCH_ENDED', 'Match Ended', 'A user has unmatched with you',
+         jsonb_build_object('match_id', p_match_id, 'ended_by', p_user_id));
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION unmatch_users(UUID, UUID) IS 'Unmatch users with validation, status update, and notifications';
+
+-- ========================================
+-- FUNCTION: Get Conversation Messages
+-- Paginated message retrieval
+-- ========================================
+CREATE OR REPLACE FUNCTION get_conversation_messages(
+    p_match_id UUID,
+    p_user_id UUID,
+    p_limit INT DEFAULT 50,
+    p_offset INT DEFAULT 0,
+    p_before_id UUID DEFAULT NULL
+)
+RETURNS TABLE (
+    message_id UUID,
+    sender_id UUID,
+    sender_username VARCHAR,
+    sender_name VARCHAR,
+    sender_photo VARCHAR,
+    content TEXT,
+    message_type VARCHAR,
+    status VARCHAR,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+) AS $$
+DECLARE
+    v_user1_id UUID;
+    v_user2_id UUID;
+BEGIN
+    -- Validate user is part of match
+    SELECT user1_id, user2_id INTO v_user1_id, v_user2_id
+    FROM matches
+    WHERE id = p_match_id;
+
+    IF v_user1_id IS NULL THEN
+        RAISE EXCEPTION 'Match % not found', p_match_id;
+    END IF;
+
+    IF p_user_id != v_user1_id AND p_user_id != v_user2_id THEN
+        RAISE EXCEPTION 'User % is not part of match %', p_user_id, p_match_id;
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        m.id,
+        m.sender_id,
+        u.username,
+        u.first_name,
+        u.profile_picture_url,
+        m.content,
+        m.message_type,
+        m.status,
+        m.created_at,
+        m.updated_at
+    FROM messages m
+    JOIN users u ON u.id = m.sender_id
+    WHERE m.match_id = p_match_id
+      AND m.deleted_at IS NULL
+      AND (p_before_id IS NULL OR m.created_at < (SELECT created_at FROM messages WHERE id = p_before_id))
+    ORDER BY m.created_at DESC
+    LIMIT p_limit
+    OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION get_conversation_messages(UUID, UUID, INT, INT, UUID) IS 'Get paginated conversation messages with sender info';
+
+-- ========================================
+-- FUNCTION: Block User
+-- Block user and auto-unmatch if matched
+-- ========================================
+CREATE OR REPLACE FUNCTION block_user(
+    p_blocker_id UUID,
+    p_blocked_id UUID
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_match_id UUID;
+BEGIN
+    -- Validate users exist
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_blocker_id) THEN
+        RAISE EXCEPTION 'Blocker user % not found', p_blocker_id;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE id = p_blocked_id) THEN
+        RAISE EXCEPTION 'Blocked user % not found', p_blocked_id;
+    END IF;
+
+    -- Cannot block yourself
+    IF p_blocker_id = p_blocked_id THEN
+        RAISE EXCEPTION 'Cannot block yourself';
+    END IF;
+
+    -- Check if already blocked
+    IF EXISTS (SELECT 1 FROM user_blocks WHERE blocker_id = p_blocker_id AND blocked_id = p_blocked_id) THEN
+        RETURN TRUE; -- Already blocked
+    END IF;
+
+    -- Insert block record
+    INSERT INTO user_blocks (blocker_id, blocked_id)
+    VALUES (p_blocker_id, p_blocked_id);
+
+    -- Auto-unmatch if matched
+    SELECT id INTO v_match_id
+    FROM matches
+    WHERE status = 'ACTIVE'
+      AND ((user1_id = p_blocker_id AND user2_id = p_blocked_id)
+           OR (user1_id = p_blocked_id AND user2_id = p_blocker_id));
+
+    IF v_match_id IS NOT NULL THEN
+        UPDATE matches
+        SET status = 'UNMATCHED',
+            ended_by = p_blocker_id,
+            ended_at = NOW(),
+            updated_at = NOW()
+        WHERE id = v_match_id;
+
+        -- Notify blocked user
+        INSERT INTO notifications (user_id, type, title, body, data)
+        VALUES (p_blocked_id, 'MATCH_ENDED', 'Match Ended', 'A match has ended',
+                jsonb_build_object('match_id', v_match_id));
+    END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION block_user(UUID, UUID) IS 'Block a user and auto-unmatch if matched';
+
+-- ========================================
+-- FUNCTION: Unblock User
+-- Remove block record
+-- ========================================
+CREATE OR REPLACE FUNCTION unblock_user(
+    p_blocker_id UUID,
+    p_blocked_id UUID
+)
+RETURNS BOOLEAN AS $$
+DECLARE
+    v_deleted INT;
+BEGIN
+    -- Delete block record
+    DELETE FROM user_blocks
+    WHERE blocker_id = p_blocker_id AND blocked_id = p_blocked_id;
+
+    GET DIAGNOSTICS v_deleted = ROW_COUNT;
+
+    IF v_deleted = 0 THEN
+        RETURN FALSE; -- Block not found
+    END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION unblock_user(UUID, UUID) IS 'Unblock a user';

@@ -17,6 +17,8 @@ SELECT
 FROM users
 WHERE status = 'ACTIVE' AND date_of_birth IS NOT NULL;
 
+COMMENT ON VIEW active_users IS 'Active users with computed age for feed generation';
+
 -- User profiles view (optimized with JOIN)
 CREATE OR REPLACE VIEW user_profiles AS
 SELECT
@@ -33,6 +35,8 @@ LEFT JOIN (
     SELECT user_id, COUNT(*) as photo_count FROM photos GROUP BY user_id
 ) ph ON ph.user_id = u.id;
 
+COMMENT ON VIEW user_profiles IS 'Complete user profile with preferences and stats (optimized with JOIN)';
+
 -- Active matches view
 CREATE OR REPLACE VIEW active_matches AS
 SELECT
@@ -47,6 +51,8 @@ JOIN users u1 ON u1.id = m.user1_id
 JOIN users u2 ON u2.id = m.user2_id
 LEFT JOIN match_scores ms ON ms.match_id = m.id
 WHERE m.status = 'ACTIVE';
+
+COMMENT ON VIEW active_matches IS 'Active matches with both user details';
 
 -- Conversation summaries view
 CREATE OR REPLACE VIEW conversation_summaries AS
@@ -73,6 +79,8 @@ LEFT JOIN last_messages lm ON lm.match_id = m.id
 LEFT JOIN unread_counts uc1 ON uc1.match_id = m.id AND uc1.sender_id = m.user2_id
 LEFT JOIN unread_counts uc2 ON uc2.match_id = m.id AND uc2.sender_id = m.user1_id
 WHERE m.status = 'ACTIVE';
+
+COMMENT ON VIEW conversation_summaries IS 'Match conversations with last message and unread counts';
 
 -- User stats view (optimized with JOINs to avoid N+1)
 CREATE OR REPLACE VIEW user_stats AS
@@ -120,6 +128,8 @@ LEFT JOIN swipe_stats ss ON ss.user_id = u.id
 LEFT JOIN match_stats ms ON ms.user_id = u.id
 LEFT JOIN message_stats msg ON msg.user_id = u.id;
 
+COMMENT ON VIEW user_stats IS 'User activity statistics for analytics (optimized with CTEs)';
+
 -- Match stats view
 CREATE OR REPLACE VIEW match_stats AS
 SELECT
@@ -136,6 +146,8 @@ LEFT JOIN messages msg ON msg.match_id = m.id
 GROUP BY DATE(m.matched_at)
 ORDER BY match_date DESC;
 
+COMMENT ON VIEW match_stats IS 'Daily match statistics for analytics dashboards';
+
 -- Swipe analytics view
 CREATE OR REPLACE VIEW swipe_analytics AS
 SELECT
@@ -148,6 +160,8 @@ SELECT
 FROM swipes
 GROUP BY DATE(created_at)
 ORDER BY swipe_date DESC;
+
+COMMENT ON VIEW swipe_analytics IS 'Daily swipe analytics for monitoring';
 
 -- ========================================
 -- MATERIALIZED VIEWS
@@ -168,6 +182,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_feed_candidates_id ON feed_candidates(id);
 CREATE INDEX IF NOT EXISTS idx_feed_candidates_gender_age ON feed_candidates(gender, age);
 CREATE INDEX IF NOT EXISTS idx_feed_candidates_active ON feed_candidates(last_active DESC);
 
+COMMENT ON MATERIALIZED VIEW feed_candidates IS 'Pre-computed feed candidates - refresh every 5 minutes';
+
 -- Daily swipe counts
 CREATE MATERIALIZED VIEW IF NOT EXISTS daily_swipe_counts AS
 SELECT
@@ -179,6 +195,8 @@ WHERE created_at > CURRENT_DATE - INTERVAL '7 days'
 GROUP BY user_id, DATE(created_at);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_swipes_user_date ON daily_swipe_counts(user_id, swipe_date);
+
+COMMENT ON MATERIALIZED VIEW daily_swipe_counts IS 'Daily swipe counts for rate limiting - refresh every minute';
 
 -- Match activity (optimized with CTE)
 CREATE MATERIALIZED VIEW IF NOT EXISTS match_activity AS
@@ -200,6 +218,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_match_activity_id ON match_activity(match_
 CREATE INDEX IF NOT EXISTS idx_match_activity_user1 ON match_activity(user1_id, last_activity DESC);
 CREATE INDEX IF NOT EXISTS idx_match_activity_user2 ON match_activity(user2_id, last_activity DESC);
 
+COMMENT ON MATERIALIZED VIEW match_activity IS 'Match activity for conversation ordering - refresh every minute';
+
 -- ========================================
 -- FUNCTIONS
 -- ========================================
@@ -212,6 +232,8 @@ BEGIN
     RETURN EXTRACT(YEAR FROM AGE(birth_date))::INT;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE;
+
+COMMENT ON FUNCTION calculate_age(DATE) IS 'Calculate age from birth date';
 
 -- Record swipe and check match
 CREATE OR REPLACE FUNCTION record_swipe(p_user_id UUID, p_target_user_id UUID, p_action VARCHAR(20))
@@ -259,6 +281,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION record_swipe(UUID, UUID, VARCHAR) IS 'Record swipe and automatically create match if mutual like';
+
 -- Refresh materialized views function
 CREATE OR REPLACE FUNCTION refresh_materialized_views()
 RETURNS void AS $$
@@ -268,6 +292,8 @@ BEGIN
     REFRESH MATERIALIZED VIEW CONCURRENTLY match_activity;
 END;
 $$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION refresh_materialized_views() IS 'Refresh all materialized views - call from scheduler';
 
 -- Cleanup old data function
 CREATE OR REPLACE FUNCTION cleanup_old_data(
@@ -303,6 +329,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+COMMENT ON FUNCTION cleanup_old_data(INT, INT, INT) IS 'Clean up expired and old data';
+
 -- Get database stats function
 CREATE OR REPLACE FUNCTION get_database_stats()
 RETURNS TABLE (table_name TEXT, row_count BIGINT, total_size TEXT, index_size TEXT) AS $$
@@ -316,6 +344,8 @@ BEGIN
     ORDER BY pg_total_relation_size(oid) DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION get_database_stats() IS 'Get table sizes and row counts for monitoring';
 
 -- Can users match function
 CREATE OR REPLACE FUNCTION can_users_match(user1 UUID, user2 UUID)
@@ -347,6 +377,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+COMMENT ON FUNCTION can_users_match(UUID, UUID) IS 'Check if two users can potentially match based on preferences';
+
 -- Get user feed function
 CREATE OR REPLACE FUNCTION get_user_feed(p_user_id UUID, p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
 RETURNS TABLE (user_id UUID, username VARCHAR, first_name VARCHAR, age INT, gender VARCHAR, bio TEXT, profile_picture_url VARCHAR, is_verified BOOLEAN, compatibility_score NUMERIC) AS $$
@@ -372,6 +404,8 @@ BEGIN
     LIMIT p_limit OFFSET p_offset;
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION get_user_feed(UUID, INT, INT) IS 'Get feed candidates for user with scoring';
 
 -- Get user matches function (optimized with CTEs)
 CREATE OR REPLACE FUNCTION get_user_matches(p_user_id UUID, p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
@@ -405,6 +439,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
+COMMENT ON FUNCTION get_user_matches(UUID, INT, INT) IS 'Get user matches with conversation info (optimized with CTEs)';
+
 -- Calculate compatibility function
 CREATE OR REPLACE FUNCTION calculate_compatibility(p_user1_id UUID, p_user2_id UUID)
 RETURNS NUMERIC AS $$
@@ -430,3 +466,5 @@ BEGIN
     RETURN LEAST(v_score, 100.0);
 END;
 $$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION calculate_compatibility(UUID, UUID) IS 'Calculate compatibility score between two users';

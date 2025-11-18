@@ -57,8 +57,8 @@ CREATE INDEX IF NOT EXISTS idx_matches_active_user1 ON matches(user1_id, matched
 CREATE INDEX IF NOT EXISTS idx_matches_active_user2 ON matches(user2_id, matched_at DESC)
     WHERE status = 'ACTIVE';
 CREATE INDEX IF NOT EXISTS idx_matches_time ON matches(matched_at DESC);
-CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status)
-    WHERE status = 'ACTIVE';
+
+-- Note: idx_matches_status removed as redundant with idx_matches_active_user1/user2
 
 -- ========================================
 -- MATCH SCORES INDEXES
@@ -144,13 +144,21 @@ CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id, created_at DESC
     WHERE user_id IS NOT NULL;
 
 -- ========================================
--- UPDATE STATISTICS
+-- STATISTICS UPDATE
+-- Run ANALYZE after creating indexes
 -- ========================================
 ANALYZE users;
 ANALYZE user_preferences;
 ANALYZE photos;
 ANALYZE swipes;
 ANALYZE matches;
+ANALYZE match_scores;
 ANALYZE messages;
+ANALYZE refresh_tokens;
 ANALYZE recommendations;
+ANALYZE user_blocks;
 ANALYZE notifications;
+ANALYZE verification_codes;
+ANALYZE interaction_history;
+ANALYZE reports;
+ANALYZE audit_logs;

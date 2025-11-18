@@ -1,5 +1,5 @@
 -- POC Dating Database Indexes
--- Version: 2.0
+-- Version: 3.0
 --
 -- PURPOSE: Optimized indexes for all query patterns
 --
@@ -9,6 +9,7 @@
 -- 3. Composite indexes for common WHERE + ORDER BY
 -- 4. Partial indexes for filtered queries
 -- 5. GIN indexes for array/JSONB columns
+-- 6. Covering indexes for high-frequency queries
 
 -- ========================================
 -- USERS TABLE INDEXES
@@ -25,12 +26,14 @@ CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 -- Composite for: WHERE gender = ? AND age BETWEEN ? AND ?
 CREATE INDEX IF NOT EXISTS idx_users_gender_age ON users(gender, age);
 
--- Legacy index on date_of_birth for backward compatibility
-CREATE INDEX IF NOT EXISTS idx_users_gender_dob ON users(gender, date_of_birth);
+-- Note: idx_users_gender_dob removed as redundant with idx_users_gender_age
 
 -- Active users filter (partial index for efficiency)
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(status, last_active DESC)
     WHERE status = 'ACTIVE';
+
+-- Status lookup for filtering
+CREATE INDEX IF NOT EXISTS idx_users_status ON users(status);
 
 -- Location-based queries (for future geo-features)
 CREATE INDEX IF NOT EXISTS idx_users_location ON users(location_lat, location_lng)
@@ -39,6 +42,10 @@ CREATE INDEX IF NOT EXISTS idx_users_location ON users(location_lat, location_ln
 -- Premium user queries
 CREATE INDEX IF NOT EXISTS idx_users_premium ON users(is_premium)
     WHERE is_premium = true;
+
+-- Active premium users for premium-only features
+CREATE INDEX IF NOT EXISTS idx_users_premium_active ON users(id)
+    WHERE is_premium = true AND status = 'ACTIVE';
 
 -- Full-text search on bio (trigram for LIKE queries)
 CREATE INDEX IF NOT EXISTS idx_users_bio_trgm ON users USING gin(bio gin_trgm_ops)
@@ -57,6 +64,9 @@ CREATE INDEX IF NOT EXISTS idx_user_preferences_interests ON user_preferences US
 -- ========================================
 -- PHOTOS INDEXES
 -- ========================================
+
+-- Single-column FK index for basic user lookups
+CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id);
 
 -- User's photos with ordering
 CREATE INDEX IF NOT EXISTS idx_photos_user_order ON photos(user_id, display_order);
@@ -111,6 +121,10 @@ CREATE INDEX IF NOT EXISTS idx_matches_active_user2 ON matches(user2_id, matched
 -- Recent matches
 CREATE INDEX IF NOT EXISTS idx_matches_time ON matches(matched_at DESC);
 
+-- Ended by user lookup (for analytics and moderation)
+CREATE INDEX IF NOT EXISTS idx_matches_ended_by ON matches(ended_by)
+    WHERE ended_by IS NOT NULL;
+
 -- Note: idx_matches_status removed as redundant with idx_matches_active_user1/user2
 
 -- ========================================
@@ -127,6 +141,10 @@ CREATE INDEX IF NOT EXISTS idx_match_scores_score ON match_scores(score DESC);
 -- Chat history (most critical)
 -- Covers: SELECT * FROM messages WHERE match_id = ? ORDER BY created_at DESC
 CREATE INDEX IF NOT EXISTS idx_messages_match_time ON messages(match_id, created_at DESC);
+
+-- Covering index for message queries (avoids heap lookups)
+CREATE INDEX IF NOT EXISTS idx_messages_match_covering ON messages(match_id, created_at DESC)
+    INCLUDE (sender_id, content, status);
 
 -- Sender's messages
 CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender_id);
@@ -156,10 +174,6 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_valid ON refresh_tokens(token_hash
 -- RECOMMENDATIONS INDEXES (Feed generation)
 -- ========================================
 
--- User's recommendations sorted by score (critical for feed)
--- Covers: SELECT * FROM recommendations WHERE user_id = ? ORDER BY score DESC
-CREATE INDEX IF NOT EXISTS idx_recommendations_user_score ON recommendations(user_id, score DESC);
-
 -- Target user lookup for reverse queries
 CREATE INDEX IF NOT EXISTS idx_recommendations_target ON recommendations(target_user_id);
 
@@ -167,7 +181,8 @@ CREATE INDEX IF NOT EXISTS idx_recommendations_target ON recommendations(target_
 CREATE INDEX IF NOT EXISTS idx_recommendations_expires ON recommendations(expires_at)
     WHERE expires_at IS NOT NULL;
 
--- Active recommendations only
+-- Active recommendations only (consolidated - covers user_id + score queries)
+-- Note: idx_recommendations_user_score removed as redundant
 CREATE INDEX IF NOT EXISTS idx_recommendations_active ON recommendations(user_id, score DESC)
     WHERE expires_at IS NULL OR expires_at > CURRENT_TIMESTAMP;
 
@@ -191,8 +206,8 @@ CREATE INDEX IF NOT EXISTS idx_user_blocks_pair ON user_blocks(blocker_id, block
 -- User's notifications
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC);
 
--- Unread notifications
-CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read)
+-- Unread notifications (optimized partial index)
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id)
     WHERE is_read = false;
 
 -- Unsent notifications (push queue)
@@ -206,9 +221,9 @@ CREATE INDEX IF NOT EXISTS idx_notifications_unsent ON notifications(is_sent, cr
 -- User's verification codes
 CREATE INDEX IF NOT EXISTS idx_verification_user ON verification_codes(user_id);
 
--- Active codes only
-CREATE INDEX IF NOT EXISTS idx_verification_active ON verification_codes(user_id, type, expires_at)
-    WHERE used_at IS NULL;
+-- Active codes only (optimized for lookup with time filter)
+CREATE INDEX IF NOT EXISTS idx_verification_active ON verification_codes(user_id, type)
+    WHERE used_at IS NULL AND expires_at > NOW();
 
 -- Cleanup expired codes
 CREATE INDEX IF NOT EXISTS idx_verification_expires ON verification_codes(expires_at)
@@ -220,6 +235,9 @@ CREATE INDEX IF NOT EXISTS idx_verification_expires ON verification_codes(expire
 
 -- User history
 CREATE INDEX IF NOT EXISTS idx_interaction_user ON interaction_history(user_id, created_at DESC);
+
+-- Target user lookup for reverse queries
+CREATE INDEX IF NOT EXISTS idx_interaction_history_target ON interaction_history(target_id);
 
 -- Action type analytics
 CREATE INDEX IF NOT EXISTS idx_interaction_action ON interaction_history(action, created_at DESC);
@@ -236,12 +254,16 @@ CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status, created_at)
 CREATE INDEX IF NOT EXISTS idx_reports_reporter ON reports(reporter_id);
 CREATE INDEX IF NOT EXISTS idx_reports_reported ON reports(reported_user_id);
 
+-- Resolved by moderator lookup
+CREATE INDEX IF NOT EXISTS idx_reports_resolved_by ON reports(resolved_by)
+    WHERE resolved_by IS NOT NULL;
+
 -- ========================================
 -- AUDIT LOGS INDEXES
 -- ========================================
 
 -- Entity lookup
-CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 
 -- Time-based queries
 CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_logs(created_at DESC);

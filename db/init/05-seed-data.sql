@@ -25,7 +25,7 @@ VALUES
     ('11111111-1111-1111-1111-111111111113', 'olivia@test.com', 'olivia_brown', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Olivia', 'Brown', '1998-11-08', 'FEMALE', 'Artist and dog mom. My golden retriever is my best friend and you should probably like dogs.', 'https://randomuser.me/api/portraits/women/3.jpg', 40.7484, -73.9857, false, false, 'ACTIVE', NOW() - INTERVAL '1 day'),
     ('11111111-1111-1111-1111-111111111114', 'ava@test.com', 'ava_garcia', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Ava', 'Garcia', '1990-05-30', 'FEMALE', 'Marketing manager who loves salsa dancing and cooking Italian food.', 'https://randomuser.me/api/portraits/women/4.jpg', 40.7282, -73.7949, true, false, 'ACTIVE', NOW() - INTERVAL '4 hours'),
     ('11111111-1111-1111-1111-111111111115', 'isabella@test.com', 'bella_martinez', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Isabella', 'Martinez', '1994-09-12', 'FEMALE', 'Nurse with a passion for travel. Visited 30 countries and counting!', 'https://randomuser.me/api/portraits/women/5.jpg', 40.6892, -74.0445, true, true, 'ACTIVE', NOW() - INTERVAL '15 minutes'),
-    ('11111111-1111-1111-1111-111111111116', 'mia@test.com', 'mia_johnson', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Mia', 'Johnson', '1996-02-28', 'FEMALE', 'Fitness trainer and meal prep queen. Looking for a gym partner and life partner.', 'https://randomuser.me/api/portraits/women/6.jpg', 40.7614, -73.9776, false, false, 'ACTIVE', NOW() - INTERVAL '6 hours'),
+    ('11111111-1111-1111-1111-111111111116', 'mia@test.com', 'mia_johnson', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Mia', 'Johnson', '1996-02-28', 'FEMALE', 'Fitness trainer and meal prep queen. Looking for a gym partner and life partner.', 'https://randomuser.me/api/portraits/women/6.jpg', 40.7614, -73.9776, false, true, 'ACTIVE', NOW() - INTERVAL '6 hours'),
     ('11111111-1111-1111-1111-111111111117', 'charlotte@test.com', 'charlotte_lee', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Charlotte', 'Lee', '1991-12-05', 'FEMALE', 'Bookworm and wine enthusiast. Will definitely judge you by your book collection.', 'https://randomuser.me/api/portraits/women/7.jpg', 40.7505, -73.9934, true, false, 'ACTIVE', NOW() - INTERVAL '3 hours'),
     ('11111111-1111-1111-1111-111111111118', 'amelia@test.com', 'amelia_kim', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Amelia', 'Kim', '1993-08-19', 'FEMALE', 'Data scientist who loves board games and craft beer. Let''s play Catan!', 'https://randomuser.me/api/portraits/women/8.jpg', 40.7282, -73.7949, true, true, 'ACTIVE', NOW() - INTERVAL '45 minutes'),
     ('11111111-1111-1111-1111-111111111119', 'harper@test.com', 'harper_davis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Harper', 'Davis', '1997-04-03', 'FEMALE', 'Photographer and cat lover. Looking for someone to explore the city with.', 'https://randomuser.me/api/portraits/women/9.jpg', 40.7128, -74.0060, false, false, 'ACTIVE', NOW() - INTERVAL '8 hours'),
@@ -35,8 +35,8 @@ VALUES
     ('11111111-1111-1111-1111-111111111123', 'penelope@test.com', 'penny_white', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Penelope', 'White', '1992-03-20', 'FEMALE', 'Elementary teacher who loves camping and stargazing.', 'https://randomuser.me/api/portraits/women/13.jpg', 40.6892, -74.0445, true, false, 'ACTIVE', NOW() - INTERVAL '7 hours'),
     ('11111111-1111-1111-1111-111111111124', 'layla@test.com', 'layla_harris', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Layla', 'Harris', '1995-11-30', 'FEMALE', 'Music producer and vinyl collector. My apartment is basically a record store.', 'https://randomuser.me/api/portraits/women/14.jpg', 40.7614, -73.9776, true, true, 'ACTIVE', NOW() - INTERVAL '20 minutes'),
     ('11111111-1111-1111-1111-111111111125', 'riley@test.com', 'riley_clark', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Riley', 'Clark', '1993-07-08', 'FEMALE', 'Veterinarian and marathon runner. Yes, I will want to meet your pets.', 'https://randomuser.me/api/portraits/women/15.jpg', 40.7505, -73.9934, false, false, 'ACTIVE', NOW() - INTERVAL '12 hours'),
-    ('11111111-1111-1111-1111-111111111126', 'zoey@test.com', 'zoey_lewis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Zoey', 'Lewis', '1990-09-15', 'FEMALE', 'Architect with a love for brutalist buildings and good coffee.', 'https://randomuser.me/api/portraits/women/16.jpg', 40.7282, -73.7949, true, false, 'ACTIVE', NOW() - INTERVAL '4 hours'),
-    ('11111111-1111-1111-1111-111111111127', 'nora@test.com', 'nora_walker', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Nora', 'Walker', '1997-02-12', 'FEMALE', 'Grad student studying marine biology. Ask me about octopuses!', 'https://randomuser.me/api/portraits/women/17.jpg', 40.7128, -74.0060, true, true, 'ACTIVE', NOW() - INTERVAL '1 hour'),
+    ('11111111-1111-1111-1111-111111111126', 'zoey@test.com', 'zoey_lewis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Zoey', 'Lewis', '1990-09-15', 'FEMALE', 'Architect with a love for brutalist buildings and good coffee.', 'https://randomuser.me/api/portraits/women/16.jpg', 40.7282, -73.7949, true, false, 'SUSPENDED', NOW() - INTERVAL '4 hours'),
+    ('11111111-1111-1111-1111-111111111127', 'nora@test.com', 'nora_walker', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Nora', 'Walker', '1997-02-12', 'FEMALE', 'Grad student studying marine biology. Ask me about octopuses!', 'https://randomuser.me/api/portraits/women/17.jpg', 40.7128, -74.0060, true, true, 'SUSPENDED', NOW() - INTERVAL '1 hour'),
     ('11111111-1111-1111-1111-111111111128', 'lily@test.com', 'lily_hall', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Lily', 'Hall', '1994-05-25', 'FEMALE', 'Product manager and amateur baker. Will bring cookies to first date.', 'https://randomuser.me/api/portraits/women/18.jpg', 40.7580, -73.9855, false, false, 'ACTIVE', NOW() - INTERVAL '9 hours'),
     ('11111111-1111-1111-1111-111111111129', 'eleanor@test.com', 'ellie_young', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Eleanor', 'Young', '1991-08-03', 'FEMALE', 'Financial analyst who loves jazz and late-night diners.', 'https://randomuser.me/api/portraits/women/19.jpg', 40.7484, -73.9857, true, false, 'ACTIVE', NOW() - INTERVAL '6 hours'),
     ('11111111-1111-1111-1111-111111111130', 'hazel@test.com', 'hazel_allen', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Hazel', 'Allen', '1996-12-18', 'FEMALE', 'Social worker and pottery enthusiast. Yes, like in Ghost.', 'https://randomuser.me/api/portraits/women/20.jpg', 40.7282, -73.7949, true, true, 'ACTIVE', NOW() - INTERVAL '30 minutes'),
@@ -49,10 +49,10 @@ VALUES
     -- Men (25 users)
     ('22222222-2222-2222-2222-222222222221', 'james@test.com', 'james_smith', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'James', 'Smith', '1991-05-18', 'MALE', 'Software developer and amateur chef. My pasta game is strong.', 'https://randomuser.me/api/portraits/men/1.jpg', 40.7128, -74.0060, true, false, 'ACTIVE', NOW() - INTERVAL '1 hour'),
     ('22222222-2222-2222-2222-222222222222', 'liam@test.com', 'liam_johnson', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Liam', 'Johnson', '1993-09-24', 'MALE', 'Investment banker who mountain bikes on weekends. Work hard, play harder.', 'https://randomuser.me/api/portraits/men/2.jpg', 40.7580, -73.9855, true, true, 'ACTIVE', NOW() - INTERVAL '45 minutes'),
-    ('22222222-2222-2222-2222-222222222223', 'noah@test.com', 'noah_williams', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Noah', 'Williams', '1990-02-11', 'MALE', 'Architect and coffee snob. Let me take you to the best hidden cafes.', 'https://randomuser.me/api/portraits/men/3.jpg', 40.7484, -73.9857, false, false, 'ACTIVE', NOW() - INTERVAL '3 hours'),
+    ('22222222-2222-2222-2222-222222222223', 'noah@test.com', 'noah_williams', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Noah', 'Williams', '1990-02-11', 'MALE', 'Architect and coffee snob. Let me take you to the best hidden cafes.', 'https://randomuser.me/api/portraits/men/3.jpg', 40.7484, -73.9857, false, true, 'ACTIVE', NOW() - INTERVAL '3 hours'),
     ('22222222-2222-2222-2222-222222222224', 'william@test.com', 'will_brown', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'William', 'Brown', '1995-07-06', 'MALE', 'Physical therapist and basketball player. 6''2" if that matters.', 'https://randomuser.me/api/portraits/men/4.jpg', 40.7282, -73.7949, true, false, 'ACTIVE', NOW() - INTERVAL '2 hours'),
     ('22222222-2222-2222-2222-222222222225', 'oliver@test.com', 'oliver_jones', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Oliver', 'Jones', '1992-11-29', 'MALE', 'Music teacher and vinyl enthusiast. Will make you a playlist.', 'https://randomuser.me/api/portraits/men/5.jpg', 40.6892, -74.0445, true, true, 'ACTIVE', NOW() - INTERVAL '30 minutes'),
-    ('22222222-2222-2222-2222-222222222226', 'elijah@test.com', 'elijah_garcia', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Elijah', 'Garcia', '1994-04-15', 'MALE', 'Emergency room doctor and amateur stand-up comedian. Dark humor included.', 'https://randomuser.me/api/portraits/men/6.jpg', 40.7614, -73.9776, false, false, 'ACTIVE', NOW() - INTERVAL '6 hours'),
+    ('22222222-2222-2222-2222-222222222226', 'elijah@test.com', 'elijah_garcia', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Elijah', 'Garcia', '1994-04-15', 'MALE', 'Emergency room doctor and amateur stand-up comedian. Dark humor included.', 'https://randomuser.me/api/portraits/men/6.jpg', 40.7614, -73.9776, false, true, 'ACTIVE', NOW() - INTERVAL '6 hours'),
     ('22222222-2222-2222-2222-222222222227', 'lucas@test.com', 'lucas_miller', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Lucas', 'Miller', '1989-08-21', 'MALE', 'Entrepreneur and dog dad to two huskies. They come first, sorry not sorry.', 'https://randomuser.me/api/portraits/men/7.jpg', 40.7505, -73.9934, true, false, 'ACTIVE', NOW() - INTERVAL '4 hours'),
     ('22222222-2222-2222-2222-222222222228', 'mason@test.com', 'mason_davis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Mason', 'Davis', '1996-01-03', 'MALE', 'Data analyst and hiking enthusiast. Let''s conquer some trails together.', 'https://randomuser.me/api/portraits/men/8.jpg', 40.7282, -73.7949, true, true, 'ACTIVE', NOW() - INTERVAL '1 hour'),
     ('22222222-2222-2222-2222-222222222229', 'ethan@test.com', 'ethan_rodriguez', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Ethan', 'Rodriguez', '1993-06-17', 'MALE', 'Chef at a farm-to-table restaurant. Will cook you dinner on the third date.', 'https://randomuser.me/api/portraits/men/9.jpg', 40.7128, -74.0060, false, false, 'ACTIVE', NOW() - INTERVAL '9 hours'),
@@ -70,8 +70,20 @@ VALUES
     ('22222222-2222-2222-2222-222222222241', 'joshua@test.com', 'josh_harris', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Joshua', 'Harris', '1993-03-17', 'MALE', 'Teacher and trivia night champion. Full of random facts.', 'https://randomuser.me/api/portraits/men/21.jpg', 40.6892, -74.0445, false, false, 'ACTIVE', NOW() - INTERVAL '10 hours'),
     ('22222222-2222-2222-2222-222222222242', 'connor@test.com', 'connor_sanchez', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Connor', 'Sanchez', '1992-06-24', 'MALE', 'Accountant and home brewer. Will share my craft beers with you.', 'https://randomuser.me/api/portraits/men/22.jpg', 40.7614, -73.9776, true, false, 'ACTIVE', NOW() - INTERVAL '3 hours'),
     ('22222222-2222-2222-2222-222222222243', 'matthew@test.com', 'matt_clark', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Matthew', 'Clark', '1995-12-01', 'MALE', 'Dentist and marathon runner. Great at small talk while you can''t respond.', 'https://randomuser.me/api/portraits/men/23.jpg', 40.7505, -73.9934, true, true, 'ACTIVE', NOW() - INTERVAL '4 hours'),
-    ('22222222-2222-2222-2222-222222222244', 'daniel@test.com', 'daniel_ramirez', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Daniel', 'Ramirez', '1991-08-13', 'MALE', 'Civil engineer and volunteer firefighter. Building and protecting communities.', 'https://randomuser.me/api/portraits/men/24.jpg', 40.7282, -73.7949, false, false, 'ACTIVE', NOW() - INTERVAL '7 hours'),
-    ('22222222-2222-2222-2222-222222222245', 'andrew@test.com', 'andrew_lewis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Andrew', 'Lewis', '1994-10-06', 'MALE', 'Psychologist and bookworm. Great listener, can recommend good reads.', 'https://randomuser.me/api/portraits/men/25.jpg', 40.7128, -74.0060, true, false, 'ACTIVE', NOW() - INTERVAL '2 hours')
+    ('22222222-2222-2222-2222-222222222244', 'daniel@test.com', 'daniel_ramirez', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Daniel', 'Ramirez', '1991-08-13', 'MALE', 'Civil engineer and volunteer firefighter. Building and protecting communities.', 'https://randomuser.me/api/portraits/men/24.jpg', 40.7282, -73.7949, false, false, 'DELETED', NOW() - INTERVAL '7 hours'),
+    ('22222222-2222-2222-2222-222222222245', 'andrew@test.com', 'andrew_lewis', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Andrew', 'Lewis', '1994-10-06', 'MALE', 'Psychologist and bookworm. Great listener, can recommend good reads.', 'https://randomuser.me/api/portraits/men/25.jpg', 40.7128, -74.0060, true, false, 'PENDING', NOW() - INTERVAL '2 hours'),
+
+    -- Geographic diversity: Los Angeles users
+    ('44444444-4444-4444-4444-444444444441', 'maya_la@test.com', 'maya_la', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Maya', 'Anderson', '1993-03-18', 'FEMALE', 'LA-based actress and beach volleyball player. Looking for adventure on the west coast.', 'https://randomuser.me/api/portraits/women/31.jpg', 34.05, -118.24, true, false, 'ACTIVE', NOW() - INTERVAL '2 hours'),
+    ('44444444-4444-4444-4444-444444444442', 'tyler_la@test.com', 'tyler_la', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Tyler', 'Brooks', '1990-07-22', 'MALE', 'Music producer in LA. Love hiking Runyon Canyon and finding new taco spots.', 'https://randomuser.me/api/portraits/men/31.jpg', 34.05, -118.24, false, true, 'ACTIVE', NOW() - INTERVAL '3 hours'),
+
+    -- Geographic diversity: Chicago users
+    ('44444444-4444-4444-4444-444444444443', 'sarah_chi@test.com', 'sarah_chi', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Sarah', 'Mitchell', '1995-11-05', 'FEMALE', 'Chicago native who loves deep dish pizza and jazz clubs. Software engineer by day.', 'https://randomuser.me/api/portraits/women/32.jpg', 41.88, -87.63, true, true, 'ACTIVE', NOW() - INTERVAL '1 hour'),
+    ('44444444-4444-4444-4444-444444444444', 'marcus_chi@test.com', 'marcus_chi', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Marcus', 'Green', '1992-04-14', 'MALE', 'Sports analyst and Cubs superfan. Always down for a game at Wrigley Field.', 'https://randomuser.me/api/portraits/men/32.jpg', 41.88, -87.63, false, false, 'ACTIVE', NOW() - INTERVAL '4 hours'),
+
+    -- Geographic diversity: Austin users
+    ('44444444-4444-4444-4444-444444444445', 'alex_atx@test.com', 'alex_atx', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Alex', 'Rivera', '1994-08-30', 'NON_BINARY', 'Austin tech worker and live music enthusiast. They/them. Keep Austin weird!', 'https://randomuser.me/api/portraits/lego/1.jpg', 30.27, -97.74, true, false, 'ACTIVE', NOW() - INTERVAL '2 hours'),
+    ('44444444-4444-4444-4444-444444444446', 'jordan_atx@test.com', 'jordan_atx', '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.V.HN4XkT4POuaa', 'Jordan', 'Lee', '1991-12-20', 'NON_BINARY', 'Austin-based artist and food truck connoisseur. Pronouns: they/them.', 'https://randomuser.me/api/portraits/lego/2.jpg', 30.27, -97.74, false, true, 'ACTIVE', NOW() - INTERVAL '5 hours')
 ON CONFLICT (email) DO NOTHING;
 
 -- ========================================
@@ -425,13 +437,16 @@ ON CONFLICT (user_id, target_user_id) DO NOTHING;
 -- ========================================
 -- MATCHES (From mutual likes above)
 -- ========================================
-INSERT INTO matches (id, user1_id, user2_id, status, matched_at)
+INSERT INTO matches (id, user1_id, user2_id, status, matched_at, ended_at, ended_by)
 VALUES
-    ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222221', 'ACTIVE', NOW() - INTERVAL '4 days'),
-    ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111112', '22222222-2222-2222-2222-222222222222', 'ACTIVE', NOW() - INTERVAL '3 days'),
-    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111113', '22222222-2222-2222-2222-222222222223', 'ACTIVE', NOW() - INTERVAL '5 days'),
-    ('33333333-3333-3333-3333-333333333334', '11111111-1111-1111-1111-111111111114', '22222222-2222-2222-2222-222222222224', 'ACTIVE', NOW() - INTERVAL '2 days'),
-    ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', '22222222-2222-2222-2222-222222222225', 'ACTIVE', NOW() - INTERVAL '1 day')
+    ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222221', 'ACTIVE', NOW() - INTERVAL '4 days', NULL, NULL),
+    ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111112', '22222222-2222-2222-2222-222222222222', 'ACTIVE', NOW() - INTERVAL '3 days', NULL, NULL),
+    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111113', '22222222-2222-2222-2222-222222222223', 'ACTIVE', NOW() - INTERVAL '5 days', NULL, NULL),
+    -- UNMATCHED status: William unmatched Ava
+    ('33333333-3333-3333-3333-333333333334', '11111111-1111-1111-1111-111111111114', '22222222-2222-2222-2222-222222222224', 'UNMATCHED', NOW() - INTERVAL '2 days', NOW() - INTERVAL '1 day', '22222222-2222-2222-2222-222222222224'),
+    ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', '22222222-2222-2222-2222-222222222225', 'ACTIVE', NOW() - INTERVAL '1 day', NULL, NULL),
+    -- BLOCKED status: Mia blocked Elijah after a bad interaction
+    ('33333333-3333-3333-3333-333333333336', '11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222226', 'BLOCKED', NOW() - INTERVAL '3 days', NOW() - INTERVAL '2 days', '11111111-1111-1111-1111-111111111116')
 ON CONFLICT (user1_id, user2_id) DO NOTHING;
 
 -- ========================================
@@ -662,6 +677,108 @@ VALUES
     ('22222222-2222-2222-2222-222222222226', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 4}'::jsonb, true, true, NOW() - INTERVAL '1 day', NOW() - INTERVAL '1 day'),
     ('22222222-2222-2222-2222-222222222227', 'PROFILE_VIEW', 'Someone Viewed Your Profile', 'Someone checked out your profile!', '{"viewer_count": 2}'::jsonb, false, true, NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days')
 ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- USER PREFERENCES FOR NEW USERS
+-- ========================================
+INSERT INTO user_preferences (user_id, min_age, max_age, max_distance_km, interested_in, interests, notification_enabled)
+VALUES
+    -- Los Angeles users
+    ('44444444-4444-4444-4444-444444444441', 21, 40, 50, 'MALE', ARRAY['acting', 'beach', 'volleyball', 'travel'], true),
+    ('44444444-4444-4444-4444-444444444442', 25, 45, 50, 'FEMALE', ARRAY['music', 'hiking', 'food', 'production'], true),
+    -- Chicago users
+    ('44444444-4444-4444-4444-444444444443', 21, 38, 25, 'MALE', ARRAY['jazz', 'technology', 'food', 'coffee'], true),
+    ('44444444-4444-4444-4444-444444444444', 25, 40, 50, 'FEMALE', ARRAY['sports', 'baseball', 'analytics', 'beer'], true),
+    -- Austin users (NON_BINARY with interested_in='BOTH')
+    ('44444444-4444-4444-4444-444444444445', 21, 45, 100, 'BOTH', ARRAY['technology', 'music', 'art', 'food'], true),
+    ('44444444-4444-4444-4444-444444444446', 25, 50, 100, 'BOTH', ARRAY['art', 'food', 'music', 'outdoors'], true)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- ========================================
+-- GENDER PREFERENCE DIVERSITY
+-- Update existing users to be interested in BOTH
+-- ========================================
+UPDATE user_preferences
+SET interested_in = 'BOTH'
+WHERE user_id IN (
+    '11111111-1111-1111-1111-111111111121',  -- Luna Patel
+    '22222222-2222-2222-2222-222222222231'   -- Henry Anderson
+);
+
+-- ========================================
+-- USER BLOCKS (Blocking relationships)
+-- ========================================
+INSERT INTO user_blocks (blocker_id, blocked_id, reason, created_at)
+VALUES
+    -- Mia blocked Elijah after inappropriate messages (related to the BLOCKED match)
+    ('11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222226', 'Inappropriate messages and behavior', NOW() - INTERVAL '2 days'),
+    -- Charlotte blocked Alexander after he was too persistent
+    ('11111111-1111-1111-1111-111111111117', '22222222-2222-2222-2222-222222222230', 'Too aggressive in messaging', NOW() - INTERVAL '5 days'),
+    -- Joshua blocked Harper after she didn't respond well to rejection
+    ('22222222-2222-2222-2222-222222222241', '11111111-1111-1111-1111-111111111119', 'Harassment after unmatching', NOW() - INTERVAL '3 days')
+ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
+
+-- ========================================
+-- REPORTS (Abuse reports)
+-- ========================================
+INSERT INTO reports (reporter_id, reported_user_id, match_id, reason, description, status, created_at)
+VALUES
+    -- Mia reported Elijah for harassment
+    ('11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222226', '33333333-3333-3333-3333-333333333336', 'HARASSMENT', 'User sent multiple inappropriate messages after I asked them to stop. Made me uncomfortable with their language and persistence.', 'UNDER_REVIEW', NOW() - INTERVAL '2 days'),
+    -- Charlotte reported Alexander for spam-like behavior
+    ('11111111-1111-1111-1111-111111111117', '22222222-2222-2222-2222-222222222230', NULL, 'SPAM', 'User sent 50+ messages in a short period after being ignored. Appears to be spamming or automated behavior.', 'RESOLVED', NOW() - INTERVAL '4 days')
+ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- PHOTOS FOR NEW USERS
+-- ========================================
+INSERT INTO photos (user_id, url, thumbnail_url, display_order, is_primary, is_verified, moderation_status)
+VALUES
+    ('44444444-4444-4444-4444-444444444441', 'https://randomuser.me/api/portraits/women/31.jpg', 'https://randomuser.me/api/portraits/women/31.jpg', 0, true, true, 'APPROVED'),
+    ('44444444-4444-4444-4444-444444444442', 'https://randomuser.me/api/portraits/men/31.jpg', 'https://randomuser.me/api/portraits/men/31.jpg', 0, true, false, 'APPROVED'),
+    ('44444444-4444-4444-4444-444444444443', 'https://randomuser.me/api/portraits/women/32.jpg', 'https://randomuser.me/api/portraits/women/32.jpg', 0, true, true, 'APPROVED'),
+    ('44444444-4444-4444-4444-444444444444', 'https://randomuser.me/api/portraits/men/32.jpg', 'https://randomuser.me/api/portraits/men/32.jpg', 0, true, false, 'APPROVED'),
+    ('44444444-4444-4444-4444-444444444445', 'https://randomuser.me/api/portraits/lego/1.jpg', 'https://randomuser.me/api/portraits/lego/1.jpg', 0, true, true, 'APPROVED'),
+    ('44444444-4444-4444-4444-444444444446', 'https://randomuser.me/api/portraits/lego/2.jpg', 'https://randomuser.me/api/portraits/lego/2.jpg', 0, true, false, 'APPROVED')
+ON CONFLICT DO NOTHING;
+
+-- ========================================
+-- EDGE CASE TESTING DATA
+-- ========================================
+
+-- User with expired premium (for testing premium expiration edge case)
+-- Note: This would need the premium_expires_at column if it exists
+
+-- User with very old last_active (for testing inactive users)
+UPDATE users SET last_active = NOW() - INTERVAL '90 days' WHERE id = '11111111-1111-1111-1111-111111111131';
+
+-- Add some additional swipes between geographic users for testing
+INSERT INTO swipes (user_id, target_user_id, action, created_at)
+VALUES
+    -- LA users swiping
+    ('44444444-4444-4444-4444-444444444441', '44444444-4444-4444-4444-444444444442', 'LIKE', NOW() - INTERVAL '1 day'),
+    ('44444444-4444-4444-4444-444444444442', '44444444-4444-4444-4444-444444444441', 'SUPER_LIKE', NOW() - INTERVAL '12 hours'),
+    -- Chicago users swiping
+    ('44444444-4444-4444-4444-444444444443', '44444444-4444-4444-4444-444444444444', 'LIKE', NOW() - INTERVAL '2 days'),
+    -- Austin users swiping (testing BOTH preference)
+    ('44444444-4444-4444-4444-444444444445', '44444444-4444-4444-4444-444444444446', 'LIKE', NOW() - INTERVAL '1 day'),
+    ('44444444-4444-4444-4444-444444444446', '44444444-4444-4444-4444-444444444445', 'LIKE', NOW() - INTERVAL '8 hours')
+ON CONFLICT (user_id, target_user_id) DO NOTHING;
+
+-- Add matches for new geographic users (LA and Austin pairs matched)
+INSERT INTO matches (id, user1_id, user2_id, status, matched_at, ended_at, ended_by)
+VALUES
+    ('33333333-3333-3333-3333-333333333337', '44444444-4444-4444-4444-444444444441', '44444444-4444-4444-4444-444444444442', 'ACTIVE', NOW() - INTERVAL '12 hours', NULL, NULL),
+    ('33333333-3333-3333-3333-333333333338', '44444444-4444-4444-4444-444444444445', '44444444-4444-4444-4444-444444444446', 'ACTIVE', NOW() - INTERVAL '8 hours', NULL, NULL)
+ON CONFLICT (user1_id, user2_id) DO NOTHING;
+
+-- Add match scores for new matches
+INSERT INTO match_scores (match_id, score, factors)
+VALUES
+    ('33333333-3333-3333-3333-333333333336', 45, '{"interest_match": 15, "age_compatibility": 10, "preference_alignment": 20}'::jsonb),
+    ('33333333-3333-3333-3333-333333333337', 85, '{"interest_match": 35, "age_compatibility": 25, "preference_alignment": 25}'::jsonb),
+    ('33333333-3333-3333-3333-333333333338', 92, '{"interest_match": 40, "age_compatibility": 27, "preference_alignment": 25}'::jsonb)
+ON CONFLICT (match_id) DO NOTHING;
 
 -- ========================================
 -- REFRESH MATERIALIZED VIEWS

@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
     gender VARCHAR(20),
     bio TEXT,
     profile_picture_url VARCHAR(500),
-    location_lat DECIMAL(10, 8),
+    location_lat DECIMAL(11, 8),
     location_lng DECIMAL(11, 8),
     is_verified BOOLEAN DEFAULT false,
     is_premium BOOLEAN DEFAULT false,
@@ -55,7 +55,10 @@ CREATE TABLE IF NOT EXISTS users (
 
     CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
-    CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER'))
+    CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER')),
+    CONSTRAINT valid_password_hash CHECK (password_hash ~ '^\$2[ab]\$'),
+    CONSTRAINT valid_bio_length CHECK (bio IS NULL OR length(bio) <= 1000),
+    CONSTRAINT valid_age_18_plus CHECK (date_of_birth IS NULL OR date_of_birth <= CURRENT_DATE - INTERVAL '18 years')
 );
 
 COMMENT ON TABLE users IS 'Core user profiles and authentication';
@@ -79,7 +82,8 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT valid_age_range CHECK (min_age <= max_age),
-    CONSTRAINT valid_interested_in CHECK (interested_in IN ('MALE', 'FEMALE', 'BOTH', 'EVERYONE'))
+    CONSTRAINT valid_interested_in CHECK (interested_in IN ('MALE', 'FEMALE', 'BOTH', 'EVERYONE')),
+    CONSTRAINT valid_interests_limit CHECK (interests IS NULL OR array_length(interests, 1) <= 20)
 );
 
 COMMENT ON TABLE user_preferences IS 'User matching preferences and settings';
@@ -151,7 +155,7 @@ COMMENT ON TABLE matches IS 'Mutual matches between users with status tracking';
 CREATE TABLE IF NOT EXISTS match_scores (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id UUID NOT NULL UNIQUE REFERENCES matches(id) ON DELETE CASCADE,
-    score NUMERIC(5, 2) CHECK (score >= 0 AND score <= 100),
+    score NUMERIC(5, 2) NOT NULL DEFAULT 50.0 CHECK (score >= 0 AND score <= 100),
     factors JSONB,
     calculated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -166,7 +170,7 @@ COMMENT ON TABLE match_scores IS 'Compatibility scores with factor breakdown';
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     match_id UUID NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
-    sender_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    sender_id UUID REFERENCES users(id) ON DELETE SET NULL,
     content TEXT NOT NULL,
     message_type VARCHAR(20) DEFAULT 'TEXT',
     status VARCHAR(20) DEFAULT 'SENT',
@@ -366,3 +370,71 @@ CREATE TRIGGER update_photos_updated_at
 CREATE TRIGGER update_match_scores_updated_at
     BEFORE UPDATE ON match_scores
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ========================================
+-- PARTIAL UNIQUE INDEX: Verification codes
+-- Ensures only one unused code per user per type
+-- ========================================
+CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_codes_active_unique
+    ON verification_codes(user_id, type)
+    WHERE used_at IS NULL;
+
+COMMENT ON INDEX idx_verification_codes_active_unique IS 'Ensures only one active verification code per user per type';
+
+-- ========================================
+-- TRIGGER: Validate message sender
+-- Ensures sender is part of the match (CRITICAL)
+-- ========================================
+CREATE OR REPLACE FUNCTION validate_message_sender()
+RETURNS TRIGGER AS $$
+DECLARE
+    match_user1 UUID;
+    match_user2 UUID;
+BEGIN
+    -- Skip validation if sender_id is NULL (deleted user)
+    IF NEW.sender_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- Get the users in this match
+    SELECT user1_id, user2_id INTO match_user1, match_user2
+    FROM matches
+    WHERE id = NEW.match_id;
+
+    -- Verify sender is one of the match participants
+    IF NEW.sender_id != match_user1 AND NEW.sender_id != match_user2 THEN
+        RAISE EXCEPTION 'Message sender must be a participant in the match';
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER validate_message_sender_trigger
+    BEFORE INSERT OR UPDATE ON messages
+    FOR EACH ROW EXECUTE FUNCTION validate_message_sender();
+
+-- ========================================
+-- TRIGGER: Match state consistency
+-- Ensures ended_at is set when status='UNMATCHED' (CRITICAL)
+-- ========================================
+CREATE OR REPLACE FUNCTION enforce_match_state_consistency()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- When status changes to UNMATCHED or BLOCKED, ensure ended_at is set
+    IF NEW.status IN ('UNMATCHED', 'BLOCKED') AND NEW.ended_at IS NULL THEN
+        NEW.ended_at = CURRENT_TIMESTAMP;
+    END IF;
+
+    -- When status is ACTIVE, ensure ended_at is NULL
+    IF NEW.status = 'ACTIVE' AND NEW.ended_at IS NOT NULL THEN
+        NEW.ended_at = NULL;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER enforce_match_state_consistency_trigger
+    BEFORE INSERT OR UPDATE ON matches
+    FOR EACH ROW EXECUTE FUNCTION enforce_match_state_consistency();
