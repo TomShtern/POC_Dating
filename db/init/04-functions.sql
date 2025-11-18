@@ -552,8 +552,7 @@ RETURNS TABLE (
     content TEXT,
     message_type VARCHAR,
     status VARCHAR,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP
+    created_at TIMESTAMP
 ) AS $$
 DECLARE
     v_user1_id UUID;
@@ -582,8 +581,7 @@ BEGIN
         m.content,
         m.message_type,
         m.status,
-        m.created_at,
-        m.updated_at
+        m.created_at
     FROM messages m
     JOIN users u ON u.id = m.sender_id
     WHERE m.match_id = p_match_id
@@ -595,7 +593,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION get_conversation_messages(UUID, UUID, INT, INT, UUID) IS 'Get paginated conversation messages with sender info';
+COMMENT ON FUNCTION get_conversation_messages(UUID, UUID, INT, INT, UUID) IS 'Get paginated conversation messages';
 
 -- ========================================
 -- FUNCTION: Block User

@@ -507,7 +507,7 @@ COMMENT ON FUNCTION unmatch_users(UUID, UUID) IS 'Unmatch users with validation 
 
 -- Get conversation messages function
 CREATE OR REPLACE FUNCTION get_conversation_messages(p_match_id UUID, p_user_id UUID, p_limit INT DEFAULT 50, p_offset INT DEFAULT 0, p_before_id UUID DEFAULT NULL)
-RETURNS TABLE (message_id UUID, sender_id UUID, sender_username VARCHAR, sender_name VARCHAR, sender_photo VARCHAR, content TEXT, message_type VARCHAR, status VARCHAR, created_at TIMESTAMP, updated_at TIMESTAMP) AS $$
+RETURNS TABLE (message_id UUID, sender_id UUID, sender_username VARCHAR, sender_name VARCHAR, sender_photo VARCHAR, content TEXT, message_type VARCHAR, status VARCHAR, created_at TIMESTAMP) AS $$
 DECLARE
     v_user1_id UUID;
     v_user2_id UUID;
@@ -523,7 +523,7 @@ BEGIN
     END IF;
 
     RETURN QUERY
-    SELECT m.id, m.sender_id, u.username, u.first_name, u.profile_picture_url, m.content, m.message_type, m.status, m.created_at, m.updated_at
+    SELECT m.id, m.sender_id, u.username, u.first_name, u.profile_picture_url, m.content, m.message_type, m.status, m.created_at
     FROM messages m
     JOIN users u ON u.id = m.sender_id
     WHERE m.match_id = p_match_id AND m.deleted_at IS NULL
