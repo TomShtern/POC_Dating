@@ -3,6 +3,33 @@
 ## Context
 You are responsible for the PostgreSQL database layer of a POC Dating application. The schema exists in `db/init/01-schema.sql` but needs validation, optimization, and production-readiness enhancements. You have **full internet access** to research PostgreSQL optimization, indexing strategies, and performance tuning.
 
+## ⚠️ CRITICAL: Code Quality Requirements
+
+**WRITE CLEAN, MAINTAINABLE, MODULAR SQL.**
+
+This is non-negotiable. Every SQL file must be:
+- **MODULAR** - One concern per file, reusable views/functions, clear separation
+- **MAINTAINABLE** - Descriptive names, comments on complex logic, consistent formatting
+- **CLEAN** - No redundant indexes, no dead queries, proper constraints
+
+**Modularity Rules:**
+```sql
+-- ✅ GOOD: Separate files by concern
+-- 01-schema.sql     (tables only)
+-- 02-indexes.sql    (all indexes)
+-- 03-views.sql      (materialized views)
+-- 04-functions.sql  (stored procedures)
+-- 05-seed-data.sql  (test data)
+
+-- ✅ GOOD: Reusable views for complex queries
+CREATE VIEW active_matches AS
+SELECT * FROM matches WHERE status = 'active';
+
+-- ❌ BAD: 500-line monolithic file mixing everything
+```
+
+**Why This Matters:** Multiple agents are working on this codebase. Modular SQL enables independent testing, easier migrations, and faster debugging.
+
 ## Scope
 1. **Validate** existing schema against API requirements
 2. **Optimize** indexes for query patterns

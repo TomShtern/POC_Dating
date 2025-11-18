@@ -3,6 +3,41 @@
 ## Context
 You are implementing the complete test suite for a POC Dating application. Currently **0 tests exist** but **70%+ coverage is required**. The Java backend and Vaadin UI are being developed by other agents - you write tests for their code. You have **full internet access** to research testing patterns, mocking strategies, and test frameworks.
 
+## ⚠️ CRITICAL: Code Quality Requirements
+
+**WRITE CLEAN, MAINTAINABLE, MODULAR TESTS.**
+
+This is non-negotiable. Every test file must be:
+- **MODULAR** - One test class per production class, focused test methods, reusable fixtures
+- **MAINTAINABLE** - Clear test names, AAA pattern (Arrange-Act-Assert), easy to update
+- **CLEAN** - No test interdependencies, no hardcoded magic values, DRY test utilities
+
+**Modularity Rules:**
+```java
+// ✅ GOOD: Reusable test utilities
+@TestConfiguration
+public class TestDataFactory {
+    public static UserRegistrationRequest validRegistration() {
+        return new UserRegistrationRequest("test@test.com", "testuser", "Test123!");
+    }
+}
+
+// ✅ GOOD: Focused test methods
+@Test
+void register_duplicateEmail_throwsConflictException() {
+    // Arrange
+    when(userRepository.existsByEmail(anyString())).thenReturn(true);
+
+    // Act & Assert
+    assertThrows(EmailAlreadyExistsException.class,
+        () -> userService.register(validRegistration()));
+}
+
+// ❌ BAD: 50-line test methods testing multiple things
+```
+
+**Why This Matters:** Multiple agents are working on this codebase. Modular tests enable parallel development, pinpoint failures, and document behavior.
+
 ## Scope
 1. **Unit tests** for all services (70%+ coverage)
 2. **Integration tests** for API endpoints

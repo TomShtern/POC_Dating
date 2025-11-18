@@ -3,6 +3,34 @@
 ## Context
 You are implementing the Java Spring Boot backend for a POC Dating application. The Vaadin UI frontend is being developed by another agent - do not modify anything in `backend/vaadin-ui-service/`. You have **full internet access** to research any issues, Spring Boot patterns, or library documentation.
 
+## ⚠️ CRITICAL: Code Quality Requirements
+
+**WRITE CLEAN, MAINTAINABLE, MODULAR CODE.**
+
+This is non-negotiable. Every file you create must be:
+- **MODULAR** - Single responsibility per class, small focused methods (<20 lines), clear boundaries
+- **MAINTAINABLE** - Self-documenting names, consistent patterns, easy to modify
+- **CLEAN** - No duplication, no dead code, proper error handling
+
+**Modularity Rules:**
+```java
+// ✅ GOOD: Small, focused methods
+public UserResponse register(UserRegistrationRequest request) {
+    validateEmailNotTaken(request.email());
+    User user = createUserEntity(request);
+    User savedUser = userRepository.save(user);
+    publishRegistrationEvent(savedUser);
+    return mapToResponse(savedUser);
+}
+
+// ❌ BAD: Monolithic 100-line methods
+public UserResponse register(UserRegistrationRequest request) {
+    // 100 lines of mixed concerns...
+}
+```
+
+**Why This Matters:** Multiple agents are working on this codebase. Modular code enables parallel development, easier testing, and faster debugging.
+
 ## Scope
 Implement these 5 microservices + common library:
 1. **common-lib** - Shared DTOs, utilities, exceptions
