@@ -67,9 +67,22 @@ public class SwipeRepositoryImpl implements SwipeRepository {
 
             return new HashSet<>(swipedIds);
         } catch (Exception e) {
-            // If swipes table doesn't exist or query fails, return empty set
-            // This allows the service to function without match service dependency
-            log.warn("Error querying swiped users for {}: {}. Returning empty set.",
+            // =====================================================================
+            // ERROR HANDLING DECISION:
+            // =====================================================================
+            // Currently returns empty set for resilience (service keeps working).
+            //
+            // TRADE-OFF:
+            // - PRO: Service works without Match Service dependency (useful in dev/test)
+            // - CON: Users may see already-swiped profiles until fixed
+            //
+            // ALTERNATIVE (strict mode):
+            // throw new RuntimeException("Failed to query swiped users", e);
+            //
+            // TODO: Add configuration to switch between resilient/strict modes
+            // =====================================================================
+            log.error("CRITICAL: Error querying swiped users for {}: {}. " +
+                      "Users may see already-swiped profiles! Returning empty set.",
                     userId, e.getMessage());
             return new HashSet<>();
         }

@@ -176,8 +176,8 @@ public class ActivityScorer implements CompatibilityScorer {
 
         double score = 1.0 - ((double) daysSinceActive / inactiveDaysThreshold);
 
-        log.trace("Activity score for candidate {}: {:.3f} ({} days since active, threshold {})",
-                candidate.getId(), score, daysSinceActive, inactiveDaysThreshold);
+        log.trace("Activity score for candidate {}: {} ({} days since active, threshold {})",
+                candidate.getId(), String.format("%.3f", score), daysSinceActive, inactiveDaysThreshold);
 
         return score;
     }

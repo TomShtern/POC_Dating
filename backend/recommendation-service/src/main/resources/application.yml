@@ -114,9 +114,8 @@ recommendation:
   # - Too high: May not have enough candidates
   minimum-score: 0.3
 
-  # How often to refresh recommendations (in hours)
-  # Cache TTL for recommendations
-  refresh-interval-hours: 24
+  # NOTE: Cache TTL is controlled by spring.cache.redis.time-to-live (24 hours)
+  # Missing data behavior: All scorers return 0.5 (neutral) for missing/null data
 
   # ----------------------------------------------------------------------------
   # Scorer Weights
@@ -229,7 +228,7 @@ logging:
   level:
     root: INFO
     com.dating.recommendation: DEBUG
-    com.dating.recommendation.scorer: DEBUG  # Set to TRACE for detailed scoring logs
+    com.dating.recommendation.scorer: TRACE  # TRACE shows individual score calculations
     org.springframework.cache: DEBUG
     org.hibernate.SQL: WARN
 

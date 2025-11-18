@@ -192,10 +192,10 @@ public class RecommendationService {
                     .mapToDouble(ScoredCandidate::finalScore)
                     .average()
                     .orElse(0);
-            log.debug("Score stats: avg={:.3f}, min={:.3f}, max={:.3f}",
-                    avgScore,
-                    scored.get(scored.size() - 1).finalScore(),
-                    scored.get(0).finalScore());
+            log.debug("Score stats: avg={}, min={}, max={}",
+                    String.format("%.3f", avgScore),
+                    String.format("%.3f", scored.get(scored.size() - 1).finalScore()),
+                    String.format("%.3f", scored.get(0).finalScore()));
         }
 
         return scored;
