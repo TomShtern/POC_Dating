@@ -1,0 +1,155 @@
+# ========================================
+# APPLICATION.YML - STOMP Configuration
+# ========================================
+# Add this to: backend/chat-service/src/main/resources/application.yml
+
+server:
+  port: 8083
+
+spring:
+  application:
+    name: chat-service
+
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_db}
+    username: ${POSTGRES_USER:dating_user}
+    password: ${POSTGRES_PASSWORD:dating_password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: /
+    connection-timeout: 10000
+    cache:
+      channel:
+        size: 25
+        checkout-timeout: 3000
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000
+
+  websocket:
+    max-text-message-size: 65536
+    max-binary-message-size: 65536
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:change-me-with-a-secure-32-character-key-here}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.dating.chat: DEBUG
+    org.springframework.messaging: DEBUG
+    org.springframework.web.socket: DEBUG
+    org.springframework.amqp: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# ========================================
+# CUSTOM APPLICATION PROPERTIES
+# ========================================
+app:
+  chat:
+    max-history-size: 100
+    message-cache-ttl: 3600
+    typing-timeout: 5
+
+  websocket:
+    # Broker type: "simple" (development) or "stomp" (production)
+    broker-type: ${WEBSOCKET_BROKER_TYPE:stomp}
+    
+    # Allowed origins for WebSocket connections
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:8090,http://localhost:3000}
+
+  rabbitmq:
+    exchange: match.exchange
+    queues:
+      match-created: chat.match.created.queue
+      match-ended: chat.match.ended.queue
+    
+    # ========================================
+    # STOMP BROKER RELAY CONFIGURATION
+    # ========================================
+    # This enables horizontal scaling via RabbitMQ STOMP protocol
+    # 
+    # HOW IT WORKS:
+    # 1. Chat Service connects to RabbitMQ STOMP port (61613)
+    # 2. All /topic and /queue destinations routed through RabbitMQ
+    # 3. Multiple instances share same message distribution
+    # 4. Clients on any instance can receive messages from any other
+    #
+    # REQUIREMENTS:
+    # - RabbitMQ STOMP plugin enabled (port 61613)
+    # - Network connectivity from Chat Service to RabbitMQ:61613
+    # - RABBITMQ_STOMP_HOST configured correctly
+    #
+    stomp:
+      # === CONNECTION PARAMETERS ===
+      # Where STOMP plugin listens (RabbitMQ STOMP broker)
+      host: ${RABBITMQ_STOMP_HOST:localhost}
+      port: ${RABBITMQ_STOMP_PORT:61613}
+      
+      # === AUTHENTICATION CREDENTIALS ===
+      # These credentials authenticate the SERVICE to RabbitMQ STOMP broker
+      # (not client credentials - for service-to-broker communication)
+      client-login: ${RABBITMQ_STOMP_CLIENT_LOGIN:guest}
+      client-passcode: ${RABBITMQ_STOMP_CLIENT_PASSCODE:guest}
+      
+      # System-level authentication (optional, for system messages)
+      system-login: ${RABBITMQ_STOMP_SYSTEM_LOGIN:}
+      system-passcode: ${RABBITMQ_STOMP_SYSTEM_PASSCODE:}
+      
+      # === CONNECTION POOL & HEARTBEAT ===
+      # Connection pool size to RabbitMQ (increase for higher throughput)
+      connection-pool-size: ${RABBITMQ_STOMP_CONNECTION_POOL_SIZE:5}
+      
+      # Heartbeat interval (milliseconds) - detect dead connections
+      # - Service sends heartbeat every N milliseconds
+      # - If no heartbeat for (heartbeat-tolerance * 2), connection closed
+      # - Lower = faster detection, higher = less overhead
+      heartbeat-interval: ${RABBITMQ_STOMP_HEARTBEAT_INTERVAL:60000}
+      
+      # Heartbeat tolerance (milliseconds) - allow silence before reconnect
+      # - If no heartbeat received for this duration, reconnect
+      # - Should be >= 2x heartbeat-interval
+      heartbeat-tolerance: ${RABBITMQ_STOMP_HEARTBEAT_TOLERANCE:180000}
+      
+      # Reconnect delay (milliseconds) - wait before reconnecting on failure
+      # - Lower = faster reconnection, higher = less thrashing
+      reconnect-delay: ${RABBITMQ_STOMP_RECONNECT_DELAY:5000}
