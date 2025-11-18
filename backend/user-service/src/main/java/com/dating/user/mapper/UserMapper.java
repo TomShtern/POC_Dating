@@ -28,7 +28,7 @@ public class UserMapper {
         }
 
         return UserResponse.builder()
-                .id(user.getId().toString())
+                .id(user.getId())
                 .email(user.getEmail())
                 .username(user.getUsername())
                 .firstName(user.getFirstName())
@@ -57,8 +57,8 @@ public class UserMapper {
         }
 
         return PreferencesResponse.builder()
-                .id(preference.getId().toString())
-                .userId(preference.getUser().getId().toString())
+                .id(preference.getId())
+                .userId(preference.getUser().getId())
                 .minAge(preference.getMinAge())
                 .maxAge(preference.getMaxAge())
                 .maxDistanceKm(preference.getMaxDistanceKm())

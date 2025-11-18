@@ -1,6 +1,7 @@
 package com.dating.match.controller;
 
 import com.dating.match.dto.response.FeedResponse;
+import com.dating.match.exception.UnauthorizedMatchAccessException;
 import com.dating.match.service.FeedService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +42,8 @@ public class FeedController {
         // (or implement admin access if needed)
         if (!userId.equals(requestUserId)) {
             log.warn("User {} attempted to access feed of user {}", requestUserId, userId);
-            return ResponseEntity.status(403).build();
+            throw new UnauthorizedMatchAccessException(
+                    "User " + requestUserId + " is not authorized to access feed of user " + userId);
         }
 
         FeedResponse response = feedService.getFeed(userId, limit, offset);

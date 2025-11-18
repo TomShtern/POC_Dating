@@ -75,9 +75,14 @@ public class ChatService {
      */
     public ConversationsListResponse getConversations(UUID userId, int limit) {
         List<ConversationResponse> conversations = conversationService.getConversations(userId, limit);
+        int total = conversations.size();
+        boolean hasMore = total >= limit;  // If we got exactly limit items, there might be more
         return ConversationsListResponse.builder()
                 .conversations(conversations)
-                .total(conversations.size())
+                .total(total)
+                .limit(limit)
+                .offset(0)  // Currently always starting from 0
+                .hasMore(hasMore)
                 .build();
     }
 

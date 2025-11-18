@@ -23,7 +23,22 @@ public class ConversationsListResponse {
     private List<ConversationResponse> conversations;
 
     /**
-     * Total number of conversations returned.
+     * Total number of conversations available.
      */
     private int total;
+
+    /**
+     * Page size.
+     */
+    private int limit;
+
+    /**
+     * Current offset.
+     */
+    private int offset;
+
+    /**
+     * Whether there are more conversations available.
+     */
+    private boolean hasMore;
 }

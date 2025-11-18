@@ -31,6 +31,16 @@ public class RecommendationListResponse implements Serializable {
     private long total;
 
     /**
+     * Page size.
+     */
+    private int limit;
+
+    /**
+     * Current offset.
+     */
+    private int offset;
+
+    /**
      * Whether there are more recommendations available.
      */
     private boolean hasMore;

@@ -39,8 +39,7 @@ public class MessageMapper {
                 .senderName(senderName)
                 .content(message.getContent())
                 .status(message.getStatus())
-                .sentAt(message.getCreatedAt())
-                .deliveredAt(message.getDeliveredAt())
+                .createdAt(message.getCreatedAt())
                 .readAt(message.getReadAt())
                 .build();
     }

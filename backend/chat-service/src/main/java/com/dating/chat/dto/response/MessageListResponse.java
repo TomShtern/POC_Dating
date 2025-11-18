@@ -34,6 +34,16 @@ public class MessageListResponse {
     private int total;
 
     /**
+     * Page size.
+     */
+    private int limit;
+
+    /**
+     * Current offset.
+     */
+    private int offset;
+
+    /**
      * Whether there are more messages to load.
      */
     private boolean hasMore;

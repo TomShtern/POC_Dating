@@ -58,7 +58,7 @@ public class MatchService {
 
         long total = matchPage.getTotalElements();
 
-        return new MatchListResponse(matches, total, matchPage.hasNext());
+        return new MatchListResponse(matches, total, limit, offset, matchPage.hasNext());
     }
 
     /**

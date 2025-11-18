@@ -120,6 +120,8 @@ public class MessageService {
                 .conversationId(conversationId)
                 .messages(messages)
                 .total((int) totalCount)
+                .limit(limit)
+                .offset(offset)
                 .hasMore(hasMore)
                 .build();
     }

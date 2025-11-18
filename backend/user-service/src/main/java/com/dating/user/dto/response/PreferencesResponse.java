@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Response DTO for user preferences.
@@ -17,8 +18,8 @@ import java.util.List;
 @Builder
 public class PreferencesResponse {
 
-    private String id;
-    private String userId;
+    private UUID id;
+    private UUID userId;
     private Integer minAge;
     private Integer maxAge;
     private Integer maxDistanceKm;

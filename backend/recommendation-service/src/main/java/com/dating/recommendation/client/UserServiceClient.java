@@ -45,13 +45,19 @@ public interface UserServiceClient {
      * Get eligible candidates for a user based on preferences.
      *
      * @param userId User ID
-     * @param limit Maximum number of candidates
+     * @param minAge Minimum age filter
+     * @param maxAge Maximum age filter
+     * @param maxDistance Maximum distance in km
+     * @param excludeIds List of user IDs to exclude
      * @return List of candidate profiles
      */
     @GetMapping("/api/users/{userId}/candidates")
     List<UserProfileDto> getCandidates(
             @PathVariable("userId") UUID userId,
-            @RequestParam(value = "limit", defaultValue = "100") int limit);
+            @RequestParam(value = "minAge", defaultValue = "18") int minAge,
+            @RequestParam(value = "maxAge", defaultValue = "100") int maxAge,
+            @RequestParam(value = "maxDistance", defaultValue = "100") int maxDistance,
+            @RequestParam(value = "excludeIds", required = false) List<UUID> excludeIds);
 
     /**
      * Get multiple user profiles by IDs.

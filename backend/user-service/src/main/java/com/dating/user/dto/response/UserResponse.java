@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Response DTO for user profile data.
@@ -17,7 +18,7 @@ import java.time.LocalDate;
 @Builder
 public class UserResponse {
 
-    private String id;
+    private UUID id;
     private String email;
     private String username;
     private String firstName;

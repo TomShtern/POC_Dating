@@ -199,6 +199,8 @@ public class RecommendationService {
         return RecommendationListResponse.builder()
                 .recommendations(recommendations)
                 .total(recommendations.size())
+                .limit(limit)
+                .offset(0)
                 .hasMore(candidates.size() > limit)
                 .generatedAt(Instant.now())
                 .build();
@@ -252,6 +254,8 @@ public class RecommendationService {
         return RecommendationListResponse.builder()
                 .recommendations(recommendations)
                 .total(cachedRecs.size())
+                .limit(limit)
+                .offset(0)
                 .hasMore(cachedRecs.size() > limit)
                 .generatedAt(cachedRecs.get(0).getCreatedAt())
                 .build();

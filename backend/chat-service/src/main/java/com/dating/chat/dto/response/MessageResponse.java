@@ -49,14 +49,9 @@ public class MessageResponse {
     private MessageStatus status;
 
     /**
-     * When the message was sent.
+     * When the message was created/sent.
      */
-    private Instant sentAt;
-
-    /**
-     * When the message was delivered.
-     */
-    private Instant deliveredAt;
+    private Instant createdAt;
 
     /**
      * When the message was read.
