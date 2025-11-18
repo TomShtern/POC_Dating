@@ -65,7 +65,13 @@ public class ChatWebSocketController {
             throw new AccessDeniedException("Authentication required");
         }
 
-        UUID senderId = UUID.fromString(principal.getName());
+        UUID senderId;
+        try {
+            senderId = UUID.fromString(principal.getName());
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid user ID format in principal: {}", principal.getName());
+            throw new AccessDeniedException("Invalid authentication");
+        }
         String senderName = getSenderName(principal);
 
         log.info("Message received: matchId={}, senderId={}", request.matchId(), senderId);
@@ -141,7 +147,13 @@ public class ChatWebSocketController {
             return;
         }
 
-        UUID senderId = UUID.fromString(principal.getName());
+        UUID senderId;
+        try {
+            senderId = UUID.fromString(principal.getName());
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid user ID format in typing indicator");
+            return;
+        }
 
         // Validate user is in match (silently ignore if not)
         if (!chatMessageService.isUserInMatch(senderId, indicator.matchId())) {
@@ -177,7 +189,13 @@ public class ChatWebSocketController {
             throw new AccessDeniedException("Authentication required");
         }
 
-        UUID readerId = UUID.fromString(principal.getName());
+        UUID readerId;
+        try {
+            readerId = UUID.fromString(principal.getName());
+        } catch (IllegalArgumentException e) {
+            log.error("Invalid user ID format in mark read");
+            throw new AccessDeniedException("Invalid authentication");
+        }
 
         // Validate user is in match
         if (!chatMessageService.isUserInMatch(readerId, request.matchId())) {

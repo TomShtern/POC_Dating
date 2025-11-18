@@ -32,6 +32,9 @@ public class JwtTokenProvider {
      * Get the signing key from the secret.
      */
     private SecretKey getSigningKey() {
+        if (jwtSecret == null || jwtSecret.isEmpty()) {
+            throw new IllegalStateException("JWT secret must be configured");
+        }
         return Keys.hmacShaKeyFor(jwtSecret.getBytes());
     }
 
@@ -89,10 +92,11 @@ public class JwtTokenProvider {
      * Extract username from token.
      *
      * @param token The JWT token
-     * @return The username
+     * @return The username, or empty string if not present
      */
     public String getUsernameFromToken(String token) {
         Claims claims = validateToken(token);
-        return claims.get("username", String.class);
+        String username = claims.get("username", String.class);
+        return username != null ? username : "";
     }
 }

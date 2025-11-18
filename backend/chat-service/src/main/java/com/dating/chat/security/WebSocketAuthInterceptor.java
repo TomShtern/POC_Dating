@@ -53,13 +53,18 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 String userId = claims.getSubject();
                 String username = claims.get("username", String.class);
 
+                // Handle null username
+                if (username == null || username.isEmpty()) {
+                    username = "unknown";
+                }
+
                 // Set the authenticated user as Principal
                 accessor.setUser(new StompPrincipal(userId, username));
 
-                log.info("WebSocket authenticated: userId={}, username={}", userId, username);
+                log.info("WebSocket authenticated: userId={}", userId);
             } catch (Exception e) {
-                log.warn("WebSocket authentication failed: {}", e.getMessage());
-                throw new AuthenticationCredentialsNotFoundException("Invalid token: " + e.getMessage());
+                log.warn("WebSocket authentication failed for connection attempt");
+                throw new AuthenticationCredentialsNotFoundException("Invalid authentication credentials");
             }
         }
 

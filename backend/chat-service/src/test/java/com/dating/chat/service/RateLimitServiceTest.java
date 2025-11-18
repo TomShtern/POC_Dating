@@ -69,13 +69,13 @@ class RateLimitServiceTest {
     }
 
     @Test
-    void isAllowed_WhenRedisError_FailsOpen() {
+    void isAllowed_WhenRedisError_FailsClosed() {
         when(zSetOperations.removeRangeByScore(anyString(), anyDouble(), anyDouble()))
                 .thenThrow(new RuntimeException("Redis error"));
 
         boolean result = rateLimitService.isAllowed("user1", "chat.send");
 
-        assertTrue(result); // Fails open
+        assertFalse(result); // Fails closed for security
     }
 
     @Test

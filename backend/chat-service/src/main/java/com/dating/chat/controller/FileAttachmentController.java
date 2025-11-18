@@ -70,17 +70,35 @@ public class FileAttachmentController {
 
     /**
      * Download attachment content.
+     * Requires authentication - user must be uploader or participant in the conversation.
      */
     @GetMapping("/{attachmentId}/download")
     public ResponseEntity<byte[]> downloadAttachment(
+            @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID attachmentId) {
 
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdHeader);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Get attachment and verify status
         FileAttachment attachment = attachmentService.getAttachment(attachmentId);
+
+        // Verify status is READY before serving
+        if (attachment.getStatus() != FileAttachment.AttachmentStatus.READY) {
+            return ResponseEntity.notFound().build();
+        }
+
         byte[] content = attachmentService.getFileContent(attachmentId);
+        String filename = attachment.getOriginalFilename() != null ?
+                attachment.getOriginalFilename() : "download";
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + attachment.getOriginalFilename() + "\"")
+                        "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType(attachment.getContentType()))
                 .contentLength(content.length)
                 .body(content);

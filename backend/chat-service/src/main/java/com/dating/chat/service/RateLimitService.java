@@ -75,7 +75,7 @@ public class RateLimitService {
             return true;
         } catch (Exception e) {
             log.error("Error checking rate limit: userId={}, destination={}", userId, destination, e);
-            return true; // Fail open
+            return false; // Fail closed for security
         }
     }
 

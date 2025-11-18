@@ -53,6 +53,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     /**
      * Find the latest message in a conversation.
      */
-    @Query("SELECT m FROM Message m WHERE m.conversation.id = :conversationId AND m.deletedAt IS NULL ORDER BY m.createdAt DESC LIMIT 1")
-    Message findLatestMessage(@Param("conversationId") UUID conversationId);
+    default Message findLatestMessage(UUID conversationId) {
+        Page<Message> page = findByConversationId(conversationId, org.springframework.data.domain.PageRequest.of(0, 1));
+        return page.hasContent() ? page.getContent().get(0) : null;
+    }
 }
