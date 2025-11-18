@@ -1,5 +1,7 @@
 package com.dating.chat.dto.websocket;
 
+import jakarta.validation.constraints.NotNull;
+
 import java.util.UUID;
 
 /**
@@ -7,6 +9,8 @@ import java.util.UUID;
  * Client sends to: /app/chat.typing
  */
 public record TypingIndicator(
+        @NotNull(message = "Match ID is required")
         UUID matchId,
+
         boolean isTyping
 ) {}

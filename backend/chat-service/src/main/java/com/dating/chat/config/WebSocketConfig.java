@@ -2,6 +2,7 @@ package com.dating.chat.config;
 
 import com.dating.chat.security.WebSocketAuthInterceptor;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
@@ -27,20 +28,26 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final WebSocketAuthInterceptor webSocketAuthInterceptor;
 
+    @Value("${app.websocket.allowed-origins:http://localhost:8090,http://localhost:3000}")
+    private String allowedOrigins;
+
     /**
      * Register STOMP endpoints that clients connect to.
      */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // Split allowed origins from config
+        String[] origins = allowedOrigins.split(",");
+
         // Main WebSocket endpoint with SockJS fallback
         // If WebSocket fails, falls back to HTTP polling
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")  // TODO: Restrict in production
+                .setAllowedOriginPatterns(origins)
                 .withSockJS();
 
         // Pure WebSocket endpoint without SockJS (for native clients)
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*");
+                .setAllowedOriginPatterns(origins);
     }
 
     /**

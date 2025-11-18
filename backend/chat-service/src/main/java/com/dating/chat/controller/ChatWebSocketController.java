@@ -9,9 +9,11 @@ import com.dating.chat.dto.websocket.TypingEvent;
 import com.dating.chat.dto.websocket.TypingIndicator;
 import com.dating.chat.security.StompPrincipal;
 import com.dating.chat.service.ChatMessageService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
@@ -51,7 +53,12 @@ public class ChatWebSocketController {
      * Server broadcasts to: /user/{recipientId}/queue/messages
      */
     @MessageMapping("/chat.send")
-    public void sendMessage(SendMessageRequest request, Principal principal) {
+    public void sendMessage(@Valid @Payload SendMessageRequest request, Principal principal) {
+        if (principal == null) {
+            log.error("Received message without authenticated principal");
+            throw new AccessDeniedException("Authentication required");
+        }
+
         UUID senderId = UUID.fromString(principal.getName());
         String senderName = getSenderName(principal);
 
@@ -104,7 +111,12 @@ public class ChatWebSocketController {
      * Server broadcasts to: /user/{recipientId}/queue/typing
      */
     @MessageMapping("/chat.typing")
-    public void typing(TypingIndicator indicator, Principal principal) {
+    public void typing(@Valid @Payload TypingIndicator indicator, Principal principal) {
+        if (principal == null) {
+            log.warn("Received typing indicator without authenticated principal");
+            return;
+        }
+
         UUID senderId = UUID.fromString(principal.getName());
 
         // Validate user is in match (silently ignore if not)
@@ -135,7 +147,12 @@ public class ChatWebSocketController {
      * Server broadcasts to: /user/{senderId}/queue/read
      */
     @MessageMapping("/chat.read")
-    public void markRead(MarkReadRequest request, Principal principal) {
+    public void markRead(@Valid @Payload MarkReadRequest request, Principal principal) {
+        if (principal == null) {
+            log.error("Received mark read without authenticated principal");
+            throw new AccessDeniedException("Authentication required");
+        }
+
         UUID readerId = UUID.fromString(principal.getName());
 
         // Validate user is in match

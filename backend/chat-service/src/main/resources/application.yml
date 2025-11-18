@@ -83,3 +83,14 @@ app:
     message-cache-ttl: 3600
     # Typing indicator timeout (seconds)
     typing-timeout: 5
+
+  websocket:
+    # Allowed origins for WebSocket connections (comma-separated)
+    # Set to specific domains in production
+    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:8090,http://localhost:3000}
+
+  rabbitmq:
+    exchange: match.exchange
+    queues:
+      match-created: chat.match.created.queue
+      match-ended: chat.match.ended.queue
