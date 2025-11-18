@@ -86,7 +86,7 @@ public class AuthService {
         log.info("User registered successfully: {}", savedUser.getId());
 
         // Publish event
-        eventPublisher.publishUserRegistered(savedUser);
+        eventPublisher.publishUserRegistered(savedUser.getId(), savedUser.getEmail(), savedUser.getUsername());
 
         return AuthResponse.of(
                 savedUser.getId(),

@@ -16,7 +16,11 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Service for user profile management.
@@ -91,7 +95,7 @@ public class UserService {
         log.info("User updated: {}", userId);
 
         // Publish event
-        eventPublisher.publishUserUpdated(updated);
+        eventPublisher.publishUserUpdated(userId, "profile");
 
         return userMapper.toUserResponse(updated);
     }
@@ -121,5 +125,65 @@ public class UserService {
 
         // Publish event
         eventPublisher.publishUserDeleted(userId);
+    }
+
+    /**
+     * Get candidate users for matching.
+     * Filters users by age range and excludes specified IDs.
+     *
+     * @param userId Requesting user's ID
+     * @param minAge Minimum age filter
+     * @param maxAge Maximum age filter
+     * @param maxDistance Maximum distance (not implemented in this version)
+     * @param excludeIds List of user IDs to exclude
+     * @return List of candidate user responses
+     */
+    @Transactional(readOnly = true)
+    public List<UserResponse> getCandidates(UUID userId, int minAge, int maxAge,
+                                            int maxDistance, List<UUID> excludeIds) {
+        log.debug("Getting candidates for user: {}, minAge: {}, maxAge: {}, excludeIds count: {}",
+                userId, minAge, maxAge, excludeIds != null ? excludeIds.size() : 0);
+
+        // Calculate birth date range from age range
+        LocalDate today = LocalDate.now();
+        LocalDate minBirthDate = today.minusYears(minAge);  // Max birth date for min age
+        LocalDate maxBirthDate = today.minusYears(maxAge + 1).plusDays(1);  // Min birth date for max age
+
+        // Ensure excludeIds is not null or empty (JPA doesn't handle empty IN clause well)
+        List<UUID> safeExcludeIds = (excludeIds == null || excludeIds.isEmpty())
+                ? Collections.singletonList(UUID.fromString("00000000-0000-0000-0000-000000000000"))
+                : excludeIds;
+
+        List<User> candidates = userRepository.findCandidates(userId, safeExcludeIds,
+                minBirthDate, maxBirthDate);
+
+        log.debug("Found {} candidates for user: {}", candidates.size(), userId);
+
+        return candidates.stream()
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get multiple users by their IDs.
+     *
+     * @param userIds List of user UUIDs
+     * @return List of user responses
+     */
+    @Transactional(readOnly = true)
+    public List<UserResponse> getUsersByIds(List<UUID> userIds) {
+        log.debug("Getting users by IDs, count: {}", userIds != null ? userIds.size() : 0);
+
+        if (userIds == null || userIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<User> users = userRepository.findByIdIn(userIds);
+
+        log.debug("Found {} users out of {} requested", users.size(), userIds.size());
+
+        return users.stream()
+                .map(userMapper::toUserResponse)
+                .collect(Collectors.toList());
     }
 }

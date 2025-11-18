@@ -1,5 +1,6 @@
 package com.dating.user.config;
 
+import com.dating.common.config.RabbitMQConstants;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -15,21 +16,13 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    // Exchange names
-    public static final String USER_EXCHANGE = "user.exchange";
-
-    // Routing keys
-    public static final String USER_REGISTERED_KEY = "user.registered";
-    public static final String USER_UPDATED_KEY = "user.updated";
-    public static final String USER_DELETED_KEY = "user.deleted";
-
     /**
      * Topic exchange for user events.
      * Allows routing based on routing key patterns.
      */
     @Bean
     public TopicExchange userExchange() {
-        return new TopicExchange(USER_EXCHANGE);
+        return new TopicExchange(RabbitMQConstants.USER_EXCHANGE);
     }
 
     /**
@@ -66,7 +59,7 @@ public class RabbitMQConfig {
     public Binding userRegisteredBinding(Queue userRegisteredQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(userRegisteredQueue)
                 .to(userExchange)
-                .with(USER_REGISTERED_KEY);
+                .with(RabbitMQConstants.USER_REGISTERED_KEY);
     }
 
     /**
@@ -76,7 +69,7 @@ public class RabbitMQConfig {
     public Binding userUpdatedBinding(Queue userUpdatedQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(userUpdatedQueue)
                 .to(userExchange)
-                .with(USER_UPDATED_KEY);
+                .with(RabbitMQConstants.USER_UPDATED_KEY);
     }
 
     /**
@@ -86,7 +79,7 @@ public class RabbitMQConfig {
     public Binding userDeletedBinding(Queue userDeletedQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(userDeletedQueue)
                 .to(userExchange)
-                .with(USER_DELETED_KEY);
+                .with(RabbitMQConstants.USER_DELETED_KEY);
     }
 
     /**

@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -67,4 +69,34 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     default Optional<User> findActiveByEmail(String email) {
         return findByEmailAndStatus(email, "ACTIVE");
     }
+
+    /**
+     * Find candidate users for matching.
+     * Filters by age range and excludes specified user IDs.
+     *
+     * @param userId User ID to exclude (the requesting user)
+     * @param excludeIds List of user IDs to exclude (already swiped, etc.)
+     * @param minBirthDate Maximum birth date (for minimum age)
+     * @param maxBirthDate Minimum birth date (for maximum age)
+     * @return List of candidate users
+     */
+    @Query("SELECT u FROM User u WHERE u.id != :userId " +
+           "AND u.id NOT IN :excludeIds " +
+           "AND u.status = 'ACTIVE' " +
+           "AND u.dateOfBirth IS NOT NULL " +
+           "AND u.dateOfBirth <= :minBirthDate " +
+           "AND u.dateOfBirth >= :maxBirthDate")
+    List<User> findCandidates(
+            @Param("userId") UUID userId,
+            @Param("excludeIds") List<UUID> excludeIds,
+            @Param("minBirthDate") LocalDate minBirthDate,
+            @Param("maxBirthDate") LocalDate maxBirthDate);
+
+    /**
+     * Find multiple users by their IDs.
+     *
+     * @param ids List of user UUIDs
+     * @return List of users matching the IDs
+     */
+    List<User> findByIdIn(List<UUID> ids);
 }

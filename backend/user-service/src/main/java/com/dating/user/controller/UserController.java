@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -63,5 +64,45 @@ public class UserController {
         log.debug("Delete user request for: {}", userId);
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Get candidate users for matching.
+     * Used by Match Service and Recommendation Service.
+     *
+     * @param userId User UUID requesting candidates
+     * @param minAge Minimum age filter (default 18)
+     * @param maxAge Maximum age filter (default 100)
+     * @param maxDistance Maximum distance in km (default 100)
+     * @param excludeIds List of user IDs to exclude
+     * @return 200 OK with list of candidate users
+     */
+    @GetMapping("/{userId}/candidates")
+    public ResponseEntity<List<UserResponse>> getCandidates(
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "18") int minAge,
+            @RequestParam(defaultValue = "100") int maxAge,
+            @RequestParam(defaultValue = "100") int maxDistance,
+            @RequestParam(required = false) List<UUID> excludeIds) {
+        log.debug("Get candidates request for user: {}, minAge: {}, maxAge: {}, maxDistance: {}",
+                userId, minAge, maxAge, maxDistance);
+        List<UserResponse> candidates = userService.getCandidates(userId, minAge, maxAge,
+                maxDistance, excludeIds);
+        return ResponseEntity.ok(candidates);
+    }
+
+    /**
+     * Get multiple users by their IDs.
+     * Used for batch fetching user profiles.
+     *
+     * @param userIds List of user UUIDs
+     * @return 200 OK with list of user responses
+     */
+    @PostMapping("/batch")
+    public ResponseEntity<List<UserResponse>> getUsersByIds(
+            @RequestBody List<UUID> userIds) {
+        log.debug("Batch get users request, count: {}", userIds != null ? userIds.size() : 0);
+        List<UserResponse> users = userService.getUsersByIds(userIds);
+        return ResponseEntity.ok(users);
     }
 }

@@ -10,8 +10,6 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Component;
 
-import java.util.Map;
-
 /**
  * Event listener for user-related events from User Service.
  */
@@ -25,52 +23,34 @@ public class UserEventListener {
     /**
      * Handle user registered event.
      * Initialize any necessary data structures for the new user.
-     * Handles both typed events and Map format for compatibility.
      *
-     * @param message Raw message object
+     * @param event User registered event
      */
     @RabbitListener(queues = RabbitMQConstants.MATCH_USER_REGISTERED_QUEUE)
-    public void handleUserRegistered(Object message) {
-        String userId = null;
+    public void handleUserRegistered(UserRegisteredEvent event) {
+        log.info("Received UserRegisteredEvent: userId={}", event.getUserId());
 
         try {
-            if (message instanceof UserRegisteredEvent event) {
-                userId = event.getUserId() != null ? event.getUserId().toString() : null;
-            } else if (message instanceof Map<?, ?> map) {
-                userId = (String) map.get("userId");
-            }
-
-            log.info("Received USER_REGISTERED event for user: {}", userId);
-
             // Currently, no special initialization needed for new users
             // Swipe history will be created on first swipe
             // Feed will be generated on first request
-            log.debug("User {} registered - ready for matching", userId);
+            log.debug("User {} registered - ready for matching", event.getUserId());
         } catch (Exception e) {
-            log.error("Error handling USER_REGISTERED event for user: {}", userId, e);
+            log.error("Error handling UserRegisteredEvent for user: {}", event.getUserId(), e);
         }
     }
 
     /**
      * Handle user updated event.
      * Invalidate cached feeds when user preferences change.
-     * Handles both typed events and Map format for compatibility.
      *
-     * @param message Raw message object
+     * @param event User updated event
      */
     @RabbitListener(queues = RabbitMQConstants.MATCH_USER_UPDATED_QUEUE)
-    public void handleUserUpdated(Object message) {
-        String userId = null;
+    public void handleUserUpdated(UserUpdatedEvent event) {
+        log.info("Received UserUpdatedEvent: userId={}", event.getUserId());
 
         try {
-            if (message instanceof UserUpdatedEvent event) {
-                userId = event.getUserId() != null ? event.getUserId().toString() : null;
-            } else if (message instanceof Map<?, ?> map) {
-                userId = (String) map.get("userId");
-            }
-
-            log.info("Received USER_UPDATED event for user: {}", userId);
-
             // Invalidate feed cache for this user
             // Their preferences may have changed, affecting who they see
             var feedCache = cacheManager.getCache(CacheConfig.FEED_CACHE);
@@ -78,10 +58,10 @@ public class UserEventListener {
                 // Evict all cache entries for this user
                 // In production, use a more targeted eviction strategy
                 feedCache.clear();
-                log.debug("Cleared feed cache due to user update: {}", userId);
+                log.debug("Cleared feed cache due to user update: {}", event.getUserId());
             }
         } catch (Exception e) {
-            log.error("Error handling USER_UPDATED event for user: {}", userId, e);
+            log.error("Error handling UserUpdatedEvent for user: {}", event.getUserId(), e);
         }
     }
 }
