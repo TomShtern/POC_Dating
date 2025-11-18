@@ -46,12 +46,20 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
 
+    -- Generated column for age (modern PostgreSQL feature)
+    age INT GENERATED ALWAYS AS (
+        CASE WHEN date_of_birth IS NOT NULL
+        THEN EXTRACT(YEAR FROM AGE(date_of_birth))::INT
+        ELSE NULL END
+    ) STORED,
+
     CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
     CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER'))
 );
 
 COMMENT ON TABLE users IS 'Core user profiles and authentication';
+COMMENT ON COLUMN users.age IS 'Auto-computed age from date_of_birth - indexed for feed filtering';
 
 -- ========================================
 -- USER PREFERENCES TABLE

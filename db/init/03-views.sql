@@ -157,6 +157,48 @@ FROM users u;
 COMMENT ON VIEW user_stats IS 'User activity statistics for analytics';
 
 -- ========================================
+-- MATCH STATS VIEW
+-- Aggregate match statistics for analytics
+-- ========================================
+CREATE OR REPLACE VIEW match_stats AS
+SELECT
+    DATE(m.matched_at) AS match_date,
+    COUNT(*) AS total_matches,
+    COUNT(*) FILTER (WHERE m.status = 'ACTIVE') AS active_matches,
+    COUNT(*) FILTER (WHERE m.status = 'UNMATCHED') AS unmatched,
+    AVG(ms.score) AS avg_compatibility_score,
+    COUNT(DISTINCT msg.match_id) AS matches_with_messages,
+    SUM(CASE WHEN msg.id IS NOT NULL THEN 1 ELSE 0 END) AS total_messages
+FROM matches m
+LEFT JOIN match_scores ms ON ms.match_id = m.id
+LEFT JOIN messages msg ON msg.match_id = m.id
+GROUP BY DATE(m.matched_at)
+ORDER BY match_date DESC;
+
+COMMENT ON VIEW match_stats IS 'Daily match statistics for analytics dashboards';
+
+-- ========================================
+-- SWIPE ANALYTICS VIEW
+-- Swipe patterns and conversion rates
+-- ========================================
+CREATE OR REPLACE VIEW swipe_analytics AS
+SELECT
+    DATE(created_at) AS swipe_date,
+    COUNT(*) AS total_swipes,
+    COUNT(*) FILTER (WHERE action = 'LIKE') AS likes,
+    COUNT(*) FILTER (WHERE action = 'PASS') AS passes,
+    COUNT(*) FILTER (WHERE action = 'SUPER_LIKE') AS super_likes,
+    ROUND(
+        COUNT(*) FILTER (WHERE action = 'LIKE')::NUMERIC / NULLIF(COUNT(*), 0) * 100,
+        2
+    ) AS like_rate_pct
+FROM swipes
+GROUP BY DATE(created_at)
+ORDER BY swipe_date DESC;
+
+COMMENT ON VIEW swipe_analytics IS 'Daily swipe analytics for monitoring';
+
+-- ========================================
 -- MATERIALIZED VIEW: Feed Candidates
 -- Pre-computed for feed generation performance
 -- ========================================

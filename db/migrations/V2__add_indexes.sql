@@ -8,6 +8,7 @@
 -- ========================================
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_gender_age ON users(gender, age);
 CREATE INDEX IF NOT EXISTS idx_users_gender_dob ON users(gender, date_of_birth);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(status, last_active DESC)
     WHERE status = 'ACTIVE';
@@ -52,6 +53,8 @@ CREATE INDEX IF NOT EXISTS idx_matches_active_user1 ON matches(user1_id, matched
 CREATE INDEX IF NOT EXISTS idx_matches_active_user2 ON matches(user2_id, matched_at DESC)
     WHERE status = 'ACTIVE';
 CREATE INDEX IF NOT EXISTS idx_matches_time ON matches(matched_at DESC);
+CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status)
+    WHERE status = 'ACTIVE';
 
 -- ========================================
 -- MATCH SCORES INDEXES

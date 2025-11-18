@@ -22,7 +22,10 @@ CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 
 -- Feed filtering: gender + age range
--- Composite for: WHERE gender = ? AND date_of_birth BETWEEN ? AND ?
+-- Composite for: WHERE gender = ? AND age BETWEEN ? AND ?
+CREATE INDEX IF NOT EXISTS idx_users_gender_age ON users(gender, age);
+
+-- Legacy index on date_of_birth for backward compatibility
 CREATE INDEX IF NOT EXISTS idx_users_gender_dob ON users(gender, date_of_birth);
 
 -- Active users filter (partial index for efficiency)
@@ -103,6 +106,10 @@ CREATE INDEX IF NOT EXISTS idx_matches_active_user2 ON matches(user2_id, matched
 
 -- Recent matches
 CREATE INDEX IF NOT EXISTS idx_matches_time ON matches(matched_at DESC);
+
+-- Status-based queries (as requested in requirements)
+CREATE INDEX IF NOT EXISTS idx_matches_status ON matches(status)
+    WHERE status = 'ACTIVE';
 
 -- ========================================
 -- MATCH SCORES INDEXES
