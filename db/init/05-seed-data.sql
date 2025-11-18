@@ -554,7 +554,32 @@ VALUES
     ('33333333-3333-3333-3333-333333333335', '22222222-2222-2222-2222-222222222225', 'What''s next on your travel bucket list?', 'READ', NOW() - INTERVAL '26 hours', NOW() - INTERVAL '25 hours'),
     ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', 'Iceland! I want to see the Northern Lights so badly.', 'READ', NOW() - INTERVAL '24 hours', NOW() - INTERVAL '23 hours'),
     ('33333333-3333-3333-3333-333333333335', '22222222-2222-2222-2222-222222222225', 'That''s on my list too! February is supposed to be the best time.', 'READ', NOW() - INTERVAL '22 hours', NOW() - INTERVAL '21 hours'),
-    ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', 'I heard that! We should plan a trip together sometime.', 'DELIVERED', NOW() - INTERVAL '20 hours', NULL)
+    ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', 'I heard that! We should plan a trip together sometime.', 'DELIVERED', NOW() - INTERVAL '20 hours', NULL),
+
+    -- Additional messages to reach 100+ total
+    ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', 'Do you prefer morning hikes or afternoon?', 'READ', NOW() - INTERVAL '60 hours', NOW() - INTERVAL '59 hours'),
+    ('33333333-3333-3333-3333-333333333331', '22222222-2222-2222-2222-222222222221', 'Morning for sure! The trails are less crowded.', 'READ', NOW() - INTERVAL '58 hours', NOW() - INTERVAL '57 hours'),
+    ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', 'Same here! Early bird gets the best views.', 'READ', NOW() - INTERVAL '56 hours', NOW() - INTERVAL '55 hours'),
+    ('33333333-3333-3333-3333-333333333331', '22222222-2222-2222-2222-222222222221', 'Have you ever tried sunrise hikes?', 'READ', NOW() - INTERVAL '54 hours', NOW() - INTERVAL '53 hours'),
+    ('33333333-3333-3333-3333-333333333331', '11111111-1111-1111-1111-111111111111', 'A few times! We should do one together.', 'READ', NOW() - INTERVAL '52 hours', NOW() - INTERVAL '51 hours'),
+    ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111112', 'What got you into mountain biking?', 'READ', NOW() - INTERVAL '50 hours', NOW() - INTERVAL '49 hours'),
+    ('33333333-3333-3333-3333-333333333332', '22222222-2222-2222-2222-222222222222', 'A friend took me once and I was hooked!', 'READ', NOW() - INTERVAL '48 hours', NOW() - INTERVAL '47 hours'),
+    ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111112', 'I totally get that. Same with yoga for me.', 'READ', NOW() - INTERVAL '46 hours', NOW() - INTERVAL '45 hours'),
+    ('33333333-3333-3333-3333-333333333332', '22222222-2222-2222-2222-222222222222', 'Maybe we can swap hobbies? I teach biking, you teach yoga?', 'READ', NOW() - INTERVAL '44 hours', NOW() - INTERVAL '43 hours'),
+    ('33333333-3333-3333-3333-333333333332', '11111111-1111-1111-1111-111111111112', 'Deal! Cross-training buddies!', 'READ', NOW() - INTERVAL '42 hours', NOW() - INTERVAL '41 hours'),
+    ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222223', 'What breed is Luna?', 'READ', NOW() - INTERVAL '60 hours', NOW() - INTERVAL '59 hours'),
+    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111113', 'A purebred Golden Retriever. 4 years old!', 'READ', NOW() - INTERVAL '58 hours', NOW() - INTERVAL '57 hours'),
+    ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222223', 'Adorable! I grew up with labs.', 'READ', NOW() - INTERVAL '56 hours', NOW() - INTERVAL '55 hours'),
+    ('33333333-3333-3333-3333-333333333333', '11111111-1111-1111-1111-111111111113', 'You can borrow Luna anytime!', 'READ', NOW() - INTERVAL '54 hours', NOW() - INTERVAL '53 hours'),
+    ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222223', 'That is so sweet! I might take you up on that.', 'READ', NOW() - INTERVAL '52 hours', NOW() - INTERVAL '51 hours'),
+    ('33333333-3333-3333-3333-333333333334', '11111111-1111-1111-1111-111111111114', 'What kind of music do you usually listen to?', 'READ', NOW() - INTERVAL '40 hours', NOW() - INTERVAL '39 hours'),
+    ('33333333-3333-3333-3333-333333333334', '22222222-2222-2222-2222-222222222224', 'A bit of everything! Rock, jazz, and Latin.', 'READ', NOW() - INTERVAL '38 hours', NOW() - INTERVAL '37 hours'),
+    ('33333333-3333-3333-3333-333333333334', '11111111-1111-1111-1111-111111111114', 'Nice variety! I am more into pop and R&B.', 'READ', NOW() - INTERVAL '36 hours', NOW() - INTERVAL '35 hours'),
+    ('33333333-3333-3333-3333-333333333334', '22222222-2222-2222-2222-222222222224', 'We should make each other playlists!', 'READ', NOW() - INTERVAL '34 hours', NOW() - INTERVAL '33 hours'),
+    ('33333333-3333-3333-3333-333333333334', '11111111-1111-1111-1111-111111111114', 'I love that idea! Challenge accepted.', 'READ', NOW() - INTERVAL '32 hours', NOW() - INTERVAL '31 hours'),
+    ('33333333-3333-3333-3333-333333333335', '22222222-2222-2222-2222-222222222225', 'Do you prefer solo travel or with friends?', 'READ', NOW() - INTERVAL '30 hours', NOW() - INTERVAL '29 hours'),
+    ('33333333-3333-3333-3333-333333333335', '11111111-1111-1111-1111-111111111115', 'A mix! Solo for spontaneity, friends for memories.', 'READ', NOW() - INTERVAL '28 hours', NOW() - INTERVAL '27 hours'),
+    ('33333333-3333-3333-3333-333333333335', '22222222-2222-2222-2222-222222222225', 'Perfect answer! Best of both worlds.', 'READ', NOW() - INTERVAL '26 hours' + INTERVAL '30 minutes', NOW() - INTERVAL '25 hours')
 ON CONFLICT DO NOTHING;
 
 -- ========================================

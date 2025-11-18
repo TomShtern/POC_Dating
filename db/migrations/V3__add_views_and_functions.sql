@@ -17,17 +17,61 @@ SELECT
 FROM users
 WHERE status = 'ACTIVE' AND date_of_birth IS NOT NULL;
 
+-- User profiles view (optimized with JOIN)
+CREATE OR REPLACE VIEW user_profiles AS
+SELECT
+    u.id, u.email, u.username, u.first_name, u.last_name,
+    u.date_of_birth,
+    EXTRACT(YEAR FROM AGE(u.date_of_birth))::INT AS age,
+    u.gender, u.bio, u.profile_picture_url, u.is_verified, u.is_premium,
+    u.status, u.last_active, u.created_at,
+    p.min_age, p.max_age, p.max_distance_km, p.interested_in, p.interests,
+    COALESCE(ph.photo_count, 0) AS photo_count
+FROM users u
+LEFT JOIN user_preferences p ON p.user_id = u.id
+LEFT JOIN (
+    SELECT user_id, COUNT(*) as photo_count FROM photos GROUP BY user_id
+) ph ON ph.user_id = u.id;
+
 -- Active matches view
 CREATE OR REPLACE VIEW active_matches AS
 SELECT
     m.id AS match_id, m.user1_id, m.user2_id, m.matched_at,
     u1.username AS user1_username, u1.first_name AS user1_name,
+    u1.profile_picture_url AS user1_photo,
     u2.username AS user2_username, u2.first_name AS user2_name,
+    u2.profile_picture_url AS user2_photo,
     ms.score AS compatibility_score
 FROM matches m
 JOIN users u1 ON u1.id = m.user1_id
 JOIN users u2 ON u2.id = m.user2_id
 LEFT JOIN match_scores ms ON ms.match_id = m.id
+WHERE m.status = 'ACTIVE';
+
+-- Conversation summaries view
+CREATE OR REPLACE VIEW conversation_summaries AS
+WITH last_messages AS (
+    SELECT DISTINCT ON (match_id)
+        match_id, content AS last_message, sender_id AS last_sender_id, created_at AS last_message_time
+    FROM messages
+    WHERE deleted_at IS NULL
+    ORDER BY match_id, created_at DESC
+),
+unread_counts AS (
+    SELECT match_id, sender_id, COUNT(*) AS unread_count
+    FROM messages
+    WHERE status != 'READ' AND deleted_at IS NULL
+    GROUP BY match_id, sender_id
+)
+SELECT
+    m.id AS match_id, m.user1_id, m.user2_id, m.matched_at,
+    lm.last_message, lm.last_sender_id, lm.last_message_time,
+    COALESCE(uc1.unread_count, 0) AS user1_unread,
+    COALESCE(uc2.unread_count, 0) AS user2_unread
+FROM matches m
+LEFT JOIN last_messages lm ON lm.match_id = m.id
+LEFT JOIN unread_counts uc1 ON uc1.match_id = m.id AND uc1.sender_id = m.user2_id
+LEFT JOIN unread_counts uc2 ON uc2.match_id = m.id AND uc2.sender_id = m.user1_id
 WHERE m.status = 'ACTIVE';
 
 -- User stats view (optimized with JOINs to avoid N+1)
@@ -136,13 +180,20 @@ GROUP BY user_id, DATE(created_at);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_daily_swipes_user_date ON daily_swipe_counts(user_id, swipe_date);
 
--- Match activity
+-- Match activity (optimized with CTE)
 CREATE MATERIALIZED VIEW IF NOT EXISTS match_activity AS
+WITH msg_stats AS (
+    SELECT match_id, MAX(created_at) as last_msg_time, COUNT(*) as msg_count
+    FROM messages
+    WHERE deleted_at IS NULL
+    GROUP BY match_id
+)
 SELECT
     m.id AS match_id, m.user1_id, m.user2_id, m.matched_at,
-    COALESCE((SELECT MAX(created_at) FROM messages msg WHERE msg.match_id = m.id), m.matched_at) AS last_activity,
-    (SELECT COUNT(*) FROM messages msg WHERE msg.match_id = m.id) AS message_count
+    COALESCE(ms.last_msg_time, m.matched_at) AS last_activity,
+    COALESCE(ms.msg_count, 0) AS message_count
 FROM matches m
+LEFT JOIN msg_stats ms ON ms.match_id = m.id
 WHERE m.status = 'ACTIVE';
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_match_activity_id ON match_activity(match_id);
@@ -265,3 +316,117 @@ BEGIN
     ORDER BY pg_total_relation_size(oid) DESC;
 END;
 $$ LANGUAGE plpgsql;
+
+-- Can users match function
+CREATE OR REPLACE FUNCTION can_users_match(user1 UUID, user2 UUID)
+RETURNS BOOLEAN AS $$
+DECLARE
+    u1_age INT; u2_age INT;
+    u1_gender VARCHAR(20); u2_gender VARCHAR(20);
+    u1_prefs RECORD; u2_prefs RECORD;
+BEGIN
+    SELECT calculate_age(date_of_birth), gender INTO u1_age, u1_gender
+    FROM users WHERE id = user1 AND status = 'ACTIVE';
+    SELECT calculate_age(date_of_birth), gender INTO u2_age, u2_gender
+    FROM users WHERE id = user2 AND status = 'ACTIVE';
+    IF u1_age IS NULL OR u2_age IS NULL THEN RETURN FALSE; END IF;
+
+    SELECT min_age, max_age, interested_in INTO u1_prefs FROM user_preferences WHERE user_id = user1;
+    SELECT min_age, max_age, interested_in INTO u2_prefs FROM user_preferences WHERE user_id = user2;
+
+    IF EXISTS (SELECT 1 FROM user_blocks WHERE (blocker_id = user1 AND blocked_id = user2) OR (blocker_id = user2 AND blocked_id = user1)) THEN
+        RETURN FALSE;
+    END IF;
+
+    IF u2_age < COALESCE(u1_prefs.min_age, 18) OR u2_age > COALESCE(u1_prefs.max_age, 99) THEN RETURN FALSE; END IF;
+    IF u1_age < COALESCE(u2_prefs.min_age, 18) OR u1_age > COALESCE(u2_prefs.max_age, 99) THEN RETURN FALSE; END IF;
+    IF u1_prefs.interested_in NOT IN ('BOTH', 'EVERYONE') AND u1_prefs.interested_in != u2_gender THEN RETURN FALSE; END IF;
+    IF u2_prefs.interested_in NOT IN ('BOTH', 'EVERYONE') AND u2_prefs.interested_in != u1_gender THEN RETURN FALSE; END IF;
+
+    RETURN TRUE;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Get user feed function
+CREATE OR REPLACE FUNCTION get_user_feed(p_user_id UUID, p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
+RETURNS TABLE (user_id UUID, username VARCHAR, first_name VARCHAR, age INT, gender VARCHAR, bio TEXT, profile_picture_url VARCHAR, is_verified BOOLEAN, compatibility_score NUMERIC) AS $$
+DECLARE
+    v_user_prefs RECORD;
+BEGIN
+    SELECT min_age, max_age, interested_in INTO v_user_prefs FROM user_preferences WHERE user_preferences.user_id = p_user_id;
+
+    RETURN QUERY
+    WITH excluded_users AS (
+        SELECT target_user_id FROM swipes WHERE swipes.user_id = p_user_id
+        UNION SELECT blocked_id FROM user_blocks WHERE blocker_id = p_user_id
+        UNION SELECT blocker_id FROM user_blocks WHERE blocked_id = p_user_id
+        UNION SELECT CASE WHEN user1_id = p_user_id THEN user2_id ELSE user1_id END FROM matches WHERE user1_id = p_user_id OR user2_id = p_user_id
+    )
+    SELECT fc.id, fc.username, fc.first_name, fc.age, fc.gender, fc.bio, fc.profile_picture_url, fc.is_verified, COALESCE(r.score, 50.0) AS compatibility_score
+    FROM feed_candidates fc
+    LEFT JOIN recommendations r ON r.user_id = p_user_id AND r.target_user_id = fc.id
+    WHERE fc.id != p_user_id AND fc.id NOT IN (SELECT * FROM excluded_users)
+      AND (v_user_prefs IS NULL OR fc.age BETWEEN COALESCE(v_user_prefs.min_age, 18) AND COALESCE(v_user_prefs.max_age, 99))
+      AND (v_user_prefs IS NULL OR v_user_prefs.interested_in IS NULL OR v_user_prefs.interested_in IN ('BOTH', 'EVERYONE') OR fc.gender = v_user_prefs.interested_in)
+    ORDER BY COALESCE(r.score, 50.0) DESC, fc.last_active DESC
+    LIMIT p_limit OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Get user matches function (optimized with CTEs)
+CREATE OR REPLACE FUNCTION get_user_matches(p_user_id UUID, p_limit INT DEFAULT 20, p_offset INT DEFAULT 0)
+RETURNS TABLE (match_id UUID, matched_user_id UUID, matched_username VARCHAR, matched_name VARCHAR, profile_picture_url VARCHAR, matched_at TIMESTAMP, last_message TEXT, last_message_time TIMESTAMP, unread_count BIGINT) AS $$
+BEGIN
+    RETURN QUERY
+    WITH last_messages AS (
+        SELECT DISTINCT ON (msg.match_id) msg.match_id, msg.content, msg.created_at
+        FROM messages msg WHERE msg.deleted_at IS NULL
+        ORDER BY msg.match_id, msg.created_at DESC
+    ),
+    unread_counts AS (
+        SELECT msg.match_id, COUNT(*) as cnt
+        FROM messages msg
+        WHERE msg.status != 'READ' AND msg.deleted_at IS NULL AND msg.sender_id != p_user_id
+        GROUP BY msg.match_id
+    )
+    SELECT m.id, CASE WHEN m.user1_id = p_user_id THEN m.user2_id ELSE m.user1_id END,
+        CASE WHEN m.user1_id = p_user_id THEN u2.username ELSE u1.username END,
+        CASE WHEN m.user1_id = p_user_id THEN u2.first_name ELSE u1.first_name END,
+        CASE WHEN m.user1_id = p_user_id THEN u2.profile_picture_url ELSE u1.profile_picture_url END,
+        m.matched_at, lm.content, lm.created_at, COALESCE(uc.cnt, 0)
+    FROM matches m
+    JOIN users u1 ON u1.id = m.user1_id
+    JOIN users u2 ON u2.id = m.user2_id
+    LEFT JOIN last_messages lm ON lm.match_id = m.id
+    LEFT JOIN unread_counts uc ON uc.match_id = m.id
+    WHERE m.status = 'ACTIVE' AND (m.user1_id = p_user_id OR m.user2_id = p_user_id)
+    ORDER BY COALESCE(lm.created_at, m.matched_at) DESC
+    LIMIT p_limit OFFSET p_offset;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- Calculate compatibility function
+CREATE OR REPLACE FUNCTION calculate_compatibility(p_user1_id UUID, p_user2_id UUID)
+RETURNS NUMERIC AS $$
+DECLARE
+    v_score NUMERIC := 50.0;
+    v_u1_interests TEXT[]; v_u2_interests TEXT[];
+    v_common_interests INT; v_age_diff INT;
+BEGIN
+    SELECT interests INTO v_u1_interests FROM user_preferences WHERE user_id = p_user1_id;
+    SELECT interests INTO v_u2_interests FROM user_preferences WHERE user_id = p_user2_id;
+
+    IF v_u1_interests IS NOT NULL AND v_u2_interests IS NOT NULL THEN
+        SELECT COUNT(*) INTO v_common_interests
+        FROM unnest(v_u1_interests) i1 JOIN unnest(v_u2_interests) i2 ON LOWER(i1) = LOWER(i2);
+        v_score := v_score + LEAST(v_common_interests * 6, 30);
+    END IF;
+
+    SELECT ABS(calculate_age((SELECT date_of_birth FROM users WHERE id = p_user1_id)) - calculate_age((SELECT date_of_birth FROM users WHERE id = p_user2_id))) INTO v_age_diff;
+    IF v_age_diff <= 5 THEN v_score := v_score + 20;
+    ELSIF v_age_diff <= 10 THEN v_score := v_score + 10;
+    END IF;
+
+    RETURN LEAST(v_score, 100.0);
+END;
+$$ LANGUAGE plpgsql STABLE;

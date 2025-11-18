@@ -62,11 +62,14 @@ SELECT
     p.max_distance_km,
     p.interested_in,
     p.interests,
-    (SELECT COUNT(*) FROM photos ph WHERE ph.user_id = u.id) AS photo_count
+    COALESCE(ph.photo_count, 0) AS photo_count
 FROM users u
-LEFT JOIN user_preferences p ON p.user_id = u.id;
+LEFT JOIN user_preferences p ON p.user_id = u.id
+LEFT JOIN (
+    SELECT user_id, COUNT(*) as photo_count FROM photos GROUP BY user_id
+) ph ON ph.user_id = u.id;
 
-COMMENT ON VIEW user_profiles IS 'Complete user profile with preferences and stats';
+COMMENT ON VIEW user_profiles IS 'Complete user profile with preferences and stats (optimized with JOIN)';
 
 -- ========================================
 -- ACTIVE MATCHES VIEW
@@ -288,17 +291,24 @@ COMMENT ON MATERIALIZED VIEW daily_swipe_counts IS 'Daily swipe counts for rate 
 -- For conversation list ordering
 -- ========================================
 CREATE MATERIALIZED VIEW IF NOT EXISTS match_activity AS
+WITH msg_stats AS (
+    SELECT
+        match_id,
+        MAX(created_at) as last_msg_time,
+        COUNT(*) as msg_count
+    FROM messages
+    WHERE deleted_at IS NULL
+    GROUP BY match_id
+)
 SELECT
     m.id AS match_id,
     m.user1_id,
     m.user2_id,
     m.matched_at,
-    COALESCE(
-        (SELECT MAX(created_at) FROM messages msg WHERE msg.match_id = m.id),
-        m.matched_at
-    ) AS last_activity,
-    (SELECT COUNT(*) FROM messages msg WHERE msg.match_id = m.id) AS message_count
+    COALESCE(ms.last_msg_time, m.matched_at) AS last_activity,
+    COALESCE(ms.msg_count, 0) AS message_count
 FROM matches m
+LEFT JOIN msg_stats ms ON ms.match_id = m.id
 WHERE m.status = 'ACTIVE';
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_match_activity_id ON match_activity(match_id);

@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS users (
     location_lng DECIMAL(11, 8),
     is_verified BOOLEAN DEFAULT false,
     is_premium BOOLEAN DEFAULT false,
-    status VARCHAR(20) DEFAULT 'ACTIVE',
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -134,7 +134,7 @@ CREATE TABLE IF NOT EXISTS matches (
     status VARCHAR(20) DEFAULT 'ACTIVE',
     matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP,
-    ended_by UUID REFERENCES users(id),
+    ended_by UUID REFERENCES users(id) ON DELETE SET NULL,
 
     CONSTRAINT no_self_match CHECK (user1_id != user2_id),
     CONSTRAINT user1_before_user2 CHECK (user1_id < user2_id),
@@ -308,7 +308,7 @@ CREATE TABLE IF NOT EXISTS reports (
     reason VARCHAR(50) NOT NULL,
     description TEXT,
     status VARCHAR(20) DEFAULT 'PENDING',
-    resolved_by UUID REFERENCES users(id),
+    resolved_by UUID REFERENCES users(id) ON DELETE SET NULL,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 

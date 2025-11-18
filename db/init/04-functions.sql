@@ -259,6 +259,25 @@ RETURNS TABLE (
 ) AS $$
 BEGIN
     RETURN QUERY
+    WITH last_messages AS (
+        SELECT DISTINCT ON (msg.match_id)
+            msg.match_id,
+            msg.content,
+            msg.created_at
+        FROM messages msg
+        WHERE msg.deleted_at IS NULL
+        ORDER BY msg.match_id, msg.created_at DESC
+    ),
+    unread_counts AS (
+        SELECT
+            msg.match_id,
+            COUNT(*) as cnt
+        FROM messages msg
+        WHERE msg.status != 'READ'
+          AND msg.deleted_at IS NULL
+          AND msg.sender_id != p_user_id
+        GROUP BY msg.match_id
+    )
     SELECT
         m.id,
         CASE WHEN m.user1_id = p_user_id THEN m.user2_id ELSE m.user1_id END,
@@ -266,43 +285,23 @@ BEGIN
         CASE WHEN m.user1_id = p_user_id THEN u2.first_name ELSE u1.first_name END,
         CASE WHEN m.user1_id = p_user_id THEN u2.profile_picture_url ELSE u1.profile_picture_url END,
         m.matched_at,
-        (
-            SELECT content
-            FROM messages msg
-            WHERE msg.match_id = m.id
-            ORDER BY msg.created_at DESC
-            LIMIT 1
-        ),
-        (
-            SELECT created_at
-            FROM messages msg
-            WHERE msg.match_id = m.id
-            ORDER BY msg.created_at DESC
-            LIMIT 1
-        ),
-        (
-            SELECT COUNT(*)
-            FROM messages msg
-            WHERE msg.match_id = m.id
-              AND msg.sender_id != p_user_id
-              AND msg.status != 'READ'
-        )
+        lm.content,
+        lm.created_at,
+        COALESCE(uc.cnt, 0)
     FROM matches m
     JOIN users u1 ON u1.id = m.user1_id
     JOIN users u2 ON u2.id = m.user2_id
+    LEFT JOIN last_messages lm ON lm.match_id = m.id
+    LEFT JOIN unread_counts uc ON uc.match_id = m.id
     WHERE m.status = 'ACTIVE'
       AND (m.user1_id = p_user_id OR m.user2_id = p_user_id)
-    ORDER BY
-        COALESCE(
-            (SELECT MAX(created_at) FROM messages msg WHERE msg.match_id = m.id),
-            m.matched_at
-        ) DESC
+    ORDER BY COALESCE(lm.created_at, m.matched_at) DESC
     LIMIT p_limit
     OFFSET p_offset;
 END;
 $$ LANGUAGE plpgsql STABLE;
 
-COMMENT ON FUNCTION get_user_matches(UUID, INT, INT) IS 'Get user matches with conversation info';
+COMMENT ON FUNCTION get_user_matches(UUID, INT, INT) IS 'Get user matches with conversation info (optimized with CTEs)';
 
 -- ========================================
 -- FUNCTION: Calculate Compatibility Score
