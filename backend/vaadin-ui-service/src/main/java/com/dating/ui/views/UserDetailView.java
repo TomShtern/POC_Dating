@@ -112,8 +112,10 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
         if (user.getPhotoUrl() != null && !user.getPhotoUrl().isEmpty()) {
             profileImage.setSrc(user.getPhotoUrl());
         } else {
-            profileImage.setSrc("https://via.placeholder.com/400x400?text=" +
-                user.getFirstName().charAt(0));
+            String initial = (user.getFirstName() != null && !user.getFirstName().isEmpty())
+                ? String.valueOf(user.getFirstName().charAt(0))
+                : "?";
+            profileImage.setSrc("https://via.placeholder.com/400x400?text=" + initial);
         }
         profileImage.setWidth("100%");
         profileImage.setHeight("400px");

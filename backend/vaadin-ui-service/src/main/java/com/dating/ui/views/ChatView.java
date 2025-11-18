@@ -385,15 +385,14 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
         if (typingIndicator != null) {
             typingIndicator.setVisible(true);
 
-            // Hide after 4 seconds if no new typing notification
-            getUI().ifPresent(ui -> ui.access(() -> {
-                try {
-                    Thread.sleep(4000);
-                    typingIndicator.setVisible(false);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                }
-            }));
+            // Hide after 4 seconds using scheduler (not blocking UI thread)
+            scheduler.schedule(() -> {
+                getUI().ifPresent(ui -> ui.access(() -> {
+                    if (typingIndicator != null) {
+                        typingIndicator.setVisible(false);
+                    }
+                }));
+            }, 4, TimeUnit.SECONDS);
         }
     }
 

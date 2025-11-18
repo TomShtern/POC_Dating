@@ -15,6 +15,7 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
@@ -37,6 +38,7 @@ public class MessagesView extends VerticalLayout {
     private Grid<Conversation> conversationGrid;
     private TextField searchField;
     private List<Conversation> allConversations;
+    private VerticalLayout emptyState;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, HH:mm");
@@ -167,12 +169,51 @@ public class MessagesView extends VerticalLayout {
             conversationGrid.setItems(allConversations);
 
             if (allConversations.isEmpty()) {
-                add(new Paragraph("No conversations yet. Start matching!"));
+                conversationGrid.setVisible(false);
+                showEmptyState();
+            } else {
+                conversationGrid.setVisible(true);
+                if (emptyState != null) {
+                    emptyState.setVisible(false);
+                }
             }
 
         } catch (Exception ex) {
             log.error("Failed to load conversations", ex);
-            add(new Paragraph("Failed to load conversations"));
+            conversationGrid.setVisible(false);
+            showEmptyState();
         }
+    }
+
+    private void showEmptyState() {
+        if (emptyState == null) {
+            emptyState = new VerticalLayout();
+            emptyState.setAlignItems(Alignment.CENTER);
+            emptyState.setJustifyContentMode(JustifyContentMode.CENTER);
+            emptyState.setPadding(true);
+            emptyState.addClassName("empty-state");
+
+            Icon chatIcon = new Icon(VaadinIcon.CHAT);
+            chatIcon.setSize("48px");
+            chatIcon.getStyle().set("color", "#d1d5db");
+
+            H2 emptyTitle = new H2("No conversations yet");
+            emptyTitle.getStyle().set("color", "#9ca3af");
+
+            Paragraph emptyText = new Paragraph(
+                "Match with someone to start chatting!");
+            emptyText.getStyle()
+                .set("color", "#9ca3af")
+                .set("text-align", "center");
+
+            Button matchesButton = new Button("View Matches", new Icon(VaadinIcon.HEART));
+            matchesButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            matchesButton.addClickListener(e ->
+                UI.getCurrent().navigate(MatchesView.class));
+
+            emptyState.add(chatIcon, emptyTitle, emptyText, matchesButton);
+            add(emptyState);
+        }
+        emptyState.setVisible(true);
     }
 }

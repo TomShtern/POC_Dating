@@ -9,6 +9,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -79,8 +81,14 @@ public class MainLayout extends AppLayout {
     }
 
     private void handleLogout() {
-        userService.logout();
-        UI.getCurrent().navigate(LoginView.class);
-        UI.getCurrent().getPage().reload();
+        try {
+            userService.logout();
+            UI.getCurrent().navigate(LoginView.class);
+            UI.getCurrent().getPage().reload();
+        } catch (Exception ex) {
+            Notification.show("Logout failed. Please try again.",
+                3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 }

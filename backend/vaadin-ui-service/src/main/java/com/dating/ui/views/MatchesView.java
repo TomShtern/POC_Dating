@@ -28,6 +28,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
 
+import com.vaadin.flow.component.html.Div;
+
 /**
  * Matches view - Display all matches
  */
@@ -41,6 +43,7 @@ public class MatchesView extends VerticalLayout {
     private final UserService userService;
     private Grid<Match> matchGrid;
     private List<Match> allMatches;
+    private VerticalLayout emptyState;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, yyyy");
@@ -230,13 +233,52 @@ public class MatchesView extends VerticalLayout {
             sortMatches("Newest First");
 
             if (allMatches.isEmpty()) {
-                add(new Paragraph("No matches yet. Keep swiping!"));
+                matchGrid.setVisible(false);
+                showEmptyState();
+            } else {
+                matchGrid.setVisible(true);
+                if (emptyState != null) {
+                    emptyState.setVisible(false);
+                }
             }
 
         } catch (Exception ex) {
             log.error("Failed to load matches", ex);
-            add(new Paragraph("Failed to load matches"));
+            matchGrid.setVisible(false);
+            showEmptyState();
         }
+    }
+
+    private void showEmptyState() {
+        if (emptyState == null) {
+            emptyState = new VerticalLayout();
+            emptyState.setAlignItems(Alignment.CENTER);
+            emptyState.setJustifyContentMode(JustifyContentMode.CENTER);
+            emptyState.setPadding(true);
+            emptyState.addClassName("empty-state");
+
+            Icon heartIcon = new Icon(VaadinIcon.HEART);
+            heartIcon.setSize("48px");
+            heartIcon.getStyle().set("color", "#d1d5db");
+
+            H2 emptyTitle = new H2("No matches yet");
+            emptyTitle.getStyle().set("color", "#9ca3af");
+
+            Paragraph emptyText = new Paragraph(
+                "Keep swiping to find your perfect match!");
+            emptyText.getStyle()
+                .set("color", "#9ca3af")
+                .set("text-align", "center");
+
+            Button discoverButton = new Button("Discover People", new Icon(VaadinIcon.SEARCH));
+            discoverButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+            discoverButton.addClickListener(e ->
+                UI.getCurrent().navigate(""));
+
+            emptyState.add(heartIcon, emptyTitle, emptyText, discoverButton);
+            add(emptyState);
+        }
+        emptyState.setVisible(true);
     }
 
     private void showUnmatchDialog(Match match) {
