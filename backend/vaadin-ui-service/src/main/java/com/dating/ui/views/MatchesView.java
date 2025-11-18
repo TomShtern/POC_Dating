@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Match;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
@@ -26,8 +27,11 @@ public class MatchesView extends VerticalLayout {
     private final MatchService matchService;
     private Grid<Match> matchGrid;
 
-    public MatchesView(MatchService matchService) {
+    public MatchesView(MatchService matchService, PageViewMetricsService pageViewMetrics) {
         this.matchService = matchService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("matches");
 
         setSizeFull();
         setPadding(true);

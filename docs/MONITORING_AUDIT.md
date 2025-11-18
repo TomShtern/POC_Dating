@@ -105,7 +105,7 @@ log.debug("Score stats: avg={}, min={}, max={}",
 | `ui.swipes.total` | ✅ | UI | Implemented |
 | `ui.matches.total` | ✅ | UI | Implemented |
 | `ui.messages.sent.total` | ✅ | UI | Implemented |
-| `ui.page.views.total` | ✅ | UI | Integrated with LoginView, SwipeView |
+| `ui.page.views.total` | ✅ | UI | Integrated with ALL views (login, register, discover, matches, messages, profile) |
 | `ui.api.call.time` | ✅ | UI | Implemented with service tags |
 | `ui.login.failures.total` | ✅ | UI | Implemented - tracks failed logins |
 
@@ -134,7 +134,7 @@ log.debug("Score stats: avg={}, min={}, max={}",
 
 1. ~~**Fix SLF4J format string** in RecommendationService.java~~ ✅ Fixed
 2. ~~**Add login failure counter** for security monitoring~~ ✅ Added `ui.login.failures.total`
-3. ~~**Integrate PageViewMetricsService** with views~~ ✅ Integrated with LoginView, SwipeView
+3. ~~**Integrate PageViewMetricsService** with views~~ ✅ Integrated with ALL views (login, register, discover, matches, messages, profile)
 
 ### Future Improvements
 
@@ -226,7 +226,7 @@ The monitoring implementation is **complete and production-ready** for the POC s
 All critical issues have been fixed:
 - ✅ SLF4J format string corrected in RecommendationService
 - ✅ Login failure tracking added (`ui.login.failures.total`)
-- ✅ PageViewMetricsService integrated with LoginView and SwipeView
+- ✅ PageViewMetricsService integrated with ALL views
 
 The system now provides:
 - Full health visibility via Actuator endpoints

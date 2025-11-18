@@ -1,6 +1,7 @@
 package com.dating.ui.views;
 
 import com.dating.ui.dto.User;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -35,8 +36,11 @@ public class ProfileView extends VerticalLayout {
     private TextArea bioField;
     private Button saveButton;
 
-    public ProfileView(UserService userService) {
+    public ProfileView(UserService userService, PageViewMetricsService pageViewMetrics) {
         this.userService = userService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("profile");
 
         setSizeFull();
         setPadding(true);

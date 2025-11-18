@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Conversation;
 import com.dating.ui.service.ChatService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
@@ -26,8 +27,11 @@ public class MessagesView extends VerticalLayout {
     private final ChatService chatService;
     private Grid<Conversation> conversationGrid;
 
-    public MessagesView(ChatService chatService) {
+    public MessagesView(ChatService chatService, PageViewMetricsService pageViewMetrics) {
         this.chatService = chatService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("messages");
 
         setSizeFull();
         setPadding(true);

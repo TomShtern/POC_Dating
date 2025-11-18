@@ -1,6 +1,7 @@
 package com.dating.ui.views;
 
 import com.dating.ui.dto.RegisterRequest;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -41,8 +42,11 @@ public class RegisterView extends VerticalLayout {
     private Button registerButton;
     private Button backButton;
 
-    public RegisterView(UserService userService) {
+    public RegisterView(UserService userService, PageViewMetricsService pageViewMetrics) {
         this.userService = userService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("register");
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
