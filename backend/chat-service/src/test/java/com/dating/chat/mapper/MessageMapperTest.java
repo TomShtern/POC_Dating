@@ -32,7 +32,6 @@ class MessageMapperTest {
                 .content("Hello!")
                 .status(MessageStatus.SENT)
                 .createdAt(now)
-                .deliveredAt(null)
                 .readAt(null)
                 .build();
 
@@ -46,16 +45,14 @@ class MessageMapperTest {
         assertEquals(senderId, response.getSenderId());
         assertEquals("Hello!", response.getContent());
         assertEquals(MessageStatus.SENT, response.getStatus());
-        assertEquals(now, response.getSentAt());
-        assertNull(response.getDeliveredAt());
+        assertEquals(now, response.getCreatedAt());
         assertNull(response.getReadAt());
     }
 
     @Test
-    void testToMessageResponse_WithDeliveredAndRead() {
+    void testToMessageResponse_WithRead() {
         // Arrange
-        Instant sentAt = Instant.now().minusSeconds(3600);
-        Instant deliveredAt = Instant.now().minusSeconds(1800);
+        Instant createdAt = Instant.now().minusSeconds(3600);
         Instant readAt = Instant.now();
 
         Message message = Message.builder()
@@ -64,8 +61,7 @@ class MessageMapperTest {
                 .senderId(UUID.randomUUID())
                 .content("Test")
                 .status(MessageStatus.READ)
-                .createdAt(sentAt)
-                .deliveredAt(deliveredAt)
+                .createdAt(createdAt)
                 .readAt(readAt)
                 .build();
 
@@ -74,8 +70,7 @@ class MessageMapperTest {
 
         // Assert
         assertEquals(MessageStatus.READ, response.getStatus());
-        assertEquals(sentAt, response.getSentAt());
-        assertEquals(deliveredAt, response.getDeliveredAt());
+        assertEquals(createdAt, response.getCreatedAt());
         assertEquals(readAt, response.getReadAt());
     }
 

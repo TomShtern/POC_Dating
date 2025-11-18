@@ -59,7 +59,7 @@ class UserServiceTest {
                 .build();
 
         userResponse = UserResponse.builder()
-                .id(userId.toString())
+                .id(userId)
                 .email("test@example.com")
                 .username("testuser")
                 .firstName("John")
@@ -79,7 +79,7 @@ class UserServiceTest {
 
         // Assert
         assertNotNull(response);
-        assertEquals(userId.toString(), response.getId());
+        assertEquals(userId, response.getId());
         assertEquals("test@example.com", response.getEmail());
         verify(userRepository).findById(userId);
     }
@@ -112,7 +112,7 @@ class UserServiceTest {
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
         UserResponse updatedResponse = UserResponse.builder()
-                .id(userId.toString())
+                .id(userId)
                 .email("test@example.com")
                 .username("testuser")
                 .firstName("Jane")

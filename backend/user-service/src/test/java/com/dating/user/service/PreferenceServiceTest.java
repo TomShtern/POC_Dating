@@ -68,8 +68,8 @@ class PreferenceServiceTest {
                 .build();
 
         preferencesResponse = PreferencesResponse.builder()
-                .id(testPreference.getId().toString())
-                .userId(userId.toString())
+                .id(testPreference.getId())
+                .userId(userId)
                 .minAge(21)
                 .maxAge(35)
                 .maxDistanceKm(50)
@@ -128,8 +128,8 @@ class PreferenceServiceTest {
         when(userPreferenceRepository.save(any(UserPreference.class))).thenReturn(testPreference);
 
         PreferencesResponse updatedResponse = PreferencesResponse.builder()
-                .id(testPreference.getId().toString())
-                .userId(userId.toString())
+                .id(testPreference.getId())
+                .userId(userId)
                 .minAge(25)
                 .maxAge(40)
                 .maxDistanceKm(100)

@@ -67,7 +67,7 @@ class ChatServiceTest {
                 .senderId(senderId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
-                .sentAt(Instant.now())
+                .createdAt(Instant.now())
                 .build();
 
         // Message from the other user (to help determine participant)
@@ -77,7 +77,7 @@ class ChatServiceTest {
                 .senderId(receiverId)
                 .content("Hi there!")
                 .status(MessageStatus.SENT)
-                .sentAt(Instant.now().minusSeconds(60))
+                .createdAt(Instant.now().minusSeconds(60))
                 .build();
     }
 
@@ -167,6 +167,8 @@ class ChatServiceTest {
                 .conversationId(conversationId)
                 .messages(messages)
                 .total(1)
+                .limit(50)
+                .offset(0)
                 .hasMore(false)
                 .build();
         when(messageService.getMessagesWithMetadata(conversationId, 50, 0)).thenReturn(expectedResponse);

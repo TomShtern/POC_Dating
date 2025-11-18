@@ -149,8 +149,14 @@ public class RecommendationService {
         UserProfileDto sourceUser = userServiceClient.getUserById(userId);
         sourceUser = preferenceAnalyzerService.enrichWithActivityStats(sourceUser);
 
-        // Get eligible candidates
-        List<UserProfileDto> candidates = userServiceClient.getCandidates(userId, limit * 3);
+        // Get eligible candidates based on source user's preferences
+        List<UserProfileDto> candidates = userServiceClient.getCandidates(
+                userId,
+                sourceUser.getMinAge() != null ? sourceUser.getMinAge() : 18,
+                sourceUser.getMaxAge() != null ? sourceUser.getMaxAge() : 100,
+                sourceUser.getMaxDistanceKm() != null ? sourceUser.getMaxDistanceKm() : 100,
+                null  // No exclusions for now
+        );
 
         // Score and sort candidates
         List<ScoredCandidate> scoredCandidates = candidates.stream()

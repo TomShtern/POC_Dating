@@ -76,7 +76,7 @@ class MessageServiceTest {
                 .senderId(senderId)
                 .content("Hello!")
                 .status(MessageStatus.SENT)
-                .sentAt(Instant.now())
+                .createdAt(Instant.now())
                 .build();
     }
 
