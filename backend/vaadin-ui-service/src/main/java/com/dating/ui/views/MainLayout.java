@@ -72,6 +72,7 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Profile", ProfileView.class, VaadinIcon.USER.create()));
         nav.addItem(new SideNavItem("Preferences", PreferencesView.class, VaadinIcon.SLIDER.create()));
         nav.addItem(new SideNavItem("Settings", SettingsView.class, VaadinIcon.COG.create()));
+        nav.addItem(new SideNavItem("About", AboutView.class, VaadinIcon.INFO_CIRCLE.create()));
 
         addToDrawer(nav);
     }
