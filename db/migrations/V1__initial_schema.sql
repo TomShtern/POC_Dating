@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS users (
     gender VARCHAR(20),
     bio TEXT,
     profile_picture_url VARCHAR(500),
-    location_lat DECIMAL(10, 8),
+    location_lat DECIMAL(11, 8),
     location_lng DECIMAL(11, 8),
     is_verified BOOLEAN DEFAULT false,
     is_premium BOOLEAN DEFAULT false,
