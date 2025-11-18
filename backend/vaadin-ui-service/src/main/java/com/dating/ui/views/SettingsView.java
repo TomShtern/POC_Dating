@@ -13,8 +13,10 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -143,6 +145,89 @@ public class SettingsView extends VerticalLayout {
         navCard.add(editProfileButton, preferencesButton);
         navigationSection.add(navCard);
 
+        // Notifications section
+        Div notificationsSection = createSection(
+            "Notifications",
+            "Control how you receive notifications",
+            VaadinIcon.BELL
+        );
+
+        Div notificationsCard = createCard();
+
+        Checkbox matchNotifications = new Checkbox("New match notifications");
+        matchNotifications.setValue(true);
+        matchNotifications.addValueChangeListener(e ->
+            Notification.show("Notification preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox messageNotifications = new Checkbox("New message notifications");
+        messageNotifications.setValue(true);
+        messageNotifications.addValueChangeListener(e ->
+            Notification.show("Notification preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox likeNotifications = new Checkbox("Someone liked you notifications");
+        likeNotifications.setValue(true);
+        likeNotifications.addValueChangeListener(e ->
+            Notification.show("Notification preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox emailNotifications = new Checkbox("Email notifications");
+        emailNotifications.setValue(false);
+        emailNotifications.addValueChangeListener(e ->
+            Notification.show("Email preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        notificationsCard.add(matchNotifications, messageNotifications,
+            likeNotifications, emailNotifications);
+        notificationsSection.add(notificationsCard);
+
+        // Privacy section
+        Div privacySection = createSection(
+            "Privacy",
+            "Control your profile visibility",
+            VaadinIcon.LOCK
+        );
+
+        Div privacyCard = createCard();
+
+        Select<String> profileVisibility = new Select<>();
+        profileVisibility.setLabel("Profile Visibility");
+        profileVisibility.setItems("Everyone", "Matches Only", "Hidden");
+        profileVisibility.setValue("Everyone");
+        profileVisibility.setWidthFull();
+        profileVisibility.addValueChangeListener(e ->
+            Notification.show("Profile visibility updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox showOnlineStatus = new Checkbox("Show when I'm online");
+        showOnlineStatus.setValue(true);
+        showOnlineStatus.addValueChangeListener(e ->
+            Notification.show("Online status preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox showLastActive = new Checkbox("Show last active time");
+        showLastActive.setValue(true);
+        showLastActive.addValueChangeListener(e ->
+            Notification.show("Last active preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox showDistance = new Checkbox("Show my distance to others");
+        showDistance.setValue(true);
+        showDistance.addValueChangeListener(e ->
+            Notification.show("Distance preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        Checkbox readReceipts = new Checkbox("Show read receipts");
+        readReceipts.setValue(true);
+        readReceipts.addValueChangeListener(e ->
+            Notification.show("Read receipts preference updated",
+                2000, Notification.Position.TOP_CENTER));
+
+        privacyCard.add(profileVisibility, showOnlineStatus, showLastActive,
+            showDistance, readReceipts);
+        privacySection.add(privacyCard);
+
         // Session section
         Div sessionSection = createSection(
             "Session",
@@ -218,7 +303,8 @@ public class SettingsView extends VerticalLayout {
         container.setWidth("500px");
         container.setSpacing(true);
         container.setPadding(false);
-        container.add(accountSection, navigationSection, sessionSection, dangerSection);
+        container.add(accountSection, navigationSection, notificationsSection,
+            privacySection, sessionSection, dangerSection);
 
         add(title, container);
     }

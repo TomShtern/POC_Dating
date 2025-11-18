@@ -3,10 +3,18 @@ package com.dating.ui.views;
 import com.dating.ui.dto.Conversation;
 import com.dating.ui.service.ChatService;
 import com.vaadin.flow.component.UI;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextField;
+import com.vaadin.flow.data.value.ValueChangeMode;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
@@ -27,6 +35,8 @@ public class MessagesView extends VerticalLayout {
 
     private final ChatService chatService;
     private Grid<Conversation> conversationGrid;
+    private TextField searchField;
+    private List<Conversation> allConversations;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, HH:mm");
@@ -43,6 +53,25 @@ public class MessagesView extends VerticalLayout {
 
     private void createUI() {
         H2 title = new H2("Messages");
+
+        // Search and refresh bar
+        HorizontalLayout toolbar = new HorizontalLayout();
+        toolbar.setWidthFull();
+        toolbar.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        searchField = new TextField();
+        searchField.setPlaceholder("Search conversations...");
+        searchField.setPrefixComponent(new Icon(VaadinIcon.SEARCH));
+        searchField.setValueChangeMode(ValueChangeMode.EAGER);
+        searchField.addValueChangeListener(e -> filterConversations(e.getValue()));
+        searchField.setWidth("300px");
+
+        Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
+        refreshButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        refreshButton.addClickListener(e -> loadConversations());
+
+        toolbar.add(searchField, refreshButton);
+        toolbar.expand(searchField);
 
         conversationGrid = new Grid<>(Conversation.class, false);
 
@@ -106,15 +135,38 @@ public class MessagesView extends VerticalLayout {
         conversationGrid.setSizeFull();
         conversationGrid.getStyle().set("cursor", "pointer");
 
-        add(title, conversationGrid);
+        add(title, toolbar, conversationGrid);
+    }
+
+    private void filterConversations(String searchTerm) {
+        if (allConversations == null) return;
+
+        if (searchTerm == null || searchTerm.isEmpty()) {
+            conversationGrid.setItems(allConversations);
+        } else {
+            String lowerSearch = searchTerm.toLowerCase();
+            List<Conversation> filtered = allConversations.stream()
+                .filter(conv -> {
+                    if (conv.getOtherUser() != null) {
+                        String name = conv.getOtherUser().getFirstName();
+                        if (conv.getOtherUser().getLastName() != null) {
+                            name += " " + conv.getOtherUser().getLastName();
+                        }
+                        return name.toLowerCase().contains(lowerSearch);
+                    }
+                    return false;
+                })
+                .toList();
+            conversationGrid.setItems(filtered);
+        }
     }
 
     private void loadConversations() {
         try {
-            List<Conversation> conversations = chatService.getConversations();
-            conversationGrid.setItems(conversations);
+            allConversations = chatService.getConversations();
+            conversationGrid.setItems(allConversations);
 
-            if (conversations.isEmpty()) {
+            if (allConversations.isEmpty()) {
                 add(new Paragraph("No conversations yet. Start matching!"));
             }
 

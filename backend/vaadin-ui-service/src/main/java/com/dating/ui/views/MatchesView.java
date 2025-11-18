@@ -15,14 +15,17 @@ import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.select.Select;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import jakarta.annotation.security.PermitAll;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -37,6 +40,7 @@ public class MatchesView extends VerticalLayout {
     private final MatchService matchService;
     private final UserService userService;
     private Grid<Match> matchGrid;
+    private List<Match> allMatches;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, yyyy");
@@ -54,6 +58,24 @@ public class MatchesView extends VerticalLayout {
 
     private void createUI() {
         H2 title = new H2("Your Matches");
+
+        // Sorting toolbar
+        HorizontalLayout toolbar = new HorizontalLayout();
+        toolbar.setWidthFull();
+        toolbar.setAlignItems(FlexComponent.Alignment.CENTER);
+        toolbar.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
+
+        Select<String> sortSelect = new Select<>();
+        sortSelect.setLabel("Sort by");
+        sortSelect.setItems("Newest First", "Oldest First", "Name A-Z", "Name Z-A");
+        sortSelect.setValue("Newest First");
+        sortSelect.addValueChangeListener(e -> sortMatches(e.getValue()));
+
+        Button refreshButton = new Button(new Icon(VaadinIcon.REFRESH));
+        refreshButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        refreshButton.addClickListener(e -> loadMatches());
+
+        toolbar.add(sortSelect, refreshButton);
 
         matchGrid = new Grid<>(Match.class, false);
 
@@ -173,15 +195,41 @@ public class MatchesView extends VerticalLayout {
         matchGrid.setSizeFull();
         matchGrid.getStyle().set("cursor", "pointer");
 
-        add(title, matchGrid);
+        add(title, toolbar, matchGrid);
+    }
+
+    private void sortMatches(String sortOption) {
+        if (allMatches == null || allMatches.isEmpty()) return;
+
+        List<Match> sorted = switch (sortOption) {
+            case "Oldest First" -> allMatches.stream()
+                .sorted(Comparator.comparing(Match::getCreatedAt, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+            case "Name A-Z" -> allMatches.stream()
+                .sorted(Comparator.comparing(m ->
+                    m.getOtherUser() != null ? m.getOtherUser().getFirstName() : "",
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)))
+                .toList();
+            case "Name Z-A" -> allMatches.stream()
+                .sorted(Comparator.comparing(
+                    (Match m) -> m.getOtherUser() != null ? m.getOtherUser().getFirstName() : "",
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)).reversed())
+                .toList();
+            default -> allMatches.stream() // Newest First
+                .sorted(Comparator.comparing(Match::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+        };
+
+        matchGrid.setItems(sorted);
     }
 
     private void loadMatches() {
         try {
-            List<Match> matches = matchService.getMyMatches();
-            matchGrid.setItems(matches);
+            allMatches = matchService.getMyMatches();
+            // Sort by newest first by default
+            sortMatches("Newest First");
 
-            if (matches.isEmpty()) {
+            if (allMatches.isEmpty()) {
                 add(new Paragraph("No matches yet. Keep swiping!"));
             }
 
