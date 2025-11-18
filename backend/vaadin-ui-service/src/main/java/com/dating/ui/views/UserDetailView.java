@@ -3,9 +3,11 @@ package com.dating.ui.views;
 import com.dating.ui.dto.Match;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.H3;
@@ -39,14 +41,16 @@ import java.time.format.DateTimeFormatter;
 public class UserDetailView extends VerticalLayout implements HasUrlParameter<String> {
 
     private final MatchService matchService;
+    private final UserService userService;
     private String matchId;
     private Match match;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMMM d, yyyy");
 
-    public UserDetailView(MatchService matchService) {
+    public UserDetailView(MatchService matchService, UserService userService) {
         this.matchService = matchService;
+        this.userService = userService;
 
         setSizeFull();
         setPadding(true);
@@ -207,8 +211,52 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
         messageButton.setIcon(new Icon(VaadinIcon.CHAT));
         messageButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
-        actions.add(messageButton);
+        Button blockButton = new Button("Block", e -> showBlockDialog(user));
+        blockButton.setIcon(new Icon(VaadinIcon.BAN));
+        blockButton.addThemeVariants(ButtonVariant.LUMO_ERROR, ButtonVariant.LUMO_TERTIARY);
+
+        Button reportButton = new Button("Report", e -> {
+            ReportUserDialog dialog = new ReportUserDialog(
+                userService, user.getId(), user.getFirstName());
+            dialog.open();
+        });
+        reportButton.setIcon(new Icon(VaadinIcon.FLAG));
+        reportButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+
+        actions.add(messageButton, blockButton, reportButton);
 
         add(topBar, profileCard, actions);
+    }
+
+    private void showBlockDialog(User user) {
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Block " + user.getFirstName());
+        dialog.setText("Are you sure you want to block " + user.getFirstName() + "? " +
+            "They won't be able to see your profile or message you. " +
+            "This will also unmatch you if you're currently matched.");
+        dialog.setCancelable(true);
+        dialog.setConfirmText("Block");
+        dialog.setConfirmButtonTheme("error primary");
+
+        dialog.addConfirmListener(event -> {
+            try {
+                userService.blockUser(user.getId());
+
+                Notification.show("User blocked successfully",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                // Navigate back to matches
+                UI.getCurrent().navigate(MatchesView.class);
+
+            } catch (Exception ex) {
+                log.error("Failed to block user", ex);
+                Notification.show("Failed to block user",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        dialog.open();
     }
 }

@@ -94,10 +94,24 @@ public class SettingsView extends VerticalLayout {
                 return;
             }
 
-            // TODO: Implement password change API
-            Notification.show("Password change feature coming soon",
-                3000, Notification.Position.TOP_CENTER)
-                .addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+            try {
+                userService.changePassword(current, newPass);
+
+                Notification.show("Password changed successfully",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                // Clear fields
+                currentPasswordField.clear();
+                newPasswordField.clear();
+                confirmPasswordField.clear();
+
+            } catch (Exception ex) {
+                log.error("Failed to change password", ex);
+                Notification.show("Failed to change password. Please check your current password.",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
         });
         changePasswordButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
@@ -171,10 +185,23 @@ public class SettingsView extends VerticalLayout {
             dialog.setConfirmButtonTheme("error primary");
 
             dialog.addConfirmListener(event -> {
-                // TODO: Implement account deletion API
-                Notification.show("Account deletion feature coming soon",
-                    3000, Notification.Position.TOP_CENTER)
-                    .addThemeVariants(NotificationVariant.LUMO_PRIMARY);
+                try {
+                    userService.deleteAccount();
+
+                    Notification.show("Account deleted successfully",
+                        3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                    // Navigate to login
+                    UI.getCurrent().navigate(LoginView.class);
+                    UI.getCurrent().getPage().reload();
+
+                } catch (Exception ex) {
+                    log.error("Failed to delete account", ex);
+                    Notification.show("Failed to delete account",
+                        3000, Notification.Position.TOP_CENTER)
+                        .addThemeVariants(NotificationVariant.LUMO_ERROR);
+                }
             });
 
             dialog.open();

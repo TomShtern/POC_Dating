@@ -9,11 +9,13 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import lombok.extern.slf4j.Slf4j;
 
@@ -82,11 +84,21 @@ public class LoginView extends VerticalLayout {
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.setWidthFull();
 
+        // Forgot password link
+        RouterLink forgotPasswordLink = new RouterLink("Forgot Password?", ForgotPasswordView.class);
+        forgotPasswordLink.getStyle()
+            .set("font-size", "0.9rem")
+            .set("color", "#667eea");
+
+        HorizontalLayout forgotLayout = new HorizontalLayout(forgotPasswordLink);
+        forgotLayout.setJustifyContentMode(JustifyContentMode.END);
+        forgotLayout.setWidthFull();
+
         // Register button
         registerButton = new Button("Create Account", e -> handleRegister());
         registerButton.setWidthFull();
 
-        formLayout.add(emailField, passwordField, loginButton, registerButton);
+        formLayout.add(emailField, passwordField, forgotLayout, loginButton, registerButton);
 
         add(title, subtitle, formLayout);
     }

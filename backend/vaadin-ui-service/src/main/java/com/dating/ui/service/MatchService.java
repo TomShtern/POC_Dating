@@ -90,4 +90,32 @@ public class MatchService {
     public Match getMatchDetails(String matchId) {
         return getMatch(matchId);
     }
+
+    /**
+     * Unmatch with a user
+     */
+    public void unmatch(String matchId) {
+        String token = SecurityUtils.getCurrentToken();
+
+        if (token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        matchClient.unmatch(matchId, "Bearer " + token);
+        log.info("Unmatched from match: {}", matchId);
+    }
+
+    /**
+     * Undo last swipe
+     */
+    public void undoLastSwipe() {
+        String token = SecurityUtils.getCurrentToken();
+
+        if (token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        matchClient.undoLastSwipe("Bearer " + token);
+        log.info("Last swipe undone for user: {}", SecurityUtils.getCurrentUserId());
+    }
 }

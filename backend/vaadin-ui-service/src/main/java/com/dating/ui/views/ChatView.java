@@ -60,9 +60,11 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
     private TextArea messageInput;
     private Button sendButton;
     private Scroller messagesScroller;
+    private Div typingIndicator;
 
     private String currentUserId;
     private int lastMessageCount = 0;
+    private long lastTypingNotification = 0;
 
     // Polling for real-time updates
     private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -119,10 +121,14 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
             .set("background", "#f5f5f5")
             .set("flex-grow", "1");
 
+        // Typing indicator
+        typingIndicator = createTypingIndicator();
+        typingIndicator.setVisible(false);
+
         // Message input area
         HorizontalLayout inputArea = createInputArea();
 
-        add(header, messagesScroller, inputArea);
+        add(header, messagesScroller, typingIndicator, inputArea);
         setFlexGrow(1, messagesScroller);
     }
 
@@ -175,6 +181,21 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
         messageInput.addKeyPressListener(Key.ENTER, e -> {
             if (!e.isShiftKey()) {
                 sendMessage();
+            }
+        });
+
+        // Send typing notification when user is typing
+        messageInput.addValueChangeListener(e -> {
+            long now = System.currentTimeMillis();
+            // Send typing notification at most every 3 seconds
+            if (now - lastTypingNotification > 3000) {
+                lastTypingNotification = now;
+                try {
+                    chatService.sendTypingIndicator(conversationId);
+                } catch (Exception ex) {
+                    // Ignore typing indicator errors
+                    log.debug("Failed to send typing indicator", ex);
+                }
             }
         });
 
@@ -332,6 +353,48 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
             "  if (scroller) scroller.scrollTop = scroller.scrollHeight;" +
             "}, 100)"
         );
+    }
+
+    private Div createTypingIndicator() {
+        Div indicator = new Div();
+        indicator.getStyle()
+            .set("padding", "8px 16px")
+            .set("background", "white")
+            .set("color", "#666")
+            .set("font-size", "0.85rem")
+            .set("font-style", "italic")
+            .set("border-top", "1px solid #f0f0f0");
+
+        String otherUserName = "Someone";
+        if (conversation != null && conversation.getOtherUser() != null) {
+            otherUserName = conversation.getOtherUser().getFirstName();
+        }
+
+        // Animated typing dots
+        Span text = new Span(otherUserName + " is typing");
+        Span dots = new Span("...");
+        dots.getStyle()
+            .set("animation", "typing-dots 1.4s infinite")
+            .set("display", "inline-block");
+
+        indicator.add(text, dots);
+        return indicator;
+    }
+
+    private void showTypingIndicator() {
+        if (typingIndicator != null) {
+            typingIndicator.setVisible(true);
+
+            // Hide after 4 seconds if no new typing notification
+            getUI().ifPresent(ui -> ui.access(() -> {
+                try {
+                    Thread.sleep(4000);
+                    typingIndicator.setVisible(false);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            }));
+        }
     }
 
     @Override

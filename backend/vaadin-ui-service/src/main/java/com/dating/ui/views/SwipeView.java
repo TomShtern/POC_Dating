@@ -34,10 +34,12 @@ public class SwipeView extends VerticalLayout {
     private final MatchService matchService;
 
     private User currentUser;
+    private User previousUser;
     private ProfileCard profileCard;
     private Button passButton;
     private Button superLikeButton;
     private Button likeButton;
+    private Button undoButton;
 
     public SwipeView(MatchService matchService) {
         this.matchService = matchService;
@@ -69,9 +71,17 @@ public class SwipeView extends VerticalLayout {
         likeButton = new Button("❤️ Like", e -> handleLike());
         likeButton.addThemeVariants(ButtonVariant.LUMO_SUCCESS, ButtonVariant.LUMO_LARGE);
 
+        undoButton = new Button("↩️ Undo", e -> handleUndo());
+        undoButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+        undoButton.setEnabled(false);
+
         HorizontalLayout buttons = new HorizontalLayout(passButton, superLikeButton, likeButton);
         buttons.setSpacing(true);
         buttons.setJustifyContentMode(JustifyContentMode.CENTER);
+
+        HorizontalLayout undoLayout = new HorizontalLayout(undoButton);
+        undoLayout.setJustifyContentMode(JustifyContentMode.CENTER);
+        undoLayout.setWidthFull();
 
         // Keyboard shortcuts hint
         Span shortcutHint = new Span("Keyboard shortcuts: ← Pass | ↑ Super Like | → Like");
@@ -85,7 +95,7 @@ public class SwipeView extends VerticalLayout {
         superLikeButton.addClickShortcut(Key.ARROW_UP);
         likeButton.addClickShortcut(Key.ARROW_RIGHT);
 
-        add(title, profileCard, buttons, shortcutHint);
+        add(title, profileCard, buttons, undoLayout, shortcutHint);
     }
 
     private void loadNextProfile() {
@@ -111,12 +121,14 @@ public class SwipeView extends VerticalLayout {
         if (currentUser == null) return;
 
         try {
+            previousUser = currentUser;
             SwipeResponse response = matchService.recordSwipe(currentUser.getId(), SwipeType.LIKE);
 
             if (response.isMatch()) {
                 showMatchNotification(currentUser);
             }
 
+            undoButton.setEnabled(true);
             loadNextProfile();
 
         } catch (Exception ex) {
@@ -129,12 +141,14 @@ public class SwipeView extends VerticalLayout {
         if (currentUser == null) return;
 
         try {
+            previousUser = currentUser;
             SwipeResponse response = matchService.recordSwipe(currentUser.getId(), SwipeType.SUPER_LIKE);
 
             if (response.isMatch()) {
                 showMatchNotification(currentUser);
             }
 
+            undoButton.setEnabled(true);
             loadNextProfile();
 
         } catch (Exception ex) {
@@ -147,12 +161,37 @@ public class SwipeView extends VerticalLayout {
         if (currentUser == null) return;
 
         try {
+            previousUser = currentUser;
             matchService.recordSwipe(currentUser.getId(), SwipeType.PASS);
+            undoButton.setEnabled(true);
             loadNextProfile();
 
         } catch (Exception ex) {
             log.error("Failed to record swipe", ex);
             showError("Failed to record swipe");
+        }
+    }
+
+    private void handleUndo() {
+        try {
+            matchService.undoLastSwipe();
+
+            // Restore previous user to card
+            if (previousUser != null) {
+                currentUser = previousUser;
+                profileCard.setUser(currentUser);
+                previousUser = null;
+            }
+
+            undoButton.setEnabled(false);
+
+            Notification.show("Last swipe undone",
+                2000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+        } catch (Exception ex) {
+            log.error("Failed to undo swipe", ex);
+            showError("Failed to undo swipe");
         }
     }
 

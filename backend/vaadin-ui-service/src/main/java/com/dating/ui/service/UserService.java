@@ -1,11 +1,10 @@
 package com.dating.ui.service;
 
 import com.dating.ui.client.UserServiceClient;
-import com.dating.ui.dto.AuthResponse;
-import com.dating.ui.dto.LoginRequest;
-import com.dating.ui.dto.RegisterRequest;
-import com.dating.ui.dto.User;
+import com.dating.ui.dto.*;
 import com.dating.ui.security.SecurityUtils;
+
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -120,5 +119,121 @@ public class UserService {
         }
 
         return userClient.updatePreferences(userId, preferences, "Bearer " + token);
+    }
+
+    /**
+     * Change password
+     */
+    public void changePassword(String currentPassword, String newPassword) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        ChangePasswordRequest request = new ChangePasswordRequest(currentPassword, newPassword);
+        userClient.changePassword(userId, request, "Bearer " + token);
+        log.info("Password changed for user: {}", userId);
+    }
+
+    /**
+     * Request password reset
+     */
+    public void forgotPassword(String email) {
+        ForgotPasswordRequest request = new ForgotPasswordRequest(email);
+        userClient.forgotPassword(request);
+        log.info("Password reset requested for email: {}", email);
+    }
+
+    /**
+     * Reset password with token
+     */
+    public void resetPassword(String resetToken, String newPassword) {
+        ResetPasswordRequest request = new ResetPasswordRequest(resetToken, newPassword);
+        userClient.resetPassword(request);
+        log.info("Password reset completed");
+    }
+
+    /**
+     * Delete account
+     */
+    public void deleteAccount() {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        userClient.deleteAccount(userId, "Bearer " + token);
+        log.info("Account deleted: {}", userId);
+        SecurityUtils.clearAuthentication();
+    }
+
+    /**
+     * Block a user
+     */
+    public void blockUser(String blockedUserId) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        BlockRequest request = new BlockRequest(blockedUserId);
+        userClient.blockUser(userId, request, "Bearer " + token);
+        log.info("User {} blocked by {}", blockedUserId, userId);
+    }
+
+    /**
+     * Unblock a user
+     */
+    public void unblockUser(String blockedUserId) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        userClient.unblockUser(userId, blockedUserId, "Bearer " + token);
+        log.info("User {} unblocked by {}", blockedUserId, userId);
+    }
+
+    /**
+     * Get blocked users
+     */
+    public List<BlockedUser> getBlockedUsers() {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        return userClient.getBlockedUsers(userId, "Bearer " + token);
+    }
+
+    /**
+     * Report a user
+     */
+    public void reportUser(String reportedUserId, String reason, String description) {
+        String userId = SecurityUtils.getCurrentUserId();
+        String token = SecurityUtils.getCurrentToken();
+
+        if (userId == null || token == null) {
+            throw new IllegalStateException("User not authenticated");
+        }
+
+        ReportRequest request = ReportRequest.builder()
+            .reportedUserId(reportedUserId)
+            .reason(reason)
+            .description(description)
+            .build();
+
+        userClient.reportUser(userId, request, "Bearer " + token);
+        log.info("User {} reported by {}: {}", reportedUserId, userId, reason);
     }
 }

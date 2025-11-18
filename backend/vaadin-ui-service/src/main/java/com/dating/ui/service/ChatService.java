@@ -75,4 +75,22 @@ public class ChatService {
 
         return chatClient.getConversation(conversationId, "Bearer " + token);
     }
+
+    /**
+     * Send typing indicator to the other user
+     */
+    public void sendTypingIndicator(String conversationId) {
+        String token = SecurityUtils.getCurrentToken();
+
+        if (token == null) {
+            return; // Silently ignore if not authenticated
+        }
+
+        try {
+            chatClient.sendTypingIndicator(conversationId, "Bearer " + token);
+        } catch (Exception ex) {
+            // Ignore typing indicator errors - they're not critical
+            log.debug("Failed to send typing indicator: {}", ex.getMessage());
+        }
+    }
 }

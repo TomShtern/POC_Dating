@@ -2,15 +2,19 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Match;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.confirmdialog.ConfirmDialog;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -31,13 +35,15 @@ import java.util.List;
 public class MatchesView extends VerticalLayout {
 
     private final MatchService matchService;
+    private final UserService userService;
     private Grid<Match> matchGrid;
 
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, yyyy");
 
-    public MatchesView(MatchService matchService) {
+    public MatchesView(MatchService matchService, UserService userService) {
         this.matchService = matchService;
+        this.userService = userService;
 
         setSizeFull();
         setPadding(true);
@@ -133,9 +139,30 @@ public class MatchesView extends VerticalLayout {
                 }
             });
 
-            actions.add(viewButton, chatButton);
+            Button unmatchButton = new Button(new Icon(VaadinIcon.CLOSE_SMALL));
+            unmatchButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL, ButtonVariant.LUMO_ERROR);
+            unmatchButton.getElement().setAttribute("title", "Unmatch");
+            unmatchButton.addClickListener(e -> showUnmatchDialog(match));
+
+            Button reportButton = new Button(new Icon(VaadinIcon.FLAG));
+            reportButton.addThemeVariants(ButtonVariant.LUMO_TERTIARY, ButtonVariant.LUMO_SMALL);
+            reportButton.getElement().setAttribute("title", "Report User");
+            reportButton.addClickListener(e -> {
+                String userName = match.getOtherUser() != null
+                    ? match.getOtherUser().getFirstName()
+                    : "User";
+                String userId = match.getOtherUser() != null
+                    ? match.getOtherUser().getId()
+                    : null;
+                if (userId != null) {
+                    ReportUserDialog dialog = new ReportUserDialog(userService, userId, userName);
+                    dialog.open();
+                }
+            });
+
+            actions.add(viewButton, chatButton, unmatchButton, reportButton);
             return actions;
-        }).setHeader("Actions").setWidth("100px").setFlexGrow(0);
+        }).setHeader("Actions").setWidth("180px").setFlexGrow(0);
 
         // Row click to view profile
         matchGrid.addItemClickListener(event -> {
@@ -162,5 +189,40 @@ public class MatchesView extends VerticalLayout {
             log.error("Failed to load matches", ex);
             add(new Paragraph("Failed to load matches"));
         }
+    }
+
+    private void showUnmatchDialog(Match match) {
+        String userName = match.getOtherUser() != null
+            ? match.getOtherUser().getFirstName()
+            : "this user";
+
+        ConfirmDialog dialog = new ConfirmDialog();
+        dialog.setHeader("Unmatch");
+        dialog.setText("Are you sure you want to unmatch with " + userName + "? " +
+            "This action cannot be undone and your conversation will be deleted.");
+        dialog.setCancelable(true);
+        dialog.setConfirmText("Unmatch");
+        dialog.setConfirmButtonTheme("error primary");
+
+        dialog.addConfirmListener(event -> {
+            try {
+                matchService.unmatch(match.getId());
+
+                Notification.show("Unmatched successfully",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
+
+                // Refresh the list
+                loadMatches();
+
+            } catch (Exception ex) {
+                log.error("Failed to unmatch", ex);
+                Notification.show("Failed to unmatch",
+                    3000, Notification.Position.TOP_CENTER)
+                    .addThemeVariants(NotificationVariant.LUMO_ERROR);
+            }
+        });
+
+        dialog.open();
     }
 }
