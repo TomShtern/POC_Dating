@@ -1,5 +1,6 @@
 package com.dating.recommendation.config;
 
+import com.dating.common.security.XUserIdValidationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,6 +9,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
  * Security configuration for the Recommendation Service.
@@ -33,9 +35,9 @@ public class SecurityConfig {
                 // Actuator endpoints for health checks
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
-                // All API endpoints - trust API Gateway for auth
-                .requestMatchers("/api/**").permitAll()
-                .anyRequest().authenticated());
+                // All API endpoints require X-User-Id header (validated by filter)
+                .anyRequest().authenticated())
+            .addFilterBefore(new XUserIdValidationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

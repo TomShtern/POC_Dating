@@ -1,11 +1,14 @@
 package com.dating.user.repository;
 
 import com.dating.user.model.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -99,4 +102,14 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @return List of users matching the IDs
      */
     List<User> findByIdIn(List<UUID> ids);
+
+    /**
+     * Find users who logged in after a given time.
+     * Used for cache warming to identify recently active users.
+     *
+     * @param threshold Time threshold
+     * @param pageable Pagination
+     * @return Page of recently active users
+     */
+    Page<User> findByLastLoginAtAfterOrderByLastLoginAtDesc(Instant threshold, Pageable pageable);
 }

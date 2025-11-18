@@ -20,7 +20,9 @@ import java.util.UUID;
     @Index(name = "idx_messages_match_id", columnList = "match_id"),
     @Index(name = "idx_messages_sender", columnList = "sender_id"),
     @Index(name = "idx_messages_status", columnList = "status"),
-    @Index(name = "idx_messages_created", columnList = "created_at")
+    @Index(name = "idx_messages_created", columnList = "created_at"),
+    @Index(name = "idx_messages_match_created", columnList = "match_id, created_at"),
+    @Index(name = "idx_messages_match_status", columnList = "match_id, sender_id, status")
 })
 @Data
 @NoArgsConstructor

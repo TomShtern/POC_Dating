@@ -21,7 +21,9 @@ import java.util.UUID;
 @Table(name = "interaction_history", indexes = {
     @Index(name = "idx_interaction_history_user_id", columnList = "user_id"),
     @Index(name = "idx_interaction_history_action", columnList = "action"),
-    @Index(name = "idx_interaction_history_created_at", columnList = "created_at")
+    @Index(name = "idx_interaction_history_created_at", columnList = "created_at"),
+    @Index(name = "idx_interaction_history_user_action", columnList = "user_id, action, created_at"),
+    @Index(name = "idx_interaction_history_user_target", columnList = "user_id, target_id")
 })
 @Data
 @NoArgsConstructor

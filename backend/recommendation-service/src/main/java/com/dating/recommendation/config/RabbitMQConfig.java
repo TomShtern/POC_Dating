@@ -25,20 +25,35 @@ public class RabbitMQConfig {
     }
 
     /**
-     * Queue for recommendation service to consume user registration events.
+     * Queue for recommendation service to consume user registration events with dead letter support.
      */
     @Bean
     public Queue recommendationUserRegisteredQueue() {
         return QueueBuilder.durable(RabbitMQConstants.RECOMMENDATION_USER_REGISTERED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
                 .build();
     }
 
     /**
-     * Queue for recommendation service to consume user update events.
+     * Queue for recommendation service to consume user update events with dead letter support.
      */
     @Bean
     public Queue recommendationUserUpdatedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.RECOMMENDATION_USER_UPDATED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
+    }
+
+    /**
+     * Queue for recommendation service to consume user deletion events with dead letter support.
+     */
+    @Bean
+    public Queue recommendationUserDeletedQueue() {
+        return QueueBuilder.durable(RabbitMQConstants.RECOMMENDATION_USER_DELETED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
                 .build();
     }
 
@@ -64,6 +79,18 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(recommendationUserUpdatedQueue)
                 .to(userExchange)
                 .with(RabbitMQConstants.USER_UPDATED_KEY);
+    }
+
+    /**
+     * Binding for user deleted events.
+     */
+    @Bean
+    public Binding recommendationUserDeletedBinding(
+            Queue recommendationUserDeletedQueue,
+            TopicExchange userExchange) {
+        return BindingBuilder.bind(recommendationUserDeletedQueue)
+                .to(userExchange)
+                .with(RabbitMQConstants.USER_DELETED_KEY);
     }
 
     /**

@@ -23,7 +23,9 @@ import java.util.UUID;
     @Index(name = "idx_recommendations_user_id", columnList = "user_id"),
     @Index(name = "idx_recommendations_created_at", columnList = "created_at"),
     @Index(name = "idx_recommendations_expires_at", columnList = "expires_at"),
-    @Index(name = "idx_recommendations_score", columnList = "score")
+    @Index(name = "idx_recommendations_score", columnList = "score"),
+    @Index(name = "idx_recommendations_user_score", columnList = "user_id, score DESC"),
+    @Index(name = "idx_recommendations_user_expires", columnList = "user_id, expires_at")
 })
 @Data
 @NoArgsConstructor

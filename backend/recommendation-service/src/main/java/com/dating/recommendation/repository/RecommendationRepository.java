@@ -1,6 +1,7 @@
 package com.dating.recommendation.repository;
 
 import com.dating.recommendation.model.Recommendation;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -92,4 +93,26 @@ public interface RecommendationRepository extends JpaRepository<Recommendation, 
      * @return Number of recommendations
      */
     long countByUserId(UUID userId);
+
+    /**
+     * Find distinct user IDs with recent recommendations.
+     * Used for cache warming.
+     *
+     * @param threshold Time threshold
+     * @param pageable Pagination
+     * @return List of user IDs
+     */
+    @Query("SELECT DISTINCT r.userId FROM Recommendation r WHERE r.createdAt > :threshold ORDER BY r.createdAt DESC")
+    List<UUID> findDistinctUserIdsWithRecentRecommendations(@Param("threshold") Instant threshold, Pageable pageable);
+
+    /**
+     * Find active recommendations for a user with pagination.
+     * Used for cache warming.
+     *
+     * @param userId User ID
+     * @param now Current timestamp
+     * @param pageable Pagination
+     * @return List of active recommendations
+     */
+    List<Recommendation> findByUserIdAndExpiresAtAfterOrderByScoreDesc(UUID userId, Instant now, Pageable pageable);
 }

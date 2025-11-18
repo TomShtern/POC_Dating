@@ -42,19 +42,25 @@ public class RabbitMQConfig {
     // ===========================================
 
     /**
-     * Queue for match created events.
+     * Queue for match created events with dead letter support.
      */
     @Bean
     public Queue matchCreatedQueue() {
-        return QueueBuilder.durable(RabbitMQConstants.MATCH_CREATED_QUEUE).build();
+        return QueueBuilder.durable(RabbitMQConstants.MATCH_CREATED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
     }
 
     /**
-     * Queue for match ended events.
+     * Queue for match ended events with dead letter support.
      */
     @Bean
     public Queue matchEndedQueue() {
-        return QueueBuilder.durable(RabbitMQConstants.MATCH_ENDED_QUEUE).build();
+        return QueueBuilder.durable(RabbitMQConstants.MATCH_ENDED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
     }
 
     // ===========================================
@@ -62,19 +68,36 @@ public class RabbitMQConfig {
     // ===========================================
 
     /**
-     * Queue for consuming user registered events.
+     * Queue for consuming user registered events with dead letter support.
      */
     @Bean
     public Queue matchUserRegisteredQueue() {
-        return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_REGISTERED_QUEUE).build();
+        return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_REGISTERED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
     }
 
     /**
-     * Queue for consuming user updated events.
+     * Queue for consuming user updated events with dead letter support.
      */
     @Bean
     public Queue matchUserUpdatedQueue() {
-        return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_UPDATED_QUEUE).build();
+        return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_UPDATED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
+    }
+
+    /**
+     * Queue for consuming user deleted events with dead letter support.
+     */
+    @Bean
+    public Queue matchUserDeletedQueue() {
+        return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_DELETED_QUEUE)
+                .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
+                .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
+                .build();
     }
 
     // ===========================================
@@ -123,6 +146,16 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(matchUserUpdatedQueue)
                 .to(userExchange)
                 .with(RabbitMQConstants.USER_UPDATED_KEY);
+    }
+
+    /**
+     * Binding for user deleted events.
+     */
+    @Bean
+    public Binding userDeletedBinding(Queue matchUserDeletedQueue, TopicExchange userExchange) {
+        return BindingBuilder.bind(matchUserDeletedQueue)
+                .to(userExchange)
+                .with(RabbitMQConstants.USER_DELETED_KEY);
     }
 
     // ===========================================

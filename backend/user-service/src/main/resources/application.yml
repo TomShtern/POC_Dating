@@ -143,15 +143,19 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,metrics,info
+        include: health,metrics,info,caches,cacheStats,prometheus
       base-path: /actuator
   endpoint:
     health:
       show-details: always
+    caches:
+      enabled: true
   metrics:
     export:
       simple:
         enabled: true
+    tags:
+      application: ${spring.application.name}
 
 ---
 # ========================================

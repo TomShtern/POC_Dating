@@ -7,6 +7,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.domain.Pageable;
+
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -79,4 +82,15 @@ public interface SwipeRepository extends JpaRepository<Swipe, UUID> {
      * @return List of swipes
      */
     List<Swipe> findByTargetUserId(UUID targetUserId);
+
+    /**
+     * Find distinct user IDs who have swiped after a given time.
+     * Used for cache warming to identify recently active users.
+     *
+     * @param threshold Time threshold
+     * @param pageable Pagination
+     * @return List of active user IDs
+     */
+    @Query("SELECT DISTINCT s.userId FROM Swipe s WHERE s.createdAt > :threshold ORDER BY s.createdAt DESC")
+    List<UUID> findDistinctUserIdsByCreatedAtAfter(@Param("threshold") Instant threshold, Pageable pageable);
 }

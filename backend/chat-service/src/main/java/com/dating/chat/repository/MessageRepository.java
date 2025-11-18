@@ -145,4 +145,15 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
     List<Message> findByMatchIdAndCreatedAtAfter(
             @Param("matchId") UUID matchId,
             @Param("after") Instant after);
+
+    /**
+     * Mark all messages from a sender as deleted.
+     * Used when a user is deleted.
+     *
+     * @param senderId Sender user ID
+     * @return Number of updated messages
+     */
+    @Modifying
+    @Query("UPDATE Message m SET m.deletedAt = CURRENT_TIMESTAMP WHERE m.senderId = :senderId AND m.deletedAt IS NULL")
+    int markMessagesAsDeletedBySenderId(@Param("senderId") UUID senderId);
 }

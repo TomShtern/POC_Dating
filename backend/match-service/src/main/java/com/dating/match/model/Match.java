@@ -18,7 +18,9 @@ import java.util.UUID;
 @Table(name = "matches", indexes = {
     @Index(name = "idx_matches_user1_id", columnList = "user1_id"),
     @Index(name = "idx_matches_user2_id", columnList = "user2_id"),
-    @Index(name = "idx_matches_matched_at", columnList = "matched_at")
+    @Index(name = "idx_matches_matched_at", columnList = "matched_at"),
+    @Index(name = "idx_matches_user1_matched", columnList = "user1_id, matched_at"),
+    @Index(name = "idx_matches_user2_matched", columnList = "user2_id, matched_at")
 }, uniqueConstraints = {
     @UniqueConstraint(name = "uk_matches_user_pair", columnNames = {"user1_id", "user2_id"})
 })

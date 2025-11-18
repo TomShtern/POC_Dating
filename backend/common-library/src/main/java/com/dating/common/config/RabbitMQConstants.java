@@ -78,6 +78,11 @@ public final class RabbitMQConstants {
      */
     public static final String MATCH_USER_UPDATED_QUEUE = "match.user.updated.queue";
 
+    /**
+     * Queue for match service to consume user deletion events.
+     */
+    public static final String MATCH_USER_DELETED_QUEUE = "match.user.deleted.queue";
+
     // ===========================================
     // QUEUES - CHAT SERVICE
     // ===========================================
@@ -102,6 +107,11 @@ public final class RabbitMQConstants {
      */
     public static final String CHAT_MATCH_ENDED_QUEUE = "chat.match.ended.queue";
 
+    /**
+     * Queue for chat service to consume user deletion events.
+     */
+    public static final String CHAT_USER_DELETED_QUEUE = "chat.user.deleted.queue";
+
     // ===========================================
     // QUEUES - RECOMMENDATION SERVICE
     // ===========================================
@@ -115,6 +125,11 @@ public final class RabbitMQConstants {
      * Queue for recommendation service to consume user update events.
      */
     public static final String RECOMMENDATION_USER_UPDATED_QUEUE = "recommendation.user.updated.queue";
+
+    /**
+     * Queue for recommendation service to consume user deletion events.
+     */
+    public static final String RECOMMENDATION_USER_DELETED_QUEUE = "recommendation.user.deleted.queue";
 
     // ===========================================
     // ROUTING KEYS
