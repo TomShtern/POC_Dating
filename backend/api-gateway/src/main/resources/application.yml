@@ -1,0 +1,190 @@
+# API Gateway Configuration
+#
+# PURPOSE: Central entry point for all microservices
+# PORT: 8080
+#
+# Responsibilities:
+# - Route requests to appropriate microservices
+# - JWT authentication and validation
+# - Rate limiting
+# - CORS handling
+# - Request/Response logging
+
+# ========================================
+# SERVER CONFIGURATION
+# ========================================
+server:
+  port: 8080
+  shutdown: graceful
+
+spring:
+  application:
+    name: api-gateway
+
+  # ========================================
+  # SPRING CLOUD GATEWAY
+  # ========================================
+  cloud:
+    gateway:
+      # Default filters for all routes
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin
+
+      # Global CORS configuration (additional to CorsConfig)
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:8090"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+              - PATCH
+            allowedHeaders:
+              - Authorization
+              - Content-Type
+              - Accept
+              - Origin
+              - X-Requested-With
+            exposedHeaders:
+              - Authorization
+              - X-User-Id
+            allowCredentials: true
+            maxAge: 3600
+
+      # Route definitions (also defined in GatewayRoutesConfig.java)
+      routes:
+        - id: user-service
+          uri: http://${USER_SERVICE_HOST:localhost}:${USER_SERVICE_PORT:8081}
+          predicates:
+            - Path=/api/users/**
+
+        - id: match-service
+          uri: http://${MATCH_SERVICE_HOST:localhost}:${MATCH_SERVICE_PORT:8082}
+          predicates:
+            - Path=/api/matches/**
+
+        - id: chat-service
+          uri: http://${CHAT_SERVICE_HOST:localhost}:${CHAT_SERVICE_PORT:8083}
+          predicates:
+            - Path=/api/chat/**
+
+        - id: recommendation-service
+          uri: http://${RECOMMENDATION_SERVICE_HOST:localhost}:${RECOMMENDATION_SERVICE_PORT:8084}
+          predicates:
+            - Path=/api/recommendations/**
+
+  # ========================================
+  # REDIS CONFIGURATION (Rate Limiting)
+  # ========================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000ms
+
+  # Disable JPA for Gateway (no database needed)
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration
+
+# ========================================
+# JWT CONFIGURATION
+# ========================================
+jwt:
+  # Must match user-service secret for token validation
+  secret: ${JWT_SECRET:bXktc2VjcmV0LWtleS1mb3Itand0LXRva2VuLXNpZ25pbmctbXVzdC1iZS1sb25nLWVub3VnaC1mb3Itc2VjdXJpdHk=}
+  issuer: poc-dating-user-service
+
+# ========================================
+# RATE LIMIT CONFIGURATION
+# ========================================
+rate-limit:
+  authenticated-limit: ${RATE_LIMIT_AUTHENTICATED:100}  # Requests per minute
+  anonymous-limit: ${RATE_LIMIT_ANONYMOUS:30}           # Requests per minute
+  window-seconds: 60
+
+# ========================================
+# LOGGING CONFIGURATION
+# ========================================
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.dating.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/api-gateway.log
+    max-size: 10MB
+    max-history: 10
+
+# ========================================
+# ACTUATOR (Health Checks, Metrics)
+# ========================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,info,gateway
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: true
+
+# ========================================
+# EUREKA CLIENT (Service Discovery)
+# ========================================
+eureka:
+  client:
+    enabled: ${EUREKA_ENABLED:false}
+    service-url:
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka}
+  instance:
+    prefer-ip-address: true
+
+---
+# ========================================
+# PROFILE: DEV
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework.cloud.gateway: DEBUG
+
+---
+# ========================================
+# PROFILE: PROD
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+logging:
+  level:
+    root: WARN
+    com.dating.gateway: INFO
+
+rate-limit:
+  authenticated-limit: 200
+  anonymous-limit: 50
