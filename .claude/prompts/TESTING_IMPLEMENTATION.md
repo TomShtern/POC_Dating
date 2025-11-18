@@ -11,6 +11,8 @@ This is non-negotiable. Every test file must be:
 - **MODULAR** - One test class per production class, focused test methods, reusable fixtures
 - **MAINTAINABLE** - Clear test names, AAA pattern (Arrange-Act-Assert), easy to update
 - **CLEAN** - No test interdependencies, no hardcoded magic values, DRY test utilities
+- **ABSTRACT** - Base test classes for common setup, shared fixtures, parameterized tests
+- **MODERN JUNIT 5** - Use @Nested, @ParameterizedTest, @DisplayName, assertAll, dynamic tests
 
 **Modularity Rules:**
 ```java
@@ -34,6 +36,70 @@ void register_duplicateEmail_throwsConflictException() {
 }
 
 // ❌ BAD: 50-line test methods testing multiple things
+
+// ✅ GOOD: Modern JUnit 5 features
+@Nested
+@DisplayName("User Registration")
+class RegistrationTests {
+
+    @ParameterizedTest
+    @ValueSource(strings = {"", "invalid", "no@domain"})
+    @DisplayName("should reject invalid emails")
+    void register_invalidEmail_throwsException(String email) {
+        var request = new UserRegistrationRequest(email, "user", "Pass123!");
+        assertThrows(ValidationException.class, () -> userService.register(request));
+    }
+
+    @Test
+    @DisplayName("should validate all fields atomically")
+    void register_multipleErrors_reportsAll() {
+        assertAll(
+            () -> assertNotNull(response.id()),
+            () -> assertEquals("test@test.com", response.email()),
+            () -> assertNotNull(response.createdAt())
+        );
+    }
+}
+
+// ❌ BAD: Old-style flat test structure
+@Test void testRegister1() { }
+@Test void testRegister2() { }
+@Test void testRegister3() { }  // No grouping, no clarity
+```
+
+**Abstraction Rules:**
+```java
+// ✅ GOOD: Base test class for common setup
+@SpringBootTest
+public abstract class BaseIntegrationTest {
+    @Autowired protected TestRestTemplate restTemplate;
+    @Autowired protected UserRepository userRepository;
+
+    @BeforeEach
+    void cleanDatabase() {
+        userRepository.deleteAll();
+    }
+
+    protected String authenticateAndGetToken(String email) {
+        // Reusable auth helper
+    }
+}
+
+// ✅ GOOD: Inherit common setup
+class UserControllerIntegrationTest extends BaseIntegrationTest {
+    @Test
+    void shouldRegisterUser() {
+        // Uses inherited restTemplate, cleanup, helpers
+    }
+}
+
+// ✅ GOOD: Shared test fixtures
+public class TestFixtures {
+    public static User createTestUser() { return User.builder()... }
+    public static Match createTestMatch(User u1, User u2) { ... }
+}
+
+// ❌ BAD: Copy-paste same setup in every test class
 ```
 
 **Why This Matters:** Multiple agents are working on this codebase. Modular tests enable parallel development, pinpoint failures, and document behavior.

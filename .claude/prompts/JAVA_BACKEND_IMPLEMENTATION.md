@@ -11,6 +11,8 @@ This is non-negotiable. Every file you create must be:
 - **MODULAR** - Single responsibility per class, small focused methods (<20 lines), clear boundaries
 - **MAINTAINABLE** - Self-documenting names, consistent patterns, easy to modify
 - **CLEAN** - No duplication, no dead code, proper error handling
+- **ABSTRACT** - Use interfaces for service boundaries, extract common behavior, favor composition
+- **MODERN JAVA 21** - Use records, pattern matching, sealed classes, virtual threads where appropriate
 
 **Modularity Rules:**
 ```java
@@ -26,6 +28,49 @@ public UserResponse register(UserRegistrationRequest request) {
 // ❌ BAD: Monolithic 100-line methods
 public UserResponse register(UserRegistrationRequest request) {
     // 100 lines of mixed concerns...
+}
+
+// ✅ GOOD: Java 21 features
+public record UserResponse(UUID id, String email, String username) {}  // Records for DTOs
+
+public sealed interface AuthResult permits Success, Failure {}  // Sealed classes
+
+// Pattern matching
+if (result instanceof Success s) {
+    return ResponseEntity.ok(s.user());
+}
+
+// ❌ BAD: Old-style Java
+public class UserResponse {  // Verbose POJO instead of record
+    private UUID id;
+    // 50 lines of getters/setters...
+}
+```
+
+**Abstraction Rules:**
+```java
+// ✅ GOOD: Interface for testability and swappability
+public interface TokenProvider {
+    String generateToken(User user);
+    Claims validateToken(String token);
+}
+
+@Service
+public class JwtTokenProvider implements TokenProvider { }
+
+// ✅ GOOD: Extract common behavior
+public abstract class BaseService<T, ID> {
+    protected abstract JpaRepository<T, ID> getRepository();
+
+    public T findById(ID id) {
+        return getRepository().findById(id)
+            .orElseThrow(() -> new EntityNotFoundException(id));
+    }
+}
+
+// ❌ BAD: Concrete dependencies everywhere
+public class UserService {
+    private final JwtTokenProvider tokenProvider;  // Tight coupling
 }
 ```
 

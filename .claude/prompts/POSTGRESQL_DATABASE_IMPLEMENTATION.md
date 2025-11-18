@@ -11,6 +11,8 @@ This is non-negotiable. Every SQL file must be:
 - **MODULAR** - One concern per file, reusable views/functions, clear separation
 - **MAINTAINABLE** - Descriptive names, comments on complex logic, consistent formatting
 - **CLEAN** - No redundant indexes, no dead queries, proper constraints
+- **ABSTRACT** - Use views for complex queries, functions for reusable logic, encapsulate business rules
+- **MODERN POSTGRESQL** - Use CTEs, window functions, JSONB, partial indexes, generated columns
 
 **Modularity Rules:**
 ```sql
@@ -26,6 +28,51 @@ CREATE VIEW active_matches AS
 SELECT * FROM matches WHERE status = 'active';
 
 -- ❌ BAD: 500-line monolithic file mixing everything
+
+-- ✅ GOOD: Modern PostgreSQL features
+-- CTEs for readability
+WITH active_users AS (
+    SELECT * FROM users WHERE last_active > NOW() - INTERVAL '7 days'
+)
+SELECT * FROM active_users WHERE gender = 'female';
+
+-- Window functions for analytics
+SELECT user_id,
+       COUNT(*) OVER (PARTITION BY DATE(created_at)) as daily_swipes
+FROM swipes;
+
+-- Partial indexes for filtered queries
+CREATE INDEX idx_active_matches ON matches(user1_id, user2_id)
+WHERE status = 'active';
+
+-- Generated columns for computed values
+ALTER TABLE users ADD COLUMN age INT GENERATED ALWAYS AS
+    (EXTRACT(YEAR FROM AGE(date_of_birth))) STORED;
+
+-- ❌ BAD: Inline subqueries repeated everywhere
+SELECT * FROM users WHERE id IN (SELECT user_id FROM swipes WHERE...);  -- Repeated 10 times
+```
+
+**Abstraction Rules:**
+```sql
+-- ✅ GOOD: Encapsulate complex queries in views
+CREATE VIEW feed_candidates AS
+SELECT u.*, r.score
+FROM users u
+LEFT JOIN recommendations r ON r.target_user_id = u.id
+WHERE u.is_active = true;
+
+-- ✅ GOOD: Reusable functions for business logic
+CREATE FUNCTION calculate_compatibility(user1_id UUID, user2_id UUID)
+RETURNS DECIMAL AS $$
+    -- Encapsulated scoring logic
+$$ LANGUAGE plpgsql;
+
+-- ✅ GOOD: Use function in queries
+SELECT *, calculate_compatibility(current_user_id, id) as score
+FROM feed_candidates ORDER BY score DESC;
+
+-- ❌ BAD: Copy-paste same 20-line subquery everywhere
 ```
 
 **Why This Matters:** Multiple agents are working on this codebase. Modular SQL enables independent testing, easier migrations, and faster debugging.
