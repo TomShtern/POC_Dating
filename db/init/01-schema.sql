@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS users (
     ) STORED,
 
     CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
-    CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
+    CONSTRAINT users_valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
     CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER')),
     CONSTRAINT valid_password_hash CHECK (password_hash ~ '^\$2[ab]\$'),
     CONSTRAINT valid_bio_length CHECK (bio IS NULL OR length(bio) <= 1000),
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS matches (
 
     CONSTRAINT no_self_match CHECK (user1_id != user2_id),
     CONSTRAINT user1_before_user2 CHECK (user1_id < user2_id),
-    CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'UNMATCHED', 'BLOCKED')),
+    CONSTRAINT matches_valid_status CHECK (status IN ('ACTIVE', 'UNMATCHED', 'BLOCKED')),
     UNIQUE(user1_id, user2_id)
 );
 
@@ -179,7 +179,7 @@ CREATE TABLE IF NOT EXISTS messages (
     read_at TIMESTAMP,
     deleted_at TIMESTAMP,
 
-    CONSTRAINT valid_status CHECK (status IN ('SENT', 'DELIVERED', 'READ')),
+    CONSTRAINT messages_valid_status CHECK (status IN ('SENT', 'DELIVERED', 'READ')),
     CONSTRAINT valid_message_type CHECK (message_type IN ('TEXT', 'IMAGE', 'GIF', 'AUDIO'))
 );
 
@@ -320,7 +320,7 @@ CREATE TABLE IF NOT EXISTS reports (
         'SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT',
         'FAKE_PROFILE', 'SCAM', 'OTHER'
     )),
-    CONSTRAINT valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
+    CONSTRAINT reports_valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
     CONSTRAINT no_self_report CHECK (reporter_id != reported_user_id)
 );
 

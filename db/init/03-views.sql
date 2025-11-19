@@ -140,10 +140,10 @@ WHERE m.status = 'ACTIVE';
 COMMENT ON VIEW conversation_summaries IS 'Match conversations with last message and unread counts';
 
 -- ========================================
--- MATERIALIZED VIEW: User Stats
+-- VIEW: User Stats
 -- User activity statistics (optimized with JOINs to avoid N+1)
 -- ========================================
-CREATE MATERIALIZED VIEW IF NOT EXISTS user_stats AS
+CREATE OR REPLACE VIEW user_stats AS
 WITH swipe_stats AS (
     SELECT
         user_id,
@@ -188,16 +188,13 @@ LEFT JOIN swipe_stats ss ON ss.user_id = u.id
 LEFT JOIN match_stats ms ON ms.user_id = u.id
 LEFT JOIN message_stats msg ON msg.user_id = u.id;
 
--- Unique index required for CONCURRENT refresh
-CREATE UNIQUE INDEX IF NOT EXISTS idx_user_stats_user_id ON user_stats(user_id);
-
-COMMENT ON MATERIALIZED VIEW user_stats IS 'User activity statistics for analytics - refresh every 5 minutes';
+COMMENT ON VIEW user_stats IS 'User activity statistics for analytics';
 
 -- ========================================
--- MATERIALIZED VIEW: Match Stats
+-- VIEW: Match Stats
 -- Aggregate match statistics for analytics
 -- ========================================
-CREATE MATERIALIZED VIEW IF NOT EXISTS match_stats AS
+CREATE OR REPLACE VIEW match_stats AS
 SELECT
     DATE(m.matched_at) AS match_date,
     COUNT(*) AS total_matches,
@@ -211,16 +208,13 @@ LEFT JOIN match_scores ms ON ms.match_id = m.id
 LEFT JOIN messages msg ON msg.match_id = m.id
 GROUP BY DATE(m.matched_at);
 
--- Unique index required for CONCURRENT refresh
-CREATE UNIQUE INDEX IF NOT EXISTS idx_match_stats_date ON match_stats(match_date);
-
-COMMENT ON MATERIALIZED VIEW match_stats IS 'Daily match statistics for analytics dashboards - refresh every hour';
+COMMENT ON VIEW match_stats IS 'Daily match statistics for analytics dashboards';
 
 -- ========================================
--- MATERIALIZED VIEW: Swipe Analytics
+-- VIEW: Swipe Analytics
 -- Swipe patterns and conversion rates
 -- ========================================
-CREATE MATERIALIZED VIEW IF NOT EXISTS swipe_analytics AS
+CREATE OR REPLACE VIEW swipe_analytics AS
 SELECT
     DATE(created_at) AS swipe_date,
     COUNT(*) AS total_swipes,
@@ -234,10 +228,7 @@ SELECT
 FROM swipes
 GROUP BY DATE(created_at);
 
--- Unique index required for CONCURRENT refresh
-CREATE UNIQUE INDEX IF NOT EXISTS idx_swipe_analytics_date ON swipe_analytics(swipe_date);
-
-COMMENT ON MATERIALIZED VIEW swipe_analytics IS 'Daily swipe analytics for monitoring - refresh every hour';
+COMMENT ON VIEW swipe_analytics IS 'Daily swipe analytics for monitoring';
 
 -- ========================================
 -- MATERIALIZED VIEW: Feed Candidates
@@ -365,36 +356,6 @@ BEGIN
         RETURN QUERY SELECT 'match_activity'::TEXT, 'success'::TEXT, v_duration;
     EXCEPTION WHEN OTHERS THEN
         RETURN QUERY SELECT 'match_activity'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
-
-    -- Refresh user_stats
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY user_stats;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'user_stats'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'user_stats'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
-
-    -- Refresh match_stats
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY match_stats;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'match_stats'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'match_stats'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
-
-    -- Refresh swipe_analytics
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY swipe_analytics;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'swipe_analytics'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'swipe_analytics'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
     END;
 END;
 $$ LANGUAGE plpgsql;

@@ -9,7 +9,6 @@
 CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
 CREATE INDEX IF NOT EXISTS idx_users_gender_age ON users(gender, age);
-CREATE INDEX IF NOT EXISTS idx_users_gender_dob ON users(gender, date_of_birth);
 CREATE INDEX IF NOT EXISTS idx_users_active ON users(status, last_active DESC)
     WHERE status = 'ACTIVE';
 CREATE INDEX IF NOT EXISTS idx_users_location ON users(location_lat, location_lng)
@@ -97,7 +96,6 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_valid ON refresh_tokens(token_hash
 -- ========================================
 -- RECOMMENDATIONS INDEXES
 -- ========================================
-CREATE INDEX IF NOT EXISTS idx_recommendations_user_score ON recommendations(user_id, score DESC);
 CREATE INDEX IF NOT EXISTS idx_recommendations_target ON recommendations(target_user_id);
 CREATE INDEX IF NOT EXISTS idx_recommendations_expires ON recommendations(expires_at)
     WHERE expires_at IS NOT NULL;
@@ -149,7 +147,7 @@ CREATE INDEX IF NOT EXISTS idx_reports_resolved_by ON reports(resolved_by)
 -- ========================================
 -- AUDIT LOGS INDEXES
 -- ========================================
-CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity ON audit_logs(entity_type, entity_id);
 CREATE INDEX IF NOT EXISTS idx_audit_time ON audit_logs(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_audit_user ON audit_logs(user_id, created_at DESC)
     WHERE user_id IS NOT NULL;
