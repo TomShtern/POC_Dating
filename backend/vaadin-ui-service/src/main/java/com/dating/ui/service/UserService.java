@@ -73,7 +73,7 @@ public class UserService {
         );
 
         loginCounter.increment();
-        log.info("User logged in successfully: {}", email);
+        log.debug("User logged in successfully");
         return response;
     }
 
@@ -93,7 +93,7 @@ public class UserService {
         );
 
         registrationCounter.increment();
-        log.info("User registered successfully: {}", request.getEmail());
+        log.debug("User registered successfully");
         return response;
     }
 
