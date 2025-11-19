@@ -113,6 +113,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @param activeSinceDays Number of days to look back
      * @return List of recently active users
      */
+    @EntityGraph(attributePaths = {"genderPreferences", "interests"})
     @Query("""
            SELECT u FROM User u
            WHERE u.active = true

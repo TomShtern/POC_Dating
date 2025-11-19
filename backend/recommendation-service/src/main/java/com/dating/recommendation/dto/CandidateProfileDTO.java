@@ -2,6 +2,7 @@ package com.dating.recommendation.dto;
 
 import com.dating.recommendation.model.User;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,10 +110,12 @@ public record CandidateProfileDTO(
      * This is the ONLY way to create a CandidateProfileDTO from a User.
      * Ensures consistent mapping and excludes sensitive fields.
      *
-     * @param user The User entity to convert
+     * @param user The User entity to convert (must not be null)
      * @return Safe CandidateProfileDTO for client exposure
+     * @throws NullPointerException if user is null
      */
     public static CandidateProfileDTO fromUser(User user) {
+        Objects.requireNonNull(user, "User cannot be null");
         return new CandidateProfileDTO(
                 user.getId(),
                 user.getUsername(),

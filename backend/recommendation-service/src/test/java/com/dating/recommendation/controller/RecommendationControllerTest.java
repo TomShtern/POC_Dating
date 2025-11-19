@@ -190,7 +190,9 @@ class RecommendationControllerTest {
             mockMvc.perform(get("/api/recommendations/users/{userId}/{targetId}/score",
                             userId, targetId)
                             .contentType(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.status").value(404))
+                    .andExpect(jsonPath("$.error").value("Not Found"));
         }
     }
 
