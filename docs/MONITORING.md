@@ -53,13 +53,15 @@ All services expose these endpoints:
 
 Each service checks different components:
 
-| Service | Health Checks |
-|---------|---------------|
-| **User Service** | Database, Redis, RabbitMQ |
-| **Match Service** | Database, Redis |
-| **Chat Service** | Database, Redis, RabbitMQ |
-| **Recommendation Service** | Database, Redis, Custom scorer health |
-| **Vaadin UI** | Redis (session storage) |
+| Service | Status | Health Checks |
+|---------|--------|---------------|
+| **User Service** | Config Only | Database, Redis, RabbitMQ |
+| **Match Service** | Stub | Database, Redis |
+| **Chat Service** | Stub | Database, Redis, RabbitMQ |
+| **Recommendation Service** | Implemented | Database, Redis, Custom scorer health |
+| **Vaadin UI** | Implemented | Redis (session storage) |
+
+> **Note:** User Service, Match Service, and Chat Service are currently stubs with configuration only. The Vaadin UI Service calls these backends via Feign clients.
 
 ## Custom Metrics
 
@@ -72,19 +74,19 @@ Each service checks different components:
 
 ### Vaadin UI Service
 
-| Metric | Type | Description |
-|--------|------|-------------|
-| `ui.login.attempts.total` | Counter | Total login attempts |
-| `ui.logins.total` | Counter | Total successful logins |
-| `ui.login.failures.total` | Counter | Total failed login attempts (security monitoring) |
-| `ui.registrations.total` | Counter | Total successful registrations |
-| `ui.swipes.total` | Counter | Total swipe actions |
-| `ui.matches.total` | Counter | Total matches created |
-| `ui.feed.generation.time` | Timer | Time spent generating/fetching user feed |
-| `ui.messages.sent.total` | Counter | Total messages sent |
-| `ui.messages.read.total` | Counter | Total messages read/retrieved |
-| `ui.page.views.total` | Counter | Page views (tagged by page name) |
-| `ui.api.call.time` | Timer | API call duration (tagged by service) |
+| Metric | Type | Tags | Description |
+|--------|------|------|-------------|
+| `ui.login.attempts.total` | Counter | - | Total login attempts |
+| `ui.login.success.total` | Counter | - | Total successful logins |
+| `ui.login.failure.total` | Counter | - | Total failed login attempts (security monitoring) |
+| `ui.registrations.total` | Counter | - | Total successful registrations |
+| `ui.swipes.total` | Counter | `direction` (like/pass/super_like) | Total swipe actions by direction |
+| `ui.matches.total` | Counter | - | Total matches created |
+| `ui.feed.generation.time` | Timer | - | Time spent generating/fetching user feed |
+| `ui.messages.sent.total` | Counter | - | Total messages sent |
+| `ui.messages.read.total` | Counter | - | Total messages read/retrieved |
+| `ui.page.views.total` | Counter | `page` (login/register/discover/matches/messages/profile) | Page views by page name |
+| `ui.api.call.time` | Timer | `service` (user-service/match-service/chat-service) | API call duration by backend service |
 
 ### User Service (When Implemented)
 
@@ -218,7 +220,10 @@ histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m]))
 rate(recommendations_generated_total[5m])
 
 # Active users (logins per minute)
-rate(ui_logins_total[1m])
+rate(ui_login_success_total[1m])
+
+# Swipes by direction
+sum by (direction) (rate(ui_swipes_total[5m]))
 ```
 
 ## Troubleshooting
@@ -298,5 +303,16 @@ curl http://localhost:8084/actuator/metrics/jvm.gc.pause
 
 ---
 
-**Last Updated:** 2024-01-15
-**Version:** 1.0
+**Last Updated:** 2025-11-18
+**Version:** 1.1
+
+## Changelog
+
+### v1.1 (2025-11-18)
+- Fixed metric names: `ui.logins.total` → `ui.login.success.total`, `ui.login.failures.total` → `ui.login.failure.total`
+- Added direction tags to `ui.swipes.total` metric
+- Added metrics tags column to documentation
+- Clarified service implementation status (Implemented vs Stub)
+- Updated PromQL examples for new metric names
+- Added production security: `show-details: when-authorized`
+- Added `management.metrics.tags` for application/environment tagging

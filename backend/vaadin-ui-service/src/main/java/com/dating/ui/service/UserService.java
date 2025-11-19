@@ -32,10 +32,10 @@ public class UserService {
         this.loginAttemptsCounter = Counter.builder("ui.login.attempts.total")
             .description("Total number of login attempts")
             .register(meterRegistry);
-        this.loginCounter = Counter.builder("ui.logins.total")
+        this.loginCounter = Counter.builder("ui.login.success.total")
             .description("Total number of successful logins")
             .register(meterRegistry);
-        this.loginFailureCounter = Counter.builder("ui.login.failures.total")
+        this.loginFailureCounter = Counter.builder("ui.login.failure.total")
             .description("Total number of failed login attempts")
             .register(meterRegistry);
         this.registrationCounter = Counter.builder("ui.registrations.total")

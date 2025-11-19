@@ -85,7 +85,14 @@ public class ChatService {
         }
 
         SendMessageRequest request = new SendMessageRequest(text);
-        Message message = apiCallTimer.record(() -> chatClient.sendMessage(conversationId, request, "Bearer " + token));
+        Message message;
+        try {
+            message = apiCallTimer.record(() -> chatClient.sendMessage(conversationId, request, "Bearer " + token));
+        } catch (Exception e) {
+            // Still record the send attempt even on failure
+            messagesSentCounter.increment();
+            throw e;
+        }
         messagesSentCounter.increment();
         return message;
     }

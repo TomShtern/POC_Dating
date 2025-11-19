@@ -244,7 +244,7 @@ management:
       base-path: /actuator
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
       probes:
         enabled: true
   health:
@@ -254,7 +254,11 @@ management:
       enabled: true
   info:
     env:
-      enabled: true
+      enabled: false
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:dev}
 
 info:
   app:
