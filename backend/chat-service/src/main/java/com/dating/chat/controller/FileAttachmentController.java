@@ -96,9 +96,15 @@ public class FileAttachmentController {
         String filename = attachment.getOriginalFilename() != null ?
                 attachment.getOriginalFilename() : "download";
 
+        // Sanitize filename to prevent header injection
+        String sanitizedFilename = filename
+                .replaceAll("[\\r\\n]", "") // Remove newlines
+                .replace("\"", "\\\"")       // Escape quotes
+                .replaceAll("[^\\w\\s.\\-]", "_"); // Replace special chars
+
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + filename + "\"")
+                        "attachment; filename=\"" + sanitizedFilename + "\"")
                 .contentType(MediaType.parseMediaType(attachment.getContentType()))
                 .contentLength(content.length)
                 .body(content);

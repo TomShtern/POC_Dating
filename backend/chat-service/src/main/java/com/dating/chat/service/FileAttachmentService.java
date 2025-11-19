@@ -70,8 +70,8 @@ public class FileAttachmentService {
 
         // Save file to disk
         Path filePath = storageDir.resolve(storedFilename);
-        try {
-            Files.copy(file.getInputStream(), filePath);
+        try (var inputStream = file.getInputStream()) {
+            Files.copy(inputStream, filePath);
         } catch (IOException e) {
             log.error("Failed to save file: {}", filePath, e);
             throw new FileValidationException("Failed to save file");

@@ -85,7 +85,11 @@ public class JwtTokenProvider {
      */
     public UUID getUserIdFromToken(String token) {
         Claims claims = validateToken(token);
-        return UUID.fromString(claims.getSubject());
+        String subject = claims.getSubject();
+        if (subject == null || subject.isEmpty()) {
+            throw new IllegalArgumentException("Token does not contain a valid user ID");
+        }
+        return UUID.fromString(subject);
     }
 
     /**

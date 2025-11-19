@@ -62,7 +62,7 @@ public class IdempotencyService {
             return isNew;
         } catch (Exception e) {
             log.error("Error checking idempotency: userId={}, key={}", userId, idempotencyKey, e);
-            return true; // Fail open
+            return false; // Fail closed for security
         }
     }
 

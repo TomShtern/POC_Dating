@@ -3,6 +3,8 @@ package com.dating.chat.controller;
 import com.dating.chat.service.PushNotificationService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -54,9 +56,11 @@ public class PushNotificationController {
      */
     public record RegisterTokenRequest(
             @NotBlank(message = "Token is required")
+            @Size(max = 2000, message = "Token exceeds maximum length")
             String token,
 
             @NotBlank(message = "Platform is required")
+            @Pattern(regexp = "^(fcm|web|apns)$", message = "Platform must be fcm, web, or apns")
             String platform
     ) {}
 }

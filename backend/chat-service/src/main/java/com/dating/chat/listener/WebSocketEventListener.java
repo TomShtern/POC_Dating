@@ -37,6 +37,11 @@ public class WebSocketEventListener {
         String username = "unknown";
         String sessionId = accessor.getSessionId();
 
+        if (sessionId == null) {
+            log.warn("WebSocket connect event with null sessionId");
+            return;
+        }
+
         if (accessor.getUser() instanceof StompPrincipal principal) {
             userId = principal.userId();
             username = principal.username();
@@ -61,6 +66,11 @@ public class WebSocketEventListener {
         StompHeaderAccessor accessor = StompHeaderAccessor.wrap(event.getMessage());
         String userId = "unknown";
         String sessionId = accessor.getSessionId();
+
+        if (sessionId == null) {
+            log.warn("WebSocket disconnect event with null sessionId");
+            return;
+        }
 
         if (accessor.getUser() instanceof StompPrincipal principal) {
             userId = principal.userId();

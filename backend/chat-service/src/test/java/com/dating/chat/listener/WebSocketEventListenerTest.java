@@ -40,7 +40,7 @@ class WebSocketEventListenerTest {
 
     @Test
     void handleConnect_WithStompPrincipal_SetsUserOnline() {
-        StompPrincipal principal = new StompPrincipal("user123", "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal("user123", "John");
         Message<byte[]> message = createMessage(StompCommand.CONNECT, "session123", principal);
         SessionConnectEvent event = new SessionConnectEvent(this, message);
 
@@ -66,7 +66,7 @@ class WebSocketEventListenerTest {
 
     @Test
     void handleDisconnect_WithStompPrincipal_SetsUserOffline() {
-        StompPrincipal principal = new StompPrincipal("user123", "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal("user123", "John");
         Message<byte[]> message = createMessage(StompCommand.DISCONNECT, "session123", principal);
         SessionDisconnectEvent event = new SessionDisconnectEvent(this, message, "session123", null);
 
@@ -79,7 +79,7 @@ class WebSocketEventListenerTest {
 
     @Test
     void handleDisconnect_UserStillHasSessions_DoesNotLogFullyOffline() {
-        StompPrincipal principal = new StompPrincipal("user123", "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal("user123", "John");
         Message<byte[]> message = createMessage(StompCommand.DISCONNECT, "session123", principal);
         SessionDisconnectEvent event = new SessionDisconnectEvent(this, message, "session123", null);
 

@@ -57,7 +57,7 @@ class ChatWebSocketControllerExtendedTest {
         UUID userId = UUID.randomUUID();
         UUID matchId = UUID.randomUUID();
         UUID recipientId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, "idempotency-key-123", null
@@ -80,7 +80,7 @@ class ChatWebSocketControllerExtendedTest {
     void sendMessage_DuplicateIdempotencyKey_IgnoresMessage() {
         UUID userId = UUID.randomUUID();
         UUID matchId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, "duplicate-key", null
@@ -100,7 +100,7 @@ class ChatWebSocketControllerExtendedTest {
         UUID matchId = UUID.randomUUID();
         UUID recipientId = UUID.randomUUID();
         UUID messageId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, null, null
@@ -127,7 +127,7 @@ class ChatWebSocketControllerExtendedTest {
         UUID matchId = UUID.randomUUID();
         UUID recipientId = UUID.randomUUID();
         UUID messageId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, null, null
@@ -153,7 +153,7 @@ class ChatWebSocketControllerExtendedTest {
         UUID userId = UUID.randomUUID();
         UUID matchId = UUID.randomUUID();
         UUID recipientId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, null, null
@@ -175,7 +175,7 @@ class ChatWebSocketControllerExtendedTest {
         UUID userId = UUID.randomUUID();
         UUID matchId = UUID.randomUUID();
         UUID recipientId = UUID.randomUUID();
-        StompPrincipal principal = new StompPrincipal(userId.toString(), "john@test.com", "John");
+        StompPrincipal principal = new StompPrincipal(userId.toString(), "John");
 
         SendMessageRequest request = new SendMessageRequest(
                 matchId, "Hello", MessageType.TEXT, "", null
