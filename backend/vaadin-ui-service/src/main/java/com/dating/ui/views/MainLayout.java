@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.security.SecurityUtils;
 import com.dating.ui.service.UserService;
+import com.dating.ui.views.admin.AdminDashboardView;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.applayout.DrawerToggle;
@@ -11,7 +12,6 @@ import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.sidenav.SideNav;
 import com.vaadin.flow.component.sidenav.SideNavItem;
 import com.vaadin.flow.router.PageTitle;
@@ -69,6 +69,13 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Matches", MatchesView.class, VaadinIcon.USERS.create()));
         nav.addItem(new SideNavItem("Messages", MessagesView.class, VaadinIcon.CHAT.create()));
         nav.addItem(new SideNavItem("Profile", ProfileView.class, VaadinIcon.USER.create()));
+
+        // Add admin link if user has admin access
+        if (SecurityUtils.hasAdminAccess()) {
+            SideNavItem adminItem = new SideNavItem("Admin Dashboard", AdminDashboardView.class,
+                    VaadinIcon.DASHBOARD.create());
+            nav.addItem(adminItem);
+        }
 
         addToDrawer(nav);
     }
