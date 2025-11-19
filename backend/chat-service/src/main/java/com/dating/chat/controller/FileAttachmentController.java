@@ -38,7 +38,12 @@ public class FileAttachmentController {
             @RequestHeader("X-User-Id") String userIdHeader,
             @RequestParam("file") MultipartFile file) {
 
-        UUID userId = UUID.fromString(userIdHeader);
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdHeader);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
         FileAttachment attachment = attachmentService.uploadAttachment(userId, file);
 
         return ResponseEntity.ok(new AttachmentResponse(
@@ -118,7 +123,12 @@ public class FileAttachmentController {
             @RequestHeader("X-User-Id") String userIdHeader,
             @PathVariable UUID attachmentId) {
 
-        UUID userId = UUID.fromString(userIdHeader);
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdHeader);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().build();
+        }
         attachmentService.deleteAttachment(attachmentId, userId);
 
         return ResponseEntity.noContent().build();

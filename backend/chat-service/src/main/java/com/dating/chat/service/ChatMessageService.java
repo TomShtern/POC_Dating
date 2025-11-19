@@ -3,6 +3,7 @@ package com.dating.chat.service;
 import com.dating.chat.dto.websocket.ChatMessageEvent;
 import com.dating.chat.dto.websocket.MessageType;
 import com.dating.chat.exception.ConversationNotFoundException;
+import com.dating.chat.exception.MessageNotFoundException;
 import com.dating.chat.model.Conversation;
 import com.dating.chat.model.Message;
 import com.dating.chat.repository.ConversationRepository;
@@ -191,9 +192,11 @@ public class ChatMessageService {
 
     /**
      * Get a message by ID.
+     * @throws MessageNotFoundException if message not found
      */
     @Transactional(readOnly = true)
     public Message getMessage(UUID messageId) {
-        return messageRepository.findById(messageId).orElse(null);
+        return messageRepository.findById(messageId)
+                .orElseThrow(() -> new MessageNotFoundException(messageId));
     }
 }

@@ -7,6 +7,7 @@ import com.dating.chat.dto.websocket.MessagesReadEvent;
 import com.dating.chat.dto.websocket.SendMessageRequest;
 import com.dating.chat.dto.websocket.TypingEvent;
 import com.dating.chat.dto.websocket.TypingIndicator;
+import com.dating.chat.exception.ConversationNotFoundException;
 import com.dating.chat.security.StompPrincipal;
 import com.dating.chat.service.ChatMessageService;
 import com.dating.chat.service.IdempotencyService;
@@ -92,46 +93,51 @@ public class ChatWebSocketController {
             throw new AccessDeniedException("Not authorized for this conversation");
         }
 
-        // Save message to database
-        ChatMessageEvent savedMessage = chatMessageService.saveMessage(
-                request.matchId(),
-                senderId,
-                senderName,
-                request.content(),
-                request.type()
-        );
+        try {
+            // Save message to database
+            ChatMessageEvent savedMessage = chatMessageService.saveMessage(
+                    request.matchId(),
+                    senderId,
+                    senderName,
+                    request.content(),
+                    request.type()
+            );
 
-        // Send to recipient via their personal queue
-        UUID recipientId = chatMessageService.getOtherUserId(request.matchId(), senderId);
+            // Send to recipient via their personal queue
+            UUID recipientId = chatMessageService.getOtherUserId(request.matchId(), senderId);
 
-        // Send to recipient
-        messagingTemplate.convertAndSendToUser(
-                recipientId.toString(),
-                "/queue/messages",
-                savedMessage
-        );
+            // Send to recipient
+            messagingTemplate.convertAndSendToUser(
+                    recipientId.toString(),
+                    "/queue/messages",
+                    savedMessage
+            );
 
-        // Mark message as delivered if recipient is online
-        if (presenceService.isOnline(recipientId.toString())) {
-            chatMessageService.markMessageAsDelivered(savedMessage.messageId());
-        } else {
-            // Send push notification to offline user
-            pushNotificationService.sendMessageNotification(recipientId, savedMessage);
+            // Mark message as delivered if recipient is online
+            if (presenceService.isOnline(recipientId.toString())) {
+                chatMessageService.markMessageAsDelivered(savedMessage.messageId());
+            } else {
+                // Send push notification to offline user
+                pushNotificationService.sendMessageNotification(recipientId, savedMessage);
+            }
+
+            // Send delivery confirmation back to sender
+            messagingTemplate.convertAndSendToUser(
+                    senderId.toString(),
+                    "/queue/delivered",
+                    new MessageDeliveredEvent(
+                            savedMessage.messageId(),
+                            savedMessage.matchId(),
+                            Instant.now()
+                    )
+            );
+
+            log.info("Message delivered: messageId={}, to={}, recipientOnline={}",
+                    savedMessage.messageId(), recipientId, presenceService.isOnline(recipientId.toString()));
+        } catch (ConversationNotFoundException e) {
+            log.error("Conversation not found for matchId={}: {}", request.matchId(), e.getMessage());
+            throw new AccessDeniedException("Conversation not found");
         }
-
-        // Send delivery confirmation back to sender
-        messagingTemplate.convertAndSendToUser(
-                senderId.toString(),
-                "/queue/delivered",
-                new MessageDeliveredEvent(
-                        savedMessage.messageId(),
-                        savedMessage.matchId(),
-                        Instant.now()
-                )
-        );
-
-        log.info("Message delivered: messageId={}, to={}, recipientOnline={}",
-                savedMessage.messageId(), recipientId, presenceService.isOnline(recipientId.toString()));
     }
 
     /**
@@ -162,18 +168,23 @@ public class ChatWebSocketController {
             return;
         }
 
-        // Get recipient
-        UUID recipientId = chatMessageService.getOtherUserId(indicator.matchId(), senderId);
+        try {
+            // Get recipient
+            UUID recipientId = chatMessageService.getOtherUserId(indicator.matchId(), senderId);
 
-        // Send typing indicator to recipient
-        messagingTemplate.convertAndSendToUser(
-                recipientId.toString(),
-                "/queue/typing",
-                new TypingEvent(indicator.matchId(), senderId, indicator.isTyping())
-        );
+            // Send typing indicator to recipient
+            messagingTemplate.convertAndSendToUser(
+                    recipientId.toString(),
+                    "/queue/typing",
+                    new TypingEvent(indicator.matchId(), senderId, indicator.isTyping())
+            );
 
-        log.debug("Typing indicator sent: matchId={}, userId={}, isTyping={}",
-                indicator.matchId(), senderId, indicator.isTyping());
+            log.debug("Typing indicator sent: matchId={}, userId={}, isTyping={}",
+                    indicator.matchId(), senderId, indicator.isTyping());
+        } catch (ConversationNotFoundException e) {
+            log.warn("Conversation not found for typing indicator: matchId={}", indicator.matchId());
+            // Silently ignore - typing indicators are not critical
+        }
     }
 
     /**
@@ -204,29 +215,34 @@ public class ChatWebSocketController {
             throw new AccessDeniedException("Not authorized for this conversation");
         }
 
-        // Update read status in database
-        chatMessageService.markMessagesAsRead(
-                request.matchId(),
-                readerId,
-                request.lastReadMessageId()
-        );
+        try {
+            // Update read status in database
+            chatMessageService.markMessagesAsRead(
+                    request.matchId(),
+                    readerId,
+                    request.lastReadMessageId()
+            );
 
-        // Notify the original sender that their messages were read
-        UUID senderId = chatMessageService.getOtherUserId(request.matchId(), readerId);
+            // Notify the original sender that their messages were read
+            UUID senderId = chatMessageService.getOtherUserId(request.matchId(), readerId);
 
-        messagingTemplate.convertAndSendToUser(
-                senderId.toString(),
-                "/queue/read",
-                new MessagesReadEvent(
-                        request.matchId(),
-                        readerId,
-                        request.lastReadMessageId(),
-                        Instant.now()
-                )
-        );
+            messagingTemplate.convertAndSendToUser(
+                    senderId.toString(),
+                    "/queue/read",
+                    new MessagesReadEvent(
+                            request.matchId(),
+                            readerId,
+                            request.lastReadMessageId(),
+                            Instant.now()
+                    )
+            );
 
-        log.info("Messages marked as read: matchId={}, readerId={}, lastMessageId={}",
-                request.matchId(), readerId, request.lastReadMessageId());
+            log.info("Messages marked as read: matchId={}, readerId={}, lastMessageId={}",
+                    request.matchId(), readerId, request.lastReadMessageId());
+        } catch (ConversationNotFoundException e) {
+            log.error("Conversation not found for markRead: matchId={}", request.matchId());
+            throw new AccessDeniedException("Conversation not found");
+        }
     }
 
     /**
