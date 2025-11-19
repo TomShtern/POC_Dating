@@ -1,8 +1,10 @@
 package com.dating.user.controller;
 
+import com.dating.common.exception.UnauthorizedException;
 import com.dating.user.dto.request.UpdateUserRequest;
 import com.dating.user.dto.response.UserResponse;
 import com.dating.user.service.UserService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,13 +44,23 @@ public class UserController {
      *
      * @param userId User UUID
      * @param request Updated user data
+     * @param httpRequest HTTP request for authorization
      * @return 200 OK with updated user response
      */
     @PutMapping("/{userId}")
     public ResponseEntity<UserResponse> updateUser(
             @PathVariable UUID userId,
-            @Valid @RequestBody UpdateUserRequest request) {
+            @Valid @RequestBody UpdateUserRequest request,
+            HttpServletRequest httpRequest) {
         log.debug("Update user request for: {}", userId);
+
+        // Authorization check - user can only update their own profile
+        UUID requestingUserId = getRequestingUserId(httpRequest);
+        if (!userId.equals(requestingUserId)) {
+            log.warn("Unauthorized update attempt: {} tried to update {}", requestingUserId, userId);
+            throw new UnauthorizedException("You can only update your own profile");
+        }
+
         UserResponse response = userService.updateUser(userId, request);
         return ResponseEntity.ok(response);
     }
@@ -57,13 +69,38 @@ public class UserController {
      * Delete user account (soft delete).
      *
      * @param userId User UUID
+     * @param httpRequest HTTP request for authorization
      * @return 204 No Content
      */
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID userId) {
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable UUID userId,
+            HttpServletRequest httpRequest) {
         log.debug("Delete user request for: {}", userId);
+
+        // Authorization check - user can only delete their own account
+        UUID requestingUserId = getRequestingUserId(httpRequest);
+        if (!userId.equals(requestingUserId)) {
+            log.warn("Unauthorized delete attempt: {} tried to delete {}", requestingUserId, userId);
+            throw new UnauthorizedException("You can only delete your own account");
+        }
+
         userService.deleteUser(userId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Extract requesting user ID from X-User-Id header.
+     *
+     * @param request HTTP request
+     * @return User UUID
+     */
+    private UUID getRequestingUserId(HttpServletRequest request) {
+        String userIdHeader = request.getHeader("X-User-Id");
+        if (userIdHeader == null || userIdHeader.isBlank()) {
+            throw new UnauthorizedException("Missing X-User-Id header");
+        }
+        return UUID.fromString(userIdHeader);
     }
 
     /**
