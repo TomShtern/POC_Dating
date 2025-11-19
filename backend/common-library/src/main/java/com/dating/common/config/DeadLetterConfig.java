@@ -13,10 +13,11 @@ public class DeadLetterConfig {
 
     /**
      * Dead letter exchange for failed messages.
+     * Explicitly set as durable to survive broker restarts.
      */
     @Bean
     public DirectExchange deadLetterExchange() {
-        return new DirectExchange(RabbitMQConstants.DEAD_LETTER_EXCHANGE);
+        return new DirectExchange(RabbitMQConstants.DEAD_LETTER_EXCHANGE, true, false);
     }
 
     /**

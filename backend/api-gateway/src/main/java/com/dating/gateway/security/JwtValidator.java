@@ -81,7 +81,7 @@ public class JwtValidator {
             return Boolean.TRUE.equals(exists);
         } catch (Exception e) {
             log.error("Error checking token blacklist: {}", e.getMessage());
-            return false; // Fail open - if Redis is down, allow the token
+            return true; // Fail closed - if Redis is down, deny the token for security
         }
     }
 

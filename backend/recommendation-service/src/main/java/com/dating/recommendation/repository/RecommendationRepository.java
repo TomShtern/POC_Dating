@@ -95,6 +95,16 @@ public interface RecommendationRepository extends JpaRepository<Recommendation, 
     long countByUserId(UUID userId);
 
     /**
+     * Delete all recommendations where the user is the recommended user.
+     * Used when cleaning up after user deletion.
+     *
+     * @param recommendedUserId User ID of the recommended user
+     * @return Number of deleted records
+     */
+    @Modifying
+    int deleteByRecommendedUserId(UUID recommendedUserId);
+
+    /**
      * Find distinct user IDs with recent recommendations.
      * Used for cache warming.
      *

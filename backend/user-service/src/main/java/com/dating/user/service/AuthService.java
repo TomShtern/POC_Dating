@@ -122,7 +122,7 @@ public class AuthService {
         }
 
         // Update last login
-        user.setLastLogin(Instant.now());
+        user.setLastLoginAt(Instant.now());
         userRepository.save(user);
 
         // Generate tokens
@@ -180,13 +180,19 @@ public class AuthService {
     }
 
     /**
-     * Logout user by revoking all refresh tokens.
+     * Logout user by revoking all refresh tokens and blacklisting access token.
      *
      * @param userId User UUID
+     * @param accessToken Current access token to blacklist (may be null)
      */
     @Transactional
-    public void logout(UUID userId) {
+    public void logout(UUID userId, String accessToken) {
         log.info("User logout: {}", userId);
         tokenService.revokeAllUserTokens(userId);
+
+        // Blacklist the current access token if provided
+        if (accessToken != null) {
+            tokenService.blacklistAccessToken(accessToken);
+        }
     }
 }

@@ -41,6 +41,7 @@ public class JwtTokenProvider {
         Date expiryDate = new Date(now.getTime() + jwtConfig.getAccessTokenExpiration());
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userId.toString())
                 .issuer(jwtConfig.getIssuer())
                 .issuedAt(now)

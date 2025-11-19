@@ -68,16 +68,22 @@ public class AuthController {
     }
 
     /**
-     * Logout user by revoking all refresh tokens.
+     * Logout user by revoking all refresh tokens and blacklisting access token.
      *
-     * @param request HTTP request containing user ID
+     * @param request HTTP request containing user ID and Authorization header
      * @return 200 OK with success message
      */
     @PostMapping("/logout")
     public ResponseEntity<Map<String, String>> logout(HttpServletRequest request) {
         UUID userId = (UUID) request.getAttribute("userId");
         if (userId != null) {
-            authService.logout(userId);
+            // Extract access token from Authorization header for blacklisting
+            String authHeader = request.getHeader("Authorization");
+            String accessToken = null;
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                accessToken = authHeader.substring(7);
+            }
+            authService.logout(userId, accessToken);
         }
         return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }

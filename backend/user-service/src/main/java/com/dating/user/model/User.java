@@ -73,7 +73,7 @@ public class User {
     private Instant updatedAt;
 
     @Column(name = "last_login")
-    private Instant lastLogin;
+    private Instant lastLoginAt;
 
     /**
      * One-to-one relationship with user preferences.

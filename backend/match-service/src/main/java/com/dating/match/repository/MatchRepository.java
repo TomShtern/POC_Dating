@@ -94,4 +94,15 @@ public interface MatchRepository extends JpaRepository<Match, UUID> {
     @Query("SELECT m FROM Match m WHERE m.id = :matchId AND " +
            "(m.user1Id = :userId OR m.user2Id = :userId)")
     Optional<Match> findByIdAndUserId(@Param("matchId") UUID matchId, @Param("userId") UUID userId);
+
+    /**
+     * Find all matches (active or ended) for a user.
+     * Used for cache warming and user deletion cleanup.
+     *
+     * @param user1Id User ID for user1
+     * @param user2Id User ID for user2
+     * @return List of matches
+     */
+    @Query("SELECT m FROM Match m WHERE m.user1Id = :user1Id OR m.user2Id = :user2Id ORDER BY m.matchedAt DESC")
+    List<Match> findByUser1IdOrUser2IdOrderByMatchedAtDesc(@Param("user1Id") UUID user1Id, @Param("user2Id") UUID user2Id);
 }

@@ -91,10 +91,10 @@ public class UserEventListener {
             int deletedRecommendations = recommendationRepository.deleteByUserId(event.getUserId());
             log.info("Deleted {} recommendations for user {}", deletedRecommendations, event.getUserId());
 
-            // Also need to delete recommendations where this user is the recommended user
-            // This would require a custom query - for now, log as TODO
-            log.debug("Note: Should also delete recommendations where {} is the recommended user",
-                    event.getUserId());
+            // Also delete recommendations where this user is the recommended user
+            int deletedAsRecommended = recommendationRepository.deleteByRecommendedUserId(event.getUserId());
+            log.info("Deleted {} recommendations where {} was recommended user",
+                    deletedAsRecommended, event.getUserId());
 
         } catch (Exception e) {
             log.error("Failed to handle user deletion for user {}: {}",
