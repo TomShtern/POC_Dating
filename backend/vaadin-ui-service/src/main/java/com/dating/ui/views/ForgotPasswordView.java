@@ -1,6 +1,7 @@
 package com.dating.ui.views;
 
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -84,12 +85,16 @@ public class ForgotPasswordView extends VerticalLayout {
     private void handleSubmit() {
         String email = emailField.getValue();
 
-        if (email.isEmpty() || !email.contains("@")) {
+        if (email == null || email.isEmpty() || !email.contains("@")) {
             Notification.show("Please enter a valid email address",
                 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_ERROR);
             return;
         }
+
+        // Disable button and show loading
+        submitButton.setEnabled(false);
+        submitButton.setText("Sending...");
 
         try {
             userService.forgotPassword(email);
@@ -103,6 +108,10 @@ public class ForgotPasswordView extends VerticalLayout {
             // Show generic success to prevent email enumeration
             removeAll();
             showSuccessMessage();
+        } finally {
+            // Re-enable button (in case user navigates back)
+            submitButton.setEnabled(true);
+            submitButton.setText("Send Reset Link");
         }
     }
 
@@ -137,5 +146,11 @@ public class ForgotPasswordView extends VerticalLayout {
 
         successLayout.add(checkTitle, message, loginButton);
         add(successLayout);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }
