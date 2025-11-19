@@ -2,13 +2,18 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.RegisterRequest;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.checkbox.Checkbox;
 import com.vaadin.flow.component.combobox.ComboBox;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.IntegerField;
@@ -38,6 +43,8 @@ public class RegisterView extends VerticalLayout {
     private TextField lastNameField;
     private IntegerField ageField;
     private ComboBox<String> genderField;
+    private TextField cityField;
+    private Checkbox termsCheckbox;
     private Button registerButton;
     private Button backButton;
 
@@ -102,6 +109,49 @@ public class RegisterView extends VerticalLayout {
         genderField.setRequiredIndicatorVisible(true);
         genderField.setWidthFull();
 
+        cityField = new TextField("City");
+        cityField.setRequiredIndicatorVisible(true);
+        cityField.setWidthFull();
+        cityField.setPlaceholder("e.g., New York");
+
+        // Add real-time password validation
+        passwordField.addValueChangeListener(e -> {
+            String password = e.getValue();
+            if (password != null && password.length() > 0 && password.length() < 8) {
+                passwordField.setInvalid(true);
+                passwordField.setErrorMessage("Password must be at least 8 characters");
+            } else {
+                passwordField.setInvalid(false);
+            }
+        });
+
+        // Add real-time confirm password validation
+        confirmPasswordField.addValueChangeListener(e -> {
+            String confirmValue = e.getValue();
+            String passwordValue = passwordField.getValue();
+            if (confirmValue != null && passwordValue != null && !confirmValue.equals(passwordValue)) {
+                confirmPasswordField.setInvalid(true);
+                confirmPasswordField.setErrorMessage("Passwords don't match");
+            } else {
+                confirmPasswordField.setInvalid(false);
+            }
+        });
+
+        // Terms and conditions
+        termsCheckbox = new Checkbox();
+        Span termsText = new Span("I agree to the ");
+        Anchor termsLink = new Anchor("#", "Terms of Service");
+        termsLink.getStyle().set("color", "#667eea");
+        Span andText = new Span(" and ");
+        Anchor privacyLink = new Anchor("#", "Privacy Policy");
+        privacyLink.getStyle().set("color", "#667eea");
+
+        HorizontalLayout termsLayout = new HorizontalLayout(
+            termsCheckbox, termsText, termsLink, andText, privacyLink);
+        termsLayout.setAlignItems(Alignment.CENTER);
+        termsLayout.setSpacing(false);
+        termsLayout.getStyle().set("flex-wrap", "wrap");
+
         registerButton = new Button("Create Account", e -> handleRegister());
         registerButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         registerButton.setWidthFull();
@@ -114,6 +164,8 @@ public class RegisterView extends VerticalLayout {
             passwordField, confirmPasswordField,
             firstNameField, lastNameField,
             ageField, genderField,
+            cityField,
+            termsLayout,
             registerButton, backButton
         );
 
@@ -126,6 +178,10 @@ public class RegisterView extends VerticalLayout {
             return;
         }
 
+        // Disable button and show loading
+        registerButton.setEnabled(false);
+        registerButton.setText("Creating account...");
+
         try {
             RegisterRequest request = RegisterRequest.builder()
                 .email(emailField.getValue())
@@ -135,6 +191,7 @@ public class RegisterView extends VerticalLayout {
                 .lastName(lastNameField.getValue())
                 .age(ageField.getValue())
                 .gender(genderField.getValue())
+                .city(cityField.getValue())
                 .build();
 
             userService.register(request);
@@ -149,6 +206,10 @@ public class RegisterView extends VerticalLayout {
         } catch (Exception ex) {
             log.error("Registration failed", ex);
             showError("Registration failed. Email might already be in use.");
+        } finally {
+            // Re-enable button
+            registerButton.setEnabled(true);
+            registerButton.setText("Create Account");
         }
     }
 
@@ -156,23 +217,46 @@ public class RegisterView extends VerticalLayout {
         if (emailField.isEmpty() || usernameField.isEmpty() ||
             passwordField.isEmpty() || confirmPasswordField.isEmpty() ||
             firstNameField.isEmpty() || lastNameField.isEmpty() ||
-            ageField.isEmpty() || genderField.isEmpty()) {
+            ageField.isEmpty() || genderField.isEmpty() || cityField.isEmpty()) {
             showError("Please fill in all fields");
             return false;
         }
 
-        if (!passwordField.getValue().equals(confirmPasswordField.getValue())) {
+        String email = emailField.getValue();
+        String username = usernameField.getValue();
+        String password = passwordField.getValue();
+        String confirmPassword = confirmPasswordField.getValue();
+        Integer age = ageField.getValue();
+
+        // Validate email format
+        if (email == null || !email.contains("@")) {
+            showError("Please enter a valid email address");
+            return false;
+        }
+
+        // Validate username length
+        if (username == null || username.length() < 3) {
+            showError("Username must be at least 3 characters");
+            return false;
+        }
+
+        if (password == null || confirmPassword == null || !password.equals(confirmPassword)) {
             showError("Passwords don't match");
             return false;
         }
 
-        if (passwordField.getValue().length() < 8) {
+        if (password.length() < 8) {
             showError("Password must be at least 8 characters");
             return false;
         }
 
-        if (ageField.getValue() < 18) {
+        if (age == null || age < 18) {
             showError("You must be at least 18 years old");
+            return false;
+        }
+
+        if (!termsCheckbox.getValue()) {
+            showError("You must accept the Terms of Service and Privacy Policy");
             return false;
         }
 
@@ -182,5 +266,11 @@ public class RegisterView extends VerticalLayout {
     private void showError(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

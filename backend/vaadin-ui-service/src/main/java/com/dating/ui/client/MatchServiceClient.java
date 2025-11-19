@@ -28,4 +28,10 @@ public interface MatchServiceClient {
 
     @GetMapping("/api/matches/{matchId}")
     Match getMatch(@PathVariable String matchId, @RequestHeader("Authorization") String token);
+
+    @DeleteMapping("/api/matches/{matchId}")
+    void unmatch(@PathVariable String matchId, @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/matches/undo")
+    void undoLastSwipe(@RequestHeader("Authorization") String token);
 }

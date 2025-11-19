@@ -31,4 +31,8 @@ public interface ChatServiceClient {
     @GetMapping("/api/chat/conversations/{conversationId}")
     Conversation getConversation(@PathVariable String conversationId,
                                  @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/chat/conversations/{conversationId}/typing")
+    void sendTypingIndicator(@PathVariable String conversationId,
+                            @RequestHeader("Authorization") String token);
 }

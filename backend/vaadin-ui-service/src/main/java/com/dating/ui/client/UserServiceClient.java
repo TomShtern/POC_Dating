@@ -1,11 +1,10 @@
 package com.dating.ui.client;
 
-import com.dating.ui.dto.AuthResponse;
-import com.dating.ui.dto.LoginRequest;
-import com.dating.ui.dto.RegisterRequest;
-import com.dating.ui.dto.User;
+import com.dating.ui.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * Feign Client for User Service
@@ -33,4 +32,36 @@ public interface UserServiceClient {
     @PutMapping("/api/users/{userId}/preferences")
     User updatePreferences(@PathVariable String userId, @RequestBody User preferences,
                           @RequestHeader("Authorization") String token);
+
+    // Password management
+    @PostMapping("/api/users/{userId}/change-password")
+    void changePassword(@PathVariable String userId, @RequestBody ChangePasswordRequest request,
+                       @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/users/auth/forgot-password")
+    void forgotPassword(@RequestBody ForgotPasswordRequest request);
+
+    @PostMapping("/api/users/auth/reset-password")
+    void resetPassword(@RequestBody ResetPasswordRequest request);
+
+    // Account management
+    @DeleteMapping("/api/users/{userId}")
+    void deleteAccount(@PathVariable String userId, @RequestHeader("Authorization") String token);
+
+    // Block/Report
+    @PostMapping("/api/users/{userId}/block")
+    void blockUser(@PathVariable String userId, @RequestBody BlockRequest request,
+                  @RequestHeader("Authorization") String token);
+
+    @DeleteMapping("/api/users/{userId}/block/{blockedUserId}")
+    void unblockUser(@PathVariable String userId, @PathVariable String blockedUserId,
+                    @RequestHeader("Authorization") String token);
+
+    @GetMapping("/api/users/{userId}/blocked")
+    List<BlockedUser> getBlockedUsers(@PathVariable String userId,
+                                      @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/users/{userId}/report")
+    void reportUser(@PathVariable String userId, @RequestBody ReportRequest request,
+                   @RequestHeader("Authorization") String token);
 }
