@@ -88,11 +88,22 @@ public class FileAttachmentService {
                 .status(FileAttachment.AttachmentStatus.READY)
                 .build();
 
-        attachment = attachmentRepository.save(attachment);
-        log.info("File uploaded: id={}, user={}, filename={}, size={}",
-                attachment.getId(), userId, originalFilename, file.getSize());
+        try {
+            attachment = attachmentRepository.save(attachment);
+            log.info("File uploaded: id={}, user={}, filename={}, size={}",
+                    attachment.getId(), userId, originalFilename, file.getSize());
 
-        return attachment;
+            return attachment;
+        } catch (Exception e) {
+            // Cleanup orphaned file on DB failure
+            try {
+                Files.deleteIfExists(filePath);
+                log.warn("Cleaned up orphaned file after DB failure: {}", filePath);
+            } catch (IOException cleanupError) {
+                log.error("Failed to cleanup orphaned file: {}", filePath, cleanupError);
+            }
+            throw e;
+        }
     }
 
     /**

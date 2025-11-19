@@ -25,6 +25,7 @@ public record SendMessageRequest(
         @Size(max = 64, message = "Idempotency key cannot exceed 64 characters")
         String idempotencyKey,
 
-        // Optional attachment ID for file attachments
+        // Optional attachment ID for file attachments (reserved for future implementation)
+        // TODO: Validate attachment exists and belongs to sender before processing
         UUID attachmentId
 ) {}

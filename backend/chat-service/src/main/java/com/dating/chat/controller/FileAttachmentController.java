@@ -75,7 +75,7 @@ public class FileAttachmentController {
 
     /**
      * Download attachment content.
-     * Requires authentication - user must be uploader or participant in the conversation.
+     * Requires authentication - only the original uploader can download.
      */
     @GetMapping("/{attachmentId}/download")
     public ResponseEntity<byte[]> downloadAttachment(
