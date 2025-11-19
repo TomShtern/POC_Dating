@@ -87,6 +87,7 @@ public class MatchService {
         } catch (Exception e) {
             // Still record the swipe attempt even on failure
             getSwipeCounter(swipeType).increment();
+            log.warn("Failed to record swipe for target user: {}", targetUserId, e);
             throw e;
         }
 
@@ -94,8 +95,7 @@ public class MatchService {
 
         if (response.isMatch()) {
             matchCounter.increment();
-            log.info("Match created! User: {} matched with: {}",
-                SecurityUtils.getCurrentUserId(), targetUserId);
+            log.debug("Match created with target user: {}", targetUserId);
         }
 
         return response;

@@ -91,6 +91,7 @@ public class ChatService {
         } catch (Exception e) {
             // Still record the send attempt even on failure
             messagesSentCounter.increment();
+            log.warn("Failed to send message to conversation: {}", conversationId, e);
             throw e;
         }
         messagesSentCounter.increment();

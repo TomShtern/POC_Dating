@@ -129,7 +129,10 @@ public class UserService {
      * Logout current user
      */
     public void logout() {
-        log.info("User logged out: {}", SecurityUtils.getCurrentUserId());
+        String userId = SecurityUtils.getCurrentUserId();
+        if (userId != null) {
+            log.debug("User session ended");
+        }
         SecurityUtils.clearAuthentication();
     }
 }
