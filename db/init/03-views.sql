@@ -319,45 +319,12 @@ COMMENT ON MATERIALIZED VIEW match_activity IS 'Match activity for conversation 
 -- REFRESH FUNCTION for Materialized Views
 -- ========================================
 CREATE OR REPLACE FUNCTION refresh_materialized_views()
-RETURNS TABLE (
-    view_name TEXT,
-    status TEXT,
-    duration_ms NUMERIC
-) AS $$
-DECLARE
-    v_start TIMESTAMP;
-    v_duration NUMERIC;
+RETURNS void AS $$
 BEGIN
-    -- Refresh feed_candidates
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY feed_candidates;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'feed_candidates'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'feed_candidates'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
-
-    -- Refresh daily_swipe_counts
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY daily_swipe_counts;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'daily_swipe_counts'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'daily_swipe_counts'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
-
-    -- Refresh match_activity
-    v_start := clock_timestamp();
-    BEGIN
-        REFRESH MATERIALIZED VIEW CONCURRENTLY match_activity;
-        v_duration := EXTRACT(MILLISECOND FROM clock_timestamp() - v_start);
-        RETURN QUERY SELECT 'match_activity'::TEXT, 'success'::TEXT, v_duration;
-    EXCEPTION WHEN OTHERS THEN
-        RETURN QUERY SELECT 'match_activity'::TEXT, ('error: ' || SQLERRM)::TEXT, 0::NUMERIC;
-    END;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY feed_candidates;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY daily_swipe_counts;
+    REFRESH MATERIALIZED VIEW CONCURRENTLY match_activity;
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION refresh_materialized_views() IS 'Refresh all materialized views with error handling and timing - call from scheduler';
+COMMENT ON FUNCTION refresh_materialized_views() IS 'Refresh all materialized views - call from scheduler';

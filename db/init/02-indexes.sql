@@ -207,7 +207,7 @@ CREATE INDEX IF NOT EXISTS idx_user_blocks_pair ON user_blocks(blocker_id, block
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at DESC);
 
 -- Unread notifications (optimized partial index)
-CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id)
+CREATE INDEX IF NOT EXISTS idx_notifications_unread ON notifications(user_id, is_read)
     WHERE is_read = false;
 
 -- Unsent notifications (push queue)
@@ -221,9 +221,9 @@ CREATE INDEX IF NOT EXISTS idx_notifications_unsent ON notifications(is_sent, cr
 -- User's verification codes
 CREATE INDEX IF NOT EXISTS idx_verification_user ON verification_codes(user_id);
 
--- Active codes only (optimized for lookup with time filter)
-CREATE INDEX IF NOT EXISTS idx_verification_active ON verification_codes(user_id, type)
-    WHERE used_at IS NULL AND expires_at > NOW();
+-- Active codes only (optimized for lookup)
+CREATE INDEX IF NOT EXISTS idx_verification_active ON verification_codes(user_id, type, expires_at)
+    WHERE used_at IS NULL;
 
 -- Cleanup expired codes
 CREATE INDEX IF NOT EXISTS idx_verification_expires ON verification_codes(expires_at)
