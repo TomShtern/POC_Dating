@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -54,7 +55,7 @@ import java.util.*;
  *   recommendation:
  *     batch-size: 20              # Number of recommendations to return
  *     minimum-score: 0.3          # Minimum score threshold
- *     refresh-interval-hours: 24  # Cache TTL
+ *   spring.cache.redis.time-to-live: 86400000  # Cache TTL (24h in ms)
  *
  * ============================================================================
  */
@@ -134,6 +135,7 @@ public class RecommendationService {
      * @return List of scored candidates, sorted by score (highest first)
      * @throws UserNotFoundException if user doesn't exist
      */
+    @Transactional(readOnly = true)
     @Cacheable(value = "recommendations", key = "#userId")
     public List<ScoredCandidate> getRecommendations(UUID userId) {
         log.info("Generating recommendations for user: {}", userId);
@@ -212,7 +214,9 @@ public class RecommendationService {
      * @param userId User 1 ID
      * @param targetId User 2 ID
      * @return ScoredCandidate with breakdown
+     * @throws UserNotFoundException if either user doesn't exist
      */
+    @Transactional(readOnly = true)
     public ScoredCandidate getCompatibilityScore(UUID userId, UUID targetId) {
         log.info("Calculating compatibility between {} and {}", userId, targetId);
 

@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -42,6 +43,9 @@ public class GlobalExceptionHandler {
     /**
      * Handle UserNotFoundException.
      * Maps to HTTP 404 Not Found.
+     *
+     * @param ex The UserNotFoundException that was thrown
+     * @return Error response with 404 status
      */
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
@@ -57,12 +61,57 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handle invalid method arguments (e.g., malformed UUID).
+     * Maps to HTTP 400 Bad Request.
+     *
+     * @param ex The MethodArgumentTypeMismatchException that was thrown
+     * @return Error response with 400 status
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Map<String, Object>> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("Invalid argument: {} - {}", ex.getName(), ex.getMessage());
+
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", HttpStatus.BAD_REQUEST.value());
+        error.put("error", "Bad Request");
+        error.put("message", String.format("Invalid value for parameter '%s': %s",
+                ex.getName(), ex.getValue()));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handle IllegalArgumentException.
+     * Maps to HTTP 400 Bad Request.
+     *
+     * @param ex The IllegalArgumentException that was thrown
+     * @return Error response with 400 status
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+
+        Map<String, Object> error = new HashMap<>();
+        error.put("timestamp", LocalDateTime.now());
+        error.put("status", HttpStatus.BAD_REQUEST.value());
+        error.put("error", "Bad Request");
+        error.put("message", ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
      * Handle all other exceptions.
      * Maps to HTTP 500 Internal Server Error.
+     *
+     * @param ex The Exception that was thrown
+     * @return Error response with 500 status
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+        // Log full stack trace for debugging, but don't expose details to client
+        log.error("Unexpected error occurred", ex);
 
         Map<String, Object> error = new HashMap<>();
         error.put("timestamp", LocalDateTime.now());

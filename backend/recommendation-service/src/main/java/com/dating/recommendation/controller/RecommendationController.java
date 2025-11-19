@@ -4,6 +4,7 @@ import com.dating.recommendation.dto.ScoredCandidate;
 import com.dating.recommendation.service.RecommendationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -107,8 +108,12 @@ public class RecommendationController {
      * Invalidate cache and regenerate recommendations.
      * Use after user updates preferences.
      *
+     * RETURNS:
+     * 202 Accepted with new recommendations.
+     * (202 indicates the request was accepted and processed)
+     *
      * @param userId User ID to refresh
-     * @return New recommendations
+     * @return New recommendations with 202 status
      */
     @PostMapping("/users/{userId}/refresh")
     public ResponseEntity<List<ScoredCandidate>> refreshRecommendations(
@@ -124,7 +129,8 @@ public class RecommendationController {
 
         log.info("Refreshed {} recommendations for user {}", recommendations.size(), userId);
 
-        return ResponseEntity.ok(recommendations);
+        // Return 202 Accepted to indicate request was processed
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(recommendations);
     }
 
     /**

@@ -1,7 +1,5 @@
 package com.dating.recommendation.dto;
 
-import com.dating.recommendation.model.User;
-
 import java.util.Map;
 
 /**
@@ -47,9 +45,10 @@ import java.util.Map;
 public record ScoredCandidate(
         /**
          * The candidate user being recommended.
-         * Contains full user profile for display in UI.
+         * Contains safe profile data for display in UI.
+         * Uses CandidateProfileDTO to avoid exposing sensitive internal fields.
          */
-        User candidate,
+        CandidateProfileDTO candidate,
 
         /**
          * Final compatibility score after aggregating all scorers.

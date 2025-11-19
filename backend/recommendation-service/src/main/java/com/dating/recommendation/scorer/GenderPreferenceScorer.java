@@ -122,16 +122,20 @@ public class GenderPreferenceScorer implements CompatibilityScorer {
         }
 
         // If preferences aren't set, assume open to all
-        if (userPreferences == null || userPreferences.isEmpty()) {
+        // Use local variables to avoid reassigning method parameters
+        Set<String> effectiveUserPrefs = userPreferences;
+        Set<String> effectiveCandidatePrefs = candidatePreferences;
+
+        if (effectiveUserPrefs == null || effectiveUserPrefs.isEmpty()) {
             log.trace("User {} has no gender preferences set. Assuming open to all.",
                     user.getId());
-            userPreferences = Set.of("MALE", "FEMALE", "OTHER");
+            effectiveUserPrefs = Set.of("MALE", "FEMALE", "OTHER");
         }
 
-        if (candidatePreferences == null || candidatePreferences.isEmpty()) {
+        if (effectiveCandidatePrefs == null || effectiveCandidatePrefs.isEmpty()) {
             log.trace("Candidate {} has no gender preferences set. Assuming open to all.",
                     candidate.getId());
-            candidatePreferences = Set.of("MALE", "FEMALE", "OTHER");
+            effectiveCandidatePrefs = Set.of("MALE", "FEMALE", "OTHER");
         }
 
         // =====================================================================
@@ -139,8 +143,8 @@ public class GenderPreferenceScorer implements CompatibilityScorer {
         // =====================================================================
         // User must want candidate's gender AND candidate must want user's gender
 
-        boolean userAcceptsCandidate = userPreferences.contains(candidateGender);
-        boolean candidateAcceptsUser = candidatePreferences.contains(userGender);
+        boolean userAcceptsCandidate = effectiveUserPrefs.contains(candidateGender);
+        boolean candidateAcceptsUser = effectiveCandidatePrefs.contains(userGender);
 
         log.trace("User {} (gender={}, wants={}) + Candidate {} (gender={}, wants={}): " +
                   "userAccepts={}, candidateAccepts={}",
