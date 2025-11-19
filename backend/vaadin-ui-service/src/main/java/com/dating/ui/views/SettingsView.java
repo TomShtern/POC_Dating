@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.User;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -562,5 +563,11 @@ public class SettingsView extends VerticalLayout {
             .set("flex-direction", "column")
             .set("gap", "0.75rem");
         return card;
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

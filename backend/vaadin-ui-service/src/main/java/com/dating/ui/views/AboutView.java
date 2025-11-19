@@ -1,5 +1,6 @@
 package com.dating.ui.views;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H2;
@@ -168,5 +169,11 @@ public class AboutView extends VerticalLayout {
 
         item.add(checkIcon, label);
         return item;
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

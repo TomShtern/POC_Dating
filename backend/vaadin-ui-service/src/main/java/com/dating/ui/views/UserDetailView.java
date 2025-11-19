@@ -4,6 +4,7 @@ import com.dating.ui.dto.Match;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -271,5 +272,11 @@ public class UserDetailView extends VerticalLayout implements HasUrlParameter<St
         });
 
         dialog.open();
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

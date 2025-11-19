@@ -1,5 +1,6 @@
 package com.dating.ui.views;
 
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -67,5 +68,11 @@ public class ErrorView extends VerticalLayout implements HasErrorParameter<NotFo
     @Override
     public int setErrorParameter(BeforeEnterEvent event, ErrorParameter<NotFoundException> parameter) {
         return HttpServletResponse.SC_NOT_FOUND;
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

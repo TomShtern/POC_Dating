@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Match;
 import com.dating.ui.service.MatchService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -295,5 +296,11 @@ public class NotificationsView extends VerticalLayout {
 
         emptyState.add(bellIcon, emptyTitle, emptyText);
         notificationsList.add(emptyState);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }
