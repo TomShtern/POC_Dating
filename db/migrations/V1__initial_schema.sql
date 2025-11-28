@@ -1,29 +1,18 @@
--- POC Dating Database Schema
--- Version: 2.0
+-- Flyway Migration V1: Initial Schema
+-- POC Dating Application
 --
--- PURPOSE: Core table definitions for dating application
---
--- MODULARITY:
--- - 01-schema.sql   (tables + constraints)
--- - 02-indexes.sql  (all indexes)
--- - 03-views.sql    (materialized views)
--- - 04-functions.sql (stored procedures)
--- - 05-seed-data.sql (test data)
---
--- EXECUTION:
--- docker-compose up postgres will auto-run these files in order
--- OR: psql -U dating_user -d dating_db -f 01-schema.sql
+-- This migration creates the initial database schema
+-- Includes: tables, constraints, triggers, and comments
 
 -- ========================================
--- EXTENSIONS (Must be first)
+-- EXTENSIONS
 -- ========================================
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";        -- Text search optimization
-CREATE EXTENSION IF NOT EXISTS "btree_gin";      -- GIN index for arrays
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+CREATE EXTENSION IF NOT EXISTS "btree_gin";
 
 -- ========================================
 -- USERS TABLE
--- Core user profiles and authentication
 -- ========================================
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -45,26 +34,17 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
-
     -- Age column (calculated from date_of_birth)
     -- Note: Cannot be GENERATED ALWAYS AS because AGE() is not immutable
     -- Calculate with: EXTRACT(YEAR FROM AGE(CURRENT_DATE, date_of_birth))
     age INT,
-
     CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
-    CONSTRAINT users_valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
-    CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER')),
-    CONSTRAINT valid_password_hash CHECK (password_hash ~ '^\$2[ab]\$'),
-    CONSTRAINT valid_bio_length CHECK (bio IS NULL OR length(bio) <= 1000),
-    CONSTRAINT valid_age_18_plus CHECK (date_of_birth IS NULL OR date_of_birth <= CURRENT_DATE - INTERVAL '18 years')
+    CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
+    CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER'))
 );
-
-COMMENT ON TABLE users IS 'Core user profiles and authentication';
-COMMENT ON COLUMN users.age IS 'Auto-computed age from date_of_birth - indexed for feed filtering';
 
 -- ========================================
 -- USER PREFERENCES TABLE
--- Matching preferences and settings
 -- ========================================
 CREATE TABLE IF NOT EXISTS user_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -78,17 +58,12 @@ CREATE TABLE IF NOT EXISTS user_preferences (
     notification_enabled BOOLEAN DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_age_range CHECK (min_age <= max_age),
-    CONSTRAINT valid_interested_in CHECK (interested_in IN ('MALE', 'FEMALE', 'BOTH', 'EVERYONE')),
-    CONSTRAINT valid_interests_limit CHECK (interests IS NULL OR array_length(interests, 1) <= 20)
+    CONSTRAINT valid_interested_in CHECK (interested_in IN ('MALE', 'FEMALE', 'BOTH', 'EVERYONE'))
 );
-
-COMMENT ON TABLE user_preferences IS 'User matching preferences and settings';
 
 -- ========================================
 -- PHOTOS TABLE
--- User photo management with ordering
 -- ========================================
 CREATE TABLE IF NOT EXISTS photos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -101,15 +76,11 @@ CREATE TABLE IF NOT EXISTS photos (
     moderation_status VARCHAR(20) DEFAULT 'PENDING',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_moderation_status CHECK (moderation_status IN ('PENDING', 'APPROVED', 'REJECTED'))
 );
 
-COMMENT ON TABLE photos IS 'User photos with display ordering and moderation status';
-
 -- ========================================
 -- SWIPES TABLE
--- High-frequency swipe events
 -- ========================================
 CREATE TABLE IF NOT EXISTS swipes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -117,17 +88,13 @@ CREATE TABLE IF NOT EXISTS swipes (
     target_user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     action VARCHAR(20) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_action CHECK (action IN ('LIKE', 'PASS', 'SUPER_LIKE')),
     CONSTRAINT no_self_swipe CHECK (user_id != target_user_id),
     UNIQUE(user_id, target_user_id)
 );
 
-COMMENT ON TABLE swipes IS 'High-frequency swipe events, indexed for feed exclusion';
-
 -- ========================================
 -- MATCHES TABLE
--- Mutual matches between users
 -- ========================================
 CREATE TABLE IF NOT EXISTS matches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -137,18 +104,14 @@ CREATE TABLE IF NOT EXISTS matches (
     matched_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP,
     ended_by UUID REFERENCES users(id) ON DELETE SET NULL,
-
     CONSTRAINT no_self_match CHECK (user1_id != user2_id),
     CONSTRAINT user1_before_user2 CHECK (user1_id < user2_id),
-    CONSTRAINT matches_valid_status CHECK (status IN ('ACTIVE', 'UNMATCHED', 'BLOCKED')),
+    CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'UNMATCHED', 'BLOCKED')),
     UNIQUE(user1_id, user2_id)
 );
 
-COMMENT ON TABLE matches IS 'Mutual matches between users with status tracking';
-
 -- ========================================
 -- MATCH SCORES TABLE
--- Compatibility scores for matches
 -- ========================================
 CREATE TABLE IF NOT EXISTS match_scores (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -159,11 +122,8 @@ CREATE TABLE IF NOT EXISTS match_scores (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE match_scores IS 'Compatibility scores with factor breakdown';
-
 -- ========================================
 -- MESSAGES TABLE
--- Chat messages with delivery tracking
 -- ========================================
 CREATE TABLE IF NOT EXISTS messages (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -176,16 +136,12 @@ CREATE TABLE IF NOT EXISTS messages (
     delivered_at TIMESTAMP,
     read_at TIMESTAMP,
     deleted_at TIMESTAMP,
-
-    CONSTRAINT messages_valid_status CHECK (status IN ('SENT', 'DELIVERED', 'READ')),
+    CONSTRAINT valid_status CHECK (status IN ('SENT', 'DELIVERED', 'READ')),
     CONSTRAINT valid_message_type CHECK (message_type IN ('TEXT', 'IMAGE', 'GIF', 'AUDIO'))
 );
 
-COMMENT ON TABLE messages IS 'Chat messages with delivery and read receipts';
-
 -- ========================================
 -- REFRESH TOKENS TABLE
--- JWT token management
 -- ========================================
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -199,11 +155,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     revoked_at TIMESTAMP
 );
 
-COMMENT ON TABLE refresh_tokens IS 'JWT refresh tokens with device tracking';
-
 -- ========================================
 -- RECOMMENDATIONS TABLE
--- ML/Algorithm-based recommendations
 -- ========================================
 CREATE TABLE IF NOT EXISTS recommendations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -214,16 +167,12 @@ CREATE TABLE IF NOT EXISTS recommendations (
     factors JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMP,
-
     CONSTRAINT no_self_recommendation CHECK (user_id != target_user_id),
     UNIQUE(user_id, target_user_id)
 );
 
-COMMENT ON TABLE recommendations IS 'Pre-computed ML recommendations with scores';
-
 -- ========================================
 -- USER BLOCKS TABLE
--- User blocking functionality
 -- ========================================
 CREATE TABLE IF NOT EXISTS user_blocks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -231,16 +180,12 @@ CREATE TABLE IF NOT EXISTS user_blocks (
     blocked_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     reason VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT no_self_block CHECK (blocker_id != blocked_id),
     UNIQUE(blocker_id, blocked_id)
 );
 
-COMMENT ON TABLE user_blocks IS 'User blocking for safety and privacy';
-
 -- ========================================
 -- NOTIFICATIONS TABLE
--- Push and in-app notifications
 -- ========================================
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -254,7 +199,6 @@ CREATE TABLE IF NOT EXISTS notifications (
     sent_at TIMESTAMP,
     read_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_notification_type CHECK (type IN (
         'NEW_MATCH', 'NEW_MESSAGE', 'SUPER_LIKE',
         'PROFILE_VIEW', 'SYSTEM', 'PROMOTION'
@@ -263,11 +207,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     CONSTRAINT read_after_sent CHECK (is_read = false OR is_sent = true)
 );
 
-COMMENT ON TABLE notifications IS 'Push and in-app notification queue';
-
 -- ========================================
 -- VERIFICATION CODES TABLE
--- Email/phone verification
 -- ========================================
 CREATE TABLE IF NOT EXISTS verification_codes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -278,15 +219,11 @@ CREATE TABLE IF NOT EXISTS verification_codes (
     used_at TIMESTAMP,
     attempts INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_verification_type CHECK (type IN ('EMAIL', 'PHONE', 'PASSWORD_RESET'))
 );
 
-COMMENT ON TABLE verification_codes IS 'Verification codes for email/phone/password reset';
-
 -- ========================================
 -- INTERACTION HISTORY TABLE
--- Analytics and behavior tracking
 -- ========================================
 CREATE TABLE IF NOT EXISTS interaction_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -297,11 +234,8 @@ CREATE TABLE IF NOT EXISTS interaction_history (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE interaction_history IS 'User behavior analytics for recommendations';
-
 -- ========================================
 -- REPORTS TABLE
--- User report/flag system
 -- ========================================
 CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -313,20 +247,16 @@ CREATE TABLE IF NOT EXISTS reports (
     resolved_by UUID REFERENCES users(id) ON DELETE SET NULL,
     resolved_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
     CONSTRAINT valid_reason CHECK (reason IN (
         'SPAM', 'HARASSMENT', 'INAPPROPRIATE_CONTENT',
         'FAKE_PROFILE', 'SCAM', 'OTHER'
     )),
-    CONSTRAINT reports_valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
+    CONSTRAINT valid_status CHECK (status IN ('PENDING', 'REVIEWING', 'RESOLVED', 'DISMISSED')),
     CONSTRAINT no_self_report CHECK (reporter_id != reported_user_id)
 );
 
-COMMENT ON TABLE reports IS 'User reports for moderation';
-
 -- ========================================
 -- AUDIT LOGS TABLE
--- System audit trail
 -- ========================================
 CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -339,10 +269,8 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-COMMENT ON TABLE audit_logs IS 'Audit trail for compliance and debugging';
-
 -- ========================================
--- TRIGGER: Update updated_at timestamp
+-- TRIGGER: Update updated_at
 -- ========================================
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -352,7 +280,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Apply trigger to tables with updated_at
 CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
@@ -370,69 +297,12 @@ CREATE TRIGGER update_match_scores_updated_at
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ========================================
--- PARTIAL UNIQUE INDEX: Verification codes
--- Ensures only one unused code per user per type
+-- TABLE COMMENTS
 -- ========================================
-CREATE UNIQUE INDEX IF NOT EXISTS idx_verification_codes_active_unique
-    ON verification_codes(user_id, type)
-    WHERE used_at IS NULL;
-
-COMMENT ON INDEX idx_verification_codes_active_unique IS 'Ensures only one active verification code per user per type';
-
--- ========================================
--- TRIGGER: Validate message sender
--- Ensures sender is part of the match (CRITICAL)
--- ========================================
-CREATE OR REPLACE FUNCTION validate_message_sender()
-RETURNS TRIGGER AS $$
-DECLARE
-    match_user1 UUID;
-    match_user2 UUID;
-BEGIN
-    -- Skip validation if sender_id is NULL (deleted user)
-    IF NEW.sender_id IS NULL THEN
-        RETURN NEW;
-    END IF;
-
-    -- Get the users in this match
-    SELECT user1_id, user2_id INTO match_user1, match_user2
-    FROM matches
-    WHERE id = NEW.match_id;
-
-    -- Verify sender is one of the match participants
-    IF NEW.sender_id != match_user1 AND NEW.sender_id != match_user2 THEN
-        RAISE EXCEPTION 'Message sender must be a participant in the match';
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER validate_message_sender_trigger
-    BEFORE INSERT OR UPDATE ON messages
-    FOR EACH ROW EXECUTE FUNCTION validate_message_sender();
-
--- ========================================
--- TRIGGER: Match state consistency
--- Ensures ended_at is set when status='UNMATCHED' (CRITICAL)
--- ========================================
-CREATE OR REPLACE FUNCTION enforce_match_state_consistency()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- When status changes to UNMATCHED or BLOCKED, ensure ended_at is set
-    IF NEW.status IN ('UNMATCHED', 'BLOCKED') AND NEW.ended_at IS NULL THEN
-        NEW.ended_at = CURRENT_TIMESTAMP;
-    END IF;
-
-    -- When status is ACTIVE, ensure ended_at is NULL
-    IF NEW.status = 'ACTIVE' AND NEW.ended_at IS NOT NULL THEN
-        NEW.ended_at = NULL;
-    END IF;
-
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER enforce_match_state_consistency_trigger
-    BEFORE INSERT OR UPDATE ON matches
-    FOR EACH ROW EXECUTE FUNCTION enforce_match_state_consistency();
+COMMENT ON TABLE users IS 'Core user profiles and authentication';
+COMMENT ON TABLE user_preferences IS 'User matching preferences and settings';
+COMMENT ON TABLE photos IS 'User photos with display ordering';
+COMMENT ON TABLE swipes IS 'High-frequency swipe events';
+COMMENT ON TABLE matches IS 'Mutual matches between users';
+COMMENT ON TABLE messages IS 'Chat messages with delivery tracking';
+COMMENT ON TABLE recommendations IS 'Pre-computed ML recommendations';
