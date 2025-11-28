@@ -1,13 +1,15 @@
 package com.dating.recommendation.service;
 
-import com.dating.recommendation.dto.ScoredCandidate;
-import com.dating.recommendation.exception.UserNotFoundException;
-import com.dating.recommendation.model.User;
-import com.dating.recommendation.repository.SwipeRepository;
-import com.dating.recommendation.repository.UserRepository;
+import com.dating.recommendation.client.UserServiceClient;
+import com.dating.recommendation.dto.UserProfileDto;
+import com.dating.recommendation.dto.response.BatchScoreResponse;
+import com.dating.recommendation.dto.response.RecommendationListResponse;
+import com.dating.recommendation.dto.response.ScoreFactors;
+import com.dating.recommendation.dto.response.ScoreResponse;
+import com.dating.recommendation.mapper.RecommendationMapper;
+import com.dating.recommendation.model.Recommendation;
+import com.dating.recommendation.repository.RecommendationRepository;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -15,316 +17,222 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Unit tests for RecommendationService.
- * Tests the core recommendation generation logic.
- */
 @ExtendWith(MockitoExtension.class)
 class RecommendationServiceTest {
 
     @Mock
-    private UserRepository userRepository;
+    private RecommendationRepository recommendationRepository;
 
     @Mock
-    private SwipeRepository swipeRepository;
+    private UserServiceClient userServiceClient;
 
     @Mock
-    private ScoreAggregator scoreAggregator;
+    private ScoringService scoringService;
+
+    @Mock
+    private PreferenceAnalyzerService preferenceAnalyzerService;
+
+    @Mock
+    private RecommendationMapper recommendationMapper;
 
     @InjectMocks
     private RecommendationService recommendationService;
 
-    private User testUser;
-    private User candidate1;
-    private User candidate2;
     private UUID userId;
-    private UUID candidate1Id;
-    private UUID candidate2Id;
+    private UUID targetUserId;
+    private UserProfileDto sourceUser;
+    private UserProfileDto targetUser;
 
     @BeforeEach
     void setUp() {
-        // Set configuration values
-        ReflectionTestUtils.setField(recommendationService, "batchSize", 20);
-        ReflectionTestUtils.setField(recommendationService, "minimumScore", 0.3);
-
-        // Create test users
         userId = UUID.randomUUID();
-        candidate1Id = UUID.randomUUID();
-        candidate2Id = UUID.randomUUID();
+        targetUserId = UUID.randomUUID();
 
-        testUser = User.builder()
+        sourceUser = UserProfileDto.builder()
                 .id(userId)
-                .username("testuser")
-                .email("test@example.com")
-                .gender("MALE")
+                .firstName("John")
+                .lastName("Doe")
                 .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .genderPreferences(Set.of("FEMALE"))
-                .interests(Set.of("hiking", "music"))
-                .active(true)
+                .gender("MALE")
+                .bio("Test bio")
+                .lastLogin(Instant.now())
+                .minAge(25)
+                .maxAge(35)
+                .maxDistanceKm(50)
+                .interestedIn("FEMALE")
+                .interests(Arrays.asList("hiking", "movies"))
                 .build();
 
-        candidate1 = User.builder()
-                .id(candidate1Id)
-                .username("candidate1")
-                .email("candidate1@example.com")
-                .gender("FEMALE")
+        targetUser = UserProfileDto.builder()
+                .id(targetUserId)
+                .firstName("Jane")
+                .lastName("Smith")
                 .dateOfBirth(LocalDate.of(1992, 5, 15))
-                .genderPreferences(Set.of("MALE"))
-                .interests(Set.of("hiking", "reading"))
-                .active(true)
-                .lastActiveAt(LocalDateTime.now())
-                .build();
-
-        candidate2 = User.builder()
-                .id(candidate2Id)
-                .username("candidate2")
-                .email("candidate2@example.com")
                 .gender("FEMALE")
-                .dateOfBirth(LocalDate.of(1995, 8, 20))
-                .genderPreferences(Set.of("MALE"))
-                .interests(Set.of("cooking", "travel"))
-                .active(true)
-                .lastActiveAt(LocalDateTime.now())
+                .bio("Test bio")
+                .lastLogin(Instant.now())
+                .interests(Arrays.asList("hiking", "cooking"))
                 .build();
+
+        // Set configuration values
+        ReflectionTestUtils.setField(recommendationService, "defaultAlgorithm", "v1");
+        ReflectionTestUtils.setField(recommendationService, "cacheTtlHours", 24);
+        ReflectionTestUtils.setField(recommendationService, "defaultLimit", 10);
+        ReflectionTestUtils.setField(recommendationService, "maxLimit", 50);
     }
 
-    @Nested
-    @DisplayName("getRecommendations tests")
-    class GetRecommendationsTests {
+    @Test
+    void testGetCompatibilityScore_Success() {
+        // Arrange
+        when(userServiceClient.getUserById(userId)).thenReturn(sourceUser);
+        when(userServiceClient.getUserById(targetUserId)).thenReturn(targetUser);
+        when(preferenceAnalyzerService.enrichWithActivityStats(any())).thenAnswer(i -> i.getArgument(0));
 
-        @Test
-        @DisplayName("Should return scored candidates for valid user")
-        void testGetRecommendations_Success() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(new HashSet<>());
-            when(userRepository.findCandidates(any())).thenReturn(List.of(candidate1, candidate2));
+        ScoreFactors factors = ScoreFactors.builder()
+                .profileCompleteness(10.0)
+                .preferenceMatch(30.0)
+                .activity(15.0)
+                .mlPrediction(15.0)
+                .build();
 
-            ScoredCandidate scored1 = createScoredCandidate(candidate1, 0.8);
-            ScoredCandidate scored2 = createScoredCandidate(candidate2, 0.6);
-            when(scoreAggregator.aggregate(testUser, candidate1)).thenReturn(scored1);
-            when(scoreAggregator.aggregate(testUser, candidate2)).thenReturn(scored2);
+        when(scoringService.calculateFactors(any(), any(), anyString())).thenReturn(factors);
 
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
+        // Act
+        ScoreResponse response = recommendationService.getCompatibilityScore(userId, targetUserId);
 
-            // Assert
-            assertNotNull(results);
-            assertEquals(2, results.size());
-            assertEquals(0.8, results.get(0).finalScore(), 0.001);
-            assertEquals(0.6, results.get(1).finalScore(), 0.001);
-
-            verify(userRepository).findById(userId);
-            verify(swipeRepository).findSwipedUserIds(userId);
-            verify(userRepository).findCandidates(any());
-        }
-
-        @Test
-        @DisplayName("Should throw UserNotFoundException for non-existent user")
-        void testGetRecommendations_UserNotFound() {
-            // Arrange
-            UUID nonExistentId = UUID.randomUUID();
-            when(userRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-            // Act & Assert
-            assertThrows(UserNotFoundException.class, () ->
-                    recommendationService.getRecommendations(nonExistentId));
-
-            verify(userRepository).findById(nonExistentId);
-            verifyNoInteractions(swipeRepository);
-        }
-
-        @Test
-        @DisplayName("Should exclude already swiped users")
-        void testGetRecommendations_ExcludesSwipedUsers() {
-            // Arrange
-            Set<UUID> swipedIds = Set.of(candidate1Id);
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(swipedIds);
-            when(userRepository.findCandidates(any())).thenReturn(List.of(candidate2));
-
-            ScoredCandidate scored2 = createScoredCandidate(candidate2, 0.6);
-            when(scoreAggregator.aggregate(testUser, candidate2)).thenReturn(scored2);
-
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
-
-            // Assert
-            assertEquals(1, results.size());
-
-            // Verify exclude set includes swiped user and self
-            verify(userRepository).findCandidates(argThat(excludeIds ->
-                    excludeIds.contains(candidate1Id) && excludeIds.contains(userId)));
-        }
-
-        @Test
-        @DisplayName("Should filter candidates below minimum score")
-        void testGetRecommendations_FiltersLowScores() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(new HashSet<>());
-            when(userRepository.findCandidates(any())).thenReturn(List.of(candidate1, candidate2));
-
-            ScoredCandidate scored1 = createScoredCandidate(candidate1, 0.8);
-            ScoredCandidate scored2 = createScoredCandidate(candidate2, 0.1); // Below threshold
-            when(scoreAggregator.aggregate(testUser, candidate1)).thenReturn(scored1);
-            when(scoreAggregator.aggregate(testUser, candidate2)).thenReturn(scored2);
-
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
-
-            // Assert
-            assertEquals(1, results.size());
-            assertEquals(0.8, results.get(0).finalScore(), 0.001);
-        }
-
-        @Test
-        @DisplayName("Should limit results to batch size")
-        void testGetRecommendations_LimitsToBatchSize() {
-            // Arrange
-            ReflectionTestUtils.setField(recommendationService, "batchSize", 1);
-
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(new HashSet<>());
-            when(userRepository.findCandidates(any())).thenReturn(List.of(candidate1, candidate2));
-
-            ScoredCandidate scored1 = createScoredCandidate(candidate1, 0.8);
-            ScoredCandidate scored2 = createScoredCandidate(candidate2, 0.6);
-            when(scoreAggregator.aggregate(testUser, candidate1)).thenReturn(scored1);
-            when(scoreAggregator.aggregate(testUser, candidate2)).thenReturn(scored2);
-
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
-
-            // Assert
-            assertEquals(1, results.size());
-            assertEquals(0.8, results.get(0).finalScore(), 0.001); // Highest score
-        }
-
-        @Test
-        @DisplayName("Should return empty list when no candidates")
-        void testGetRecommendations_NoCandidates() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(new HashSet<>());
-            when(userRepository.findCandidates(any())).thenReturn(List.of());
-
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
-
-            // Assert
-            assertNotNull(results);
-            assertTrue(results.isEmpty());
-        }
-
-        @Test
-        @DisplayName("Should sort candidates by score descending")
-        void testGetRecommendations_SortsByScoreDescending() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(swipeRepository.findSwipedUserIds(userId)).thenReturn(new HashSet<>());
-            when(userRepository.findCandidates(any())).thenReturn(List.of(candidate1, candidate2));
-
-            // Return in reverse order to test sorting
-            ScoredCandidate scored1 = createScoredCandidate(candidate1, 0.4);
-            ScoredCandidate scored2 = createScoredCandidate(candidate2, 0.9);
-            when(scoreAggregator.aggregate(testUser, candidate1)).thenReturn(scored1);
-            when(scoreAggregator.aggregate(testUser, candidate2)).thenReturn(scored2);
-
-            // Act
-            List<ScoredCandidate> results = recommendationService.getRecommendations(userId);
-
-            // Assert
-            assertEquals(2, results.size());
-            assertEquals(0.9, results.get(0).finalScore(), 0.001); // Highest first
-            assertEquals(0.4, results.get(1).finalScore(), 0.001);
-        }
+        // Assert
+        assertNotNull(response);
+        assertEquals(70, response.getScore());
+        assertNotNull(response.getFactors());
+        assertNotNull(response.getCalculatedAt());
     }
 
-    @Nested
-    @DisplayName("getCompatibilityScore tests")
-    class GetCompatibilityScoreTests {
+    @Test
+    void testScoreProfiles_Success() {
+        // Arrange
+        List<UUID> candidateIds = Arrays.asList(targetUserId);
 
-        @Test
-        @DisplayName("Should return score between two users")
-        void testGetCompatibilityScore_Success() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(userRepository.findById(candidate1Id)).thenReturn(Optional.of(candidate1));
+        when(userServiceClient.getUserById(userId)).thenReturn(sourceUser);
+        when(userServiceClient.getUsersByIds(anyList())).thenReturn(Arrays.asList(targetUser));
+        when(preferenceAnalyzerService.enrichWithActivityStats(any())).thenAnswer(i -> i.getArgument(0));
 
-            ScoredCandidate expectedScore = createScoredCandidate(candidate1, 0.75);
-            when(scoreAggregator.aggregate(testUser, candidate1)).thenReturn(expectedScore);
+        Map<UUID, Integer> scores = new HashMap<>();
+        scores.put(targetUserId, 75);
 
-            // Act
-            ScoredCandidate result = recommendationService.getCompatibilityScore(userId, candidate1Id);
+        Map<UUID, ScoreFactors> factors = new HashMap<>();
+        factors.put(targetUserId, ScoreFactors.builder().build());
 
-            // Assert
-            assertNotNull(result);
-            assertEquals(0.75, result.finalScore(), 0.001);
-        }
+        BatchScoreResponse batchResponse = BatchScoreResponse.builder()
+                .scores(scores)
+                .factors(factors)
+                .build();
 
-        @Test
-        @DisplayName("Should throw exception when first user not found")
-        void testGetCompatibilityScore_FirstUserNotFound() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.empty());
+        when(scoringService.scoreMultiple(any(), anyList(), anyString())).thenReturn(batchResponse);
 
-            // Act & Assert
-            assertThrows(UserNotFoundException.class, () ->
-                    recommendationService.getCompatibilityScore(userId, candidate1Id));
-        }
+        // Act
+        BatchScoreResponse response = recommendationService.scoreProfiles(userId, candidateIds, "v1");
 
-        @Test
-        @DisplayName("Should throw exception when second user not found")
-        void testGetCompatibilityScore_SecondUserNotFound() {
-            // Arrange
-            when(userRepository.findById(userId)).thenReturn(Optional.of(testUser));
-            when(userRepository.findById(candidate1Id)).thenReturn(Optional.empty());
-
-            // Act & Assert
-            assertThrows(UserNotFoundException.class, () ->
-                    recommendationService.getCompatibilityScore(userId, candidate1Id));
-        }
+        // Assert
+        assertNotNull(response);
+        assertEquals(1, response.getScores().size());
+        assertTrue(response.getScores().containsKey(targetUserId));
+        assertEquals(75, response.getScores().get(targetUserId));
     }
 
-    @Nested
-    @DisplayName("getAlgorithmInfo tests")
-    class GetAlgorithmInfoTests {
+    @Test
+    void testRefreshRecommendations_DeletesExisting() {
+        // Arrange & Act
+        recommendationService.refreshRecommendations(userId);
 
-        @Test
-        @DisplayName("Should return algorithm configuration")
-        void testGetAlgorithmInfo() {
-            // Arrange
-            Map<String, Double> scorerWeights = Map.of("age", 0.2, "location", 0.3);
-            when(scoreAggregator.getScorerWeights()).thenReturn(scorerWeights);
-            when(scoreAggregator.getActiveScorerCount()).thenReturn(2);
-
-            // Act
-            Map<String, Object> info = recommendationService.getAlgorithmInfo();
-
-            // Assert
-            assertNotNull(info);
-            assertEquals(20, info.get("batchSize"));
-            assertEquals(0.3, info.get("minimumScore"));
-            assertEquals(scorerWeights, info.get("scorers"));
-            assertEquals(2, info.get("activeScorerCount"));
-        }
+        // Assert
+        verify(recommendationRepository, times(1)).deleteByUserId(userId);
     }
 
-    // Helper method to create ScoredCandidate
-    private ScoredCandidate createScoredCandidate(User candidate, double score) {
-        return new ScoredCandidate(
-                com.dating.recommendation.dto.CandidateProfileDTO.fromUser(candidate),
-                score,
-                Map.of("test-scorer", score)
-        );
+    @Test
+    void testCleanupExpiredRecommendations_Success() {
+        // Arrange
+        when(recommendationRepository.deleteExpiredRecommendations(any())).thenReturn(5);
+
+        // Act
+        int deleted = recommendationService.cleanupExpiredRecommendations();
+
+        // Assert
+        assertEquals(5, deleted);
+        verify(recommendationRepository, times(1)).deleteExpiredRecommendations(any());
+    }
+
+    @Test
+    void testGetRecommendations_UsesCache() {
+        // Arrange
+        List<Recommendation> cachedRecs = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            UUID recUserId = UUID.randomUUID();
+            Recommendation rec = Recommendation.builder()
+                    .id(UUID.randomUUID())
+                    .userId(userId)
+                    .recommendedUserId(recUserId)
+                    .score(BigDecimal.valueOf(80 - i))
+                    .algorithmVersion("v1")
+                    .factors(new HashMap<>())
+                    .createdAt(Instant.now())
+                    .expiresAt(Instant.now().plusSeconds(3600))
+                    .build();
+            cachedRecs.add(rec);
+        }
+
+        when(recommendationRepository.findActiveRecommendations(eq(userId), any()))
+                .thenReturn(cachedRecs);
+
+        List<UUID> userIds = cachedRecs.stream()
+                .map(Recommendation::getRecommendedUserId)
+                .toList();
+
+        List<UserProfileDto> users = userIds.stream()
+                .map(id -> UserProfileDto.builder()
+                        .id(id)
+                        .firstName("User")
+                        .build())
+                .toList();
+
+        when(userServiceClient.getUsersByIds(anyList())).thenReturn(users);
+        when(scoringService.generateReason(any(), any(), any())).thenReturn("Test reason");
+        when(recommendationMapper.toResponse(any(), any(), any(), any()))
+                .thenAnswer(i -> com.dating.recommendation.dto.response.RecommendationResponse.builder()
+                        .id(UUID.randomUUID())
+                        .score(80)
+                        .build());
+
+        // Act
+        RecommendationListResponse response = recommendationService.getRecommendations(userId, 10, "v1");
+
+        // Assert
+        assertNotNull(response);
+        verify(recommendationRepository, times(1)).findActiveRecommendations(eq(userId), any());
+    }
+
+    @Test
+    void testGetRecommendations_LimitsMaxResults() {
+        // Arrange
+        when(recommendationRepository.findActiveRecommendations(any(), any()))
+                .thenReturn(new ArrayList<>());
+
+        when(userServiceClient.getUserById(userId)).thenReturn(sourceUser);
+        when(userServiceClient.getCandidates(eq(userId), anyInt())).thenReturn(new ArrayList<>());
+        when(preferenceAnalyzerService.enrichWithActivityStats(any())).thenAnswer(i -> i.getArgument(0));
+
+        // Act
+        RecommendationListResponse response = recommendationService.getRecommendations(userId, 100, "v1");
+
+        // Assert - limit should be capped at maxLimit (50)
+        verify(userServiceClient, times(1)).getCandidates(eq(userId), eq(150)); // 50 * 3
     }
 }
