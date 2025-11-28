@@ -1,7 +1,9 @@
 package com.dating.ui.views;
 
 import com.dating.ui.dto.AuthResponse;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -9,11 +11,13 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.EmailField;
 import com.vaadin.flow.component.textfield.PasswordField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.server.auth.AnonymousAllowed;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,14 +32,19 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginView extends VerticalLayout {
 
     private final UserService userService;
+    private final PageViewMetricsService pageViewMetrics;
 
     private EmailField emailField;
     private PasswordField passwordField;
     private Button loginButton;
     private Button registerButton;
 
-    public LoginView(UserService userService) {
+    public LoginView(UserService userService, PageViewMetricsService pageViewMetrics) {
         this.userService = userService;
+        this.pageViewMetrics = pageViewMetrics;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("login");
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
@@ -82,11 +91,21 @@ public class LoginView extends VerticalLayout {
         loginButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
         loginButton.setWidthFull();
 
+        // Forgot password link
+        RouterLink forgotPasswordLink = new RouterLink("Forgot Password?", ForgotPasswordView.class);
+        forgotPasswordLink.getStyle()
+            .set("font-size", "0.9rem")
+            .set("color", "#667eea");
+
+        HorizontalLayout forgotLayout = new HorizontalLayout(forgotPasswordLink);
+        forgotLayout.setJustifyContentMode(JustifyContentMode.END);
+        forgotLayout.setWidthFull();
+
         // Register button
         registerButton = new Button("Create Account", e -> handleRegister());
         registerButton.setWidthFull();
 
-        formLayout.add(emailField, passwordField, loginButton, registerButton);
+        formLayout.add(emailField, passwordField, forgotLayout, loginButton, registerButton);
 
         add(title, subtitle, formLayout);
     }
@@ -96,25 +115,36 @@ public class LoginView extends VerticalLayout {
         String password = passwordField.getValue();
 
         // Validation
-        if (email.isEmpty() || password.isEmpty()) {
+        if (email == null || email.isEmpty() || password == null || password.isEmpty()) {
             showError("Please fill in all fields");
             return;
         }
 
-        if (!emailField.isInvalid() && !email.contains("@")) {
+        if (!email.contains("@")) {
             emailField.setInvalid(true);
             emailField.setErrorMessage("Please enter a valid email");
             return;
         }
 
+        // Disable button and show loading
+        loginButton.setEnabled(false);
+        loginButton.setText("Logging in...");
+
         try {
             // Call user service to login
             AuthResponse response = userService.login(email, password);
 
+            if (response == null || response.getUser() == null) {
+                showError("Login failed - invalid response");
+                return;
+            }
+
             log.info("Login successful for user: {}", response.getUser().getId());
 
             // Show success message
-            Notification.show("Welcome back, " + response.getUser().getFirstName() + "!",
+            String firstName = response.getUser().getFirstName();
+            String welcomeName = (firstName != null && !firstName.isEmpty()) ? firstName : "User";
+            Notification.show("Welcome back, " + welcomeName + "!",
                 3000, Notification.Position.TOP_CENTER)
                 .addThemeVariants(NotificationVariant.LUMO_SUCCESS);
 
@@ -122,8 +152,13 @@ public class LoginView extends VerticalLayout {
             UI.getCurrent().navigate(SwipeView.class);
 
         } catch (Exception ex) {
-            log.error("Login failed", ex);
+            log.error("Login failed for email: {}", email, ex);
+            userService.recordLoginFailure();
             showError("Invalid email or password");
+        } finally {
+            // Re-enable button
+            loginButton.setEnabled(true);
+            loginButton.setText("Login");
         }
     }
 
@@ -134,5 +169,11 @@ public class LoginView extends VerticalLayout {
     private void showError(String message) {
         Notification notification = Notification.show(message, 3000, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(NotificationVariant.LUMO_ERROR);
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        // Simple view - no listeners to clean up
     }
 }

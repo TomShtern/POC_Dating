@@ -1,0 +1,267 @@
+{
+  "audit": {
+    "generated": "2025-11-18",
+    "scope": "Comparing Flyway migrations (V1-V3) vs init schema files (01-04)",
+    "total_discrepancies": 13,
+    "files_compared": {
+      "schemas": {
+        "migration": "/db/migrations/V1__initial_schema.sql",
+        "init": "/db/init/01-schema.sql"
+      },
+      "indexes": {
+        "migration": "/db/migrations/V2__add_indexes.sql",
+        "init": "/db/init/02-indexes.sql"
+      },
+      "views_functions": {
+        "migration": "/db/migrations/V3__add_views_and_functions.sql",
+        "init": ["/db/init/03-views.sql", "/db/init/04-functions.sql"]
+      }
+    },
+    "discrepancies": [
+      {
+        "id": "1.1",
+        "category": "Schema Constraints",
+        "severity": "CRITICAL",
+        "object": "users.status",
+        "type": "Missing Constraint",
+        "file": "V1__initial_schema.sql",
+        "line": 32,
+        "issue": "Missing NOT NULL constraint",
+        "init_state": "status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'",
+        "migration_state": "status VARCHAR(20) DEFAULT 'ACTIVE'",
+        "impact": "Allows accidental NULL values despite DEFAULT",
+        "recommendation": "ALTER TABLE users ALTER COLUMN status SET NOT NULL;"
+      },
+      {
+        "id": "1.2",
+        "category": "Schema Constraints",
+        "severity": "HIGH",
+        "object": "matches.ended_by",
+        "type": "Missing Foreign Key Action",
+        "file": "V1__initial_schema.sql",
+        "line": 108,
+        "issue": "Missing ON DELETE SET NULL",
+        "init_state": "ended_by UUID REFERENCES users(id) ON DELETE SET NULL",
+        "migration_state": "ended_by UUID REFERENCES users(id)",
+        "impact": "User deletion fails if user has ended matches",
+        "recommendation": "ALTER TABLE matches DROP CONSTRAINT matches_ended_by_fkey, ADD CONSTRAINT matches_ended_by_fkey FOREIGN KEY (ended_by) REFERENCES users(id) ON DELETE SET NULL;"
+      },
+      {
+        "id": "1.3",
+        "category": "Schema Constraints",
+        "severity": "HIGH",
+        "object": "reports.resolved_by",
+        "type": "Missing Foreign Key Action",
+        "file": "V1__initial_schema.sql",
+        "line": 249,
+        "issue": "Missing ON DELETE SET NULL",
+        "init_state": "resolved_by UUID REFERENCES users(id) ON DELETE SET NULL",
+        "migration_state": "resolved_by UUID REFERENCES users(id)",
+        "impact": "User deletion fails if user has resolved reports",
+        "recommendation": "ALTER TABLE reports DROP CONSTRAINT reports_resolved_by_fkey, ADD CONSTRAINT reports_resolved_by_fkey FOREIGN KEY (resolved_by) REFERENCES users(id) ON DELETE SET NULL;"
+      },
+      {
+        "id": "2.1",
+        "category": "Index Strategy",
+        "severity": "HIGH",
+        "object": "ANALYZE Commands",
+        "type": "Incomplete Statistics",
+        "file": "V2__add_indexes.sql",
+        "line": "149-156",
+        "issue": "Missing ANALYZE for 7 tables",
+        "missing_tables": [
+          "match_scores",
+          "refresh_tokens",
+          "user_blocks",
+          "verification_codes",
+          "interaction_history",
+          "reports",
+          "audit_logs"
+        ],
+        "impact": "Query optimizer lacks statistics, causing suboptimal plans",
+        "recommendation": "Add ANALYZE statements for all 7 missing tables after index creation"
+      },
+      {
+        "id": "2.2",
+        "category": "Index Strategy",
+        "severity": "MEDIUM",
+        "object": "idx_matches_status",
+        "type": "Redundant Index",
+        "file": "V2__add_indexes.sql",
+        "line": "60-61",
+        "issue": "Index is redundant with composite indexes",
+        "redundant_with": [
+          "idx_matches_active_user1: ON matches(user1_id, matched_at DESC) WHERE status = 'ACTIVE'",
+          "idx_matches_active_user2: ON matches(user2_id, matched_at DESC) WHERE status = 'ACTIVE'"
+        ],
+        "impact": "Wastes storage, slows down write operations",
+        "recommendation": "DROP INDEX IF EXISTS idx_matches_status;"
+      },
+      {
+        "id": "3.1",
+        "category": "Documentation",
+        "severity": "MEDIUM",
+        "object": "VIEW Comments",
+        "type": "Missing Documentation",
+        "file": "V3__add_views_and_functions.sql",
+        "line": "10-150",
+        "missing_comments": [
+          "active_users",
+          "user_profiles",
+          "active_matches",
+          "conversation_summaries",
+          "user_stats",
+          "match_stats",
+          "swipe_analytics"
+        ],
+        "impact": "Reduced maintainability",
+        "recommendation": "Add COMMENT statements after each CREATE OR REPLACE VIEW"
+      },
+      {
+        "id": "3.2",
+        "category": "Documentation",
+        "severity": "MEDIUM",
+        "object": "Materialized VIEW Comments",
+        "type": "Missing Documentation",
+        "file": "V3__add_views_and_functions.sql",
+        "line": "157-202",
+        "missing_comments": [
+          "feed_candidates",
+          "daily_swipe_counts",
+          "match_activity"
+        ],
+        "impact": "Missing refresh schedule documentation",
+        "recommendation": "Add COMMENT statements with refresh schedule information"
+      },
+      {
+        "id": "3.3",
+        "category": "Documentation",
+        "severity": "LOW",
+        "object": "refresh_materialized_views()",
+        "type": "Missing Function Comment",
+        "file": "V3__add_views_and_functions.sql",
+        "line": "263-270",
+        "issue": "No COMMENT statement",
+        "recommendation": "COMMENT ON FUNCTION refresh_materialized_views() IS 'Refresh all materialized views - call from scheduler';"
+      },
+      {
+        "id": "3.4",
+        "category": "Code Organization",
+        "severity": "MEDIUM",
+        "object": "Function Placement",
+        "type": "Organizational Issue",
+        "file": "V3__add_views_and_functions.sql",
+        "issue": "refresh_materialized_views placed with all functions instead of with views",
+        "expected_organization": {
+          "views": "03-views.sql",
+          "view_functions": "03-views.sql",
+          "utility_functions": "04-functions.sql"
+        },
+        "recommendation": "Follow init file pattern for V4+ migrations"
+      },
+      {
+        "id": "3.5",
+        "category": "Code Organization",
+        "severity": "MEDIUM",
+        "object": "Function Execution Order",
+        "type": "Informational",
+        "file": "V3__add_views_and_functions.sql",
+        "status": "ACCEPTABLE",
+        "analysis": "No circular dependencies found, order is valid"
+      },
+      {
+        "id": "4.1",
+        "category": "Missing Objects",
+        "severity": "LOW",
+        "object": "Function COMMENT Statements",
+        "type": "Missing Documentation",
+        "file": "V3__add_views_and_functions.sql",
+        "missing_comments_count": 8,
+        "functions": [
+          "calculate_age",
+          "can_users_match",
+          "record_swipe",
+          "get_user_feed",
+          "get_user_matches",
+          "calculate_compatibility",
+          "cleanup_old_data",
+          "get_database_stats"
+        ],
+        "recommendation": "Add COMMENT ON FUNCTION statements for all 8 functions"
+      },
+      {
+        "id": "5.1",
+        "category": "Production Ready",
+        "severity": "INFO",
+        "object": "CONCURRENTLY Keyword",
+        "type": "Validation",
+        "status": "CORRECT ✓",
+        "analysis": "Materialized views correctly use CONCURRENTLY for lock-free refresh"
+      },
+      {
+        "id": "5.2",
+        "category": "Documentation",
+        "severity": "LOW",
+        "object": "Index Comments Quality",
+        "type": "Documentation Quality",
+        "file": "V2__add_indexes.sql vs 02-indexes.sql",
+        "issue": "V2 has minimal comments, init has detailed query pattern documentation",
+        "recommendation": "Improve index comments in future migrations"
+      }
+    ]
+  },
+  "remediation": {
+    "priority": {
+      "P0_Critical": [
+        "1.1: Add NOT NULL to users.status",
+        "1.2: Add ON DELETE SET NULL to matches.ended_by",
+        "1.3: Add ON DELETE SET NULL to reports.resolved_by",
+        "2.1: Add missing ANALYZE statements"
+      ],
+      "P1_High": [
+        "2.2: Remove redundant idx_matches_status",
+        "3.1-3.3: Add VIEW and function documentation"
+      ],
+      "P2_Medium": [
+        "3.4: Reorganize function placement",
+        "5.2: Improve index documentation"
+      ]
+    },
+    "strategy": {
+      "existing_deployments": [
+        "Create V4__audit_fixes_phase1.sql for schema (P0)",
+        "Create V5__audit_fixes_phase2.sql for indexes (P1)",
+        "Create V6__audit_fixes_phase3.sql for docs (P2)"
+      ],
+      "fresh_deployments": [
+        "Use init files (01-04) directly - they have corrections"
+      ]
+    },
+    "files_to_update": [
+      "V1__initial_schema.sql",
+      "V2__add_indexes.sql",
+      "V3__add_views_and_functions.sql"
+    ]
+  },
+  "summary_statistics": {
+    "by_severity": {
+      "CRITICAL": 1,
+      "HIGH": 3,
+      "MEDIUM": 5,
+      "LOW": 4,
+      "INFO": 1
+    },
+    "by_category": {
+      "Schema Constraints": 3,
+      "Index Strategy": 2,
+      "Documentation": 5,
+      "Code Organization": 2,
+      "Production Ready": 1
+    },
+    "by_file": {
+      "V1__initial_schema.sql": 3,
+      "V2__add_indexes.sql": 2,
+      "V3__add_views_and_functions.sql": 8
+    }
+  }
+}

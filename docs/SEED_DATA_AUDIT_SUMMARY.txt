@@ -1,0 +1,189 @@
+==============================================================================
+SEED DATA AUDIT - QUICK SUMMARY
+==============================================================================
+File: /home/user/POC_Dating/db/init/05-seed-data.sql
+Date: 2025-11-18
+
+OVERALL SCORE: 7.5/10 - Functional but needs improvements
+STATUS: ⚠️ Safe to deploy, but incomplete for comprehensive testing
+
+==============================================================================
+CRITICAL FINDINGS
+==============================================================================
+
+1. DATA VOLUME SHORTFALLS
+   ❌ Swipes:    158 / 200+ required (MISSING: 42 swipes = 79% of target)
+   ❌ Messages:   78 / 100+ required (MISSING: 22 messages = 78% of target)
+   ✅ Users:      50 / 50+ required (COMPLETE)
+   ⚠️  Matches:    5 / 10+ needed (MINIMAL: only from mutual likes)
+
+2. MISSING NOTIFICATION COVERAGE
+   ❌ CRITICAL: Only 3 notifications for 50 users (5% coverage)
+      - NEW_MATCH: 2 (Emma & James only)
+      - NEW_MESSAGE: 1 (Emma only)
+      - Missing: SUPER_LIKE (0/23), PROFILE_VIEW (0), SYSTEM (0)
+   Expected: 40-60+ notifications for realistic testing
+
+3. INSUFFICIENT PHOTO DATA
+   ❌ Current: 85 photos max (1-2 per user)
+   ✓ Required: 100-250 photos (2-5 per user as stated)
+   Gap: 15-165 photos short
+
+4. MISSING EDGE CASES
+   ❌ No UNMATCHED status matches (for unmatch testing)
+   ❌ No BLOCKED status matches (for safety feature testing)
+   ❌ No deleted messages (deleted_at is NULL for all)
+
+==============================================================================
+EXCELLENT FINDINGS
+==============================================================================
+
+✅ DATA INTEGRITY: PERFECT (10/10)
+   - All 540+ UUIDs properly formatted (8-4-4-4-12 pattern)
+   - Zero orphaned foreign key references
+   - Zero duplicate records
+   - All self-reference constraints satisfied
+
+✅ CONSTRAINT COMPLIANCE: PERFECT (10/10)
+   - All matches satisfy user1_id < user2_id constraint
+   - No self-swipes (user_id != target_user_id)
+   - No self-matches (user1_id != user2_id)
+   - All UNIQUE constraints respected
+
+✅ TIMESTAMP LOGIC: CORRECT (10/10)
+   - All created_at <= read_at for READ messages
+   - All SENT/DELIVERED messages have read_at = NULL
+   - Conversations progress chronologically
+
+✅ REALISTIC PATTERNS (8/10)
+   - Message status mix: 76% READ, 14% DELIVERED, 10% SENT ✓
+   - Swipe action mix: 71% LIKE, 15% SUPER_LIKE, 14% PASS ✓
+   - Conversation depth: Natural dialogue flow ✓
+   - Gender balance: 25 women + 25 men ✓
+
+✅ SCHEMA ALIGNMENT: COMPLETE (10/10)
+   - All required tables populated
+   - User preferences: All 50 users have preferences
+   - Photos: Primary photo for all, secondary for 35
+   - Recommendations: Generated with CROSS JOIN (deterministic)
+   - Materialized views: Refreshed
+
+==============================================================================
+SPECIFIC IMPROVEMENT RECOMMENDATIONS
+==============================================================================
+
+PRIORITY 1: Add 42+ Swipes (to reach 200+)
+- Add 20 mutual likes (creates 20 matches total)
+- Add 15 one-sided likes
+- Add 10 passes
+- Expand swipe range: 7+ days old to handle feed exclusion tests
+
+PRIORITY 2: Add 22+ Messages (to reach 100+)
+- Add to existing 5 matches: 17 messages
+- Add to new matches (from new mutual likes): 5 messages
+- Include diverse message types (IMAGE, GIF, AUDIO placeholders)
+
+PRIORITY 3: Add ~40 Notifications
+- NEW_MATCH: Both users in each match (10 for 5 matches)
+- NEW_MESSAGE: Recipient of each message (39 unique senders)
+- SUPER_LIKE: Users receiving super-likes (23)
+- Optional: PROFILE_VIEW, SYSTEM, PROMOTION
+
+PRIORITY 4: Expand Photos (add 50-100 photos)
+- 2-3 more photos per user
+- Vary moderation status (APPROVED, PENDING, REJECTED)
+- Vary display_order (0, 1, 2...)
+
+PRIORITY 5: Add Edge Case Matches
+- 1-2 UNMATCHED matches (ended_at != NULL)
+- 1-2 BLOCKED matches (for safety features)
+- Matches across time periods (old → recent)
+
+==============================================================================
+DATA COUNTS DETAIL
+==============================================================================
+
+SWIPES BREAKDOWN (158 total):
+- Mutual likes:     10 swipes (2x per pair = 5 matches)
+- One-sided likes:   5 swipes
+- Initial passes:    3 swipes
+- Women's likes:    60 swipes
+- Men's likes:      60 swipes
+- Additional passes: 20 swipes
+Total: 158 / 200+ target (SHORTFALL: 42)
+
+MESSAGE STATUS (78 total):
+- READ:      59 (75.6%)
+- DELIVERED: 11 (14.1%)
+- SENT:       8 (10.3%)
+
+SWIPE ACTIONS (158 total):
+- LIKE:       112 (70.9%)
+- SUPER_LIKE:  23 (14.6%)
+- PASS:        23 (14.6%)
+
+MATCHES (5 total):
+- Status: All ACTIVE
+- constraint: All satisfy user1_id < user2_id
+- Source: All from mutual likes
+- Gap: Missing UNMATCHED and BLOCKED statuses
+
+NOTIFICATIONS (3 total):
+- NEW_MATCH:   2
+- NEW_MESSAGE: 1
+- Missing: SUPER_LIKE (0/23), PROFILE_VIEW, SYSTEM, PROMOTION
+
+PHOTOS (~85 total):
+- Primary:    50 (all users)
+- Secondary: ~35 (30% with random() > 0.3)
+
+==============================================================================
+VERIFICATION CHECKLIST
+==============================================================================
+
+UUID Formatting:        ✓ PASS - All 8-4-4-4-12 format
+Foreign Key References: ✓ PASS - Zero orphaned references
+Match Constraints:      ✓ PASS - user1_id < user2_id satisfied
+Self-References:        ✓ PASS - No self-swipes/matches
+Timestamp Logic:        ✓ PASS - created_at <= read_at correct
+User Count:             ✓ PASS - 50 users (25F + 25M)
+User Preferences:       ✓ PASS - All 50 users have preferences
+Schema Completeness:    ✓ PASS - All tables populated
+Constraint Compliance:  ✓ PASS - No conflicts detected
+
+Data Volume (Swipes):   ✗ FAIL - 158 / 200+ (79% of target)
+Data Volume (Messages): ✗ FAIL - 78 / 100+ (78% of target)
+Notification Coverage:  ✗ FAIL - 3 / 40+ expected (7.5% of target)
+Photo Coverage:         ✗ FAIL - 85 / 100-250 (35-85% of target)
+Match Status Variety:   ✗ FAIL - Only ACTIVE (missing UNMATCHED, BLOCKED)
+
+==============================================================================
+DEPLOYMENT DECISION
+==============================================================================
+
+✓ SAFE TO DEPLOY AS-IS
+  - No data corruption
+  - No integrity violations
+  - Schema properly initialized
+  - Provides functional MVP test data
+
+⚠️ RECOMMENDED IMPROVEMENTS BEFORE LOAD TESTING
+  1. Expand swipes to 200+
+  2. Add 100+ messages
+  3. Generate 40+ notifications
+  4. Add 50-100 photos
+  5. Include edge-case matches (UNMATCHED, BLOCKED)
+
+⏱️ TIMELINE IMPACT
+  - Deployment: No blocker (deploy with confidence)
+  - Testing: Use as-is for MVP validation
+  - Load testing: Add improvements first for realistic scenarios
+  - Time estimate: 1-2 hours to implement all improvements
+
+==============================================================================
+FULL REPORT LOCATION
+==============================================================================
+/home/user/POC_Dating/docs/SEED_DATA_AUDIT.md
+(Comprehensive 8-section audit with detailed recommendations)
+
+==============================================================================

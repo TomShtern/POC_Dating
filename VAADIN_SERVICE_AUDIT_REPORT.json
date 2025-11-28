@@ -1,0 +1,428 @@
+{
+  "services": [
+    {
+      "file": "UserService.java",
+      "issues": [
+        {
+          "severity": "CRITICAL",
+          "line": 29,
+          "description": "HTTP call to userClient.login() not wrapped in try-catch. Feign exceptions will propagate unhandled",
+          "fix": "Wrap in try-catch block and handle FeignException or other HttpClientException. Provide meaningful error message"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 47,
+          "description": "HTTP call to userClient.register() not wrapped in try-catch. Feign exceptions will propagate unhandled",
+          "fix": "Wrap in try-catch block and handle FeignException. Consider specific exception types (validation, conflict, etc)"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 71,
+          "description": "HTTP call to userClient.getUser() not wrapped in try-catch. No error handling for network failures",
+          "fix": "Add try-catch block with fallback or retry logic for transient failures"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 85,
+          "description": "HTTP call to userClient.updateUser() not wrapped in try-catch. No error handling for update failures",
+          "fix": "Wrap in try-catch and handle potential validation/permission errors"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 107,
+          "description": "HTTP call to userClient.getPreferences() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 121,
+          "description": "HTTP call to userClient.updatePreferences() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 136,
+          "description": "HTTP call to userClient.changePassword() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block. Handle specific errors (current password invalid, service unavailable, etc)"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 145,
+          "description": "HTTP call to userClient.forgotPassword() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 154,
+          "description": "HTTP call to userClient.resetPassword() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 169,
+          "description": "HTTP call to userClient.deleteAccount() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling. Critical operation - needs confirmation"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 186,
+          "description": "HTTP call to userClient.blockUser() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 201,
+          "description": "HTTP call to userClient.unblockUser() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 216,
+          "description": "HTTP call to userClient.getBlockedUsers() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 236,
+          "description": "HTTP call to userClient.reportUser() not wrapped in try-catch. No error handling",
+          "fix": "Add try-catch block with error handling"
+        },
+        {
+          "severity": "HIGH",
+          "line": 29,
+          "description": "No null check on AuthResponse returned from userClient.login(). Response could be null",
+          "fix": "Add null check: if (response == null) throw new IllegalStateException(\"Invalid response from server\")"
+        },
+        {
+          "severity": "HIGH",
+          "line": 33,
+          "description": "No null check on response.getUser() before accessing. Could cause NullPointerException",
+          "fix": "Add null check: if (response.getUser() == null) throw new IllegalStateException(\"User data missing from response\")"
+        },
+        {
+          "severity": "HIGH",
+          "line": 47,
+          "description": "No null check on AuthResponse returned from userClient.register(). Response could be null",
+          "fix": "Add null check on response and response.getUser()"
+        },
+        {
+          "severity": "HIGH",
+          "line": 51,
+          "description": "No null check on response.getUser() before accessing user data",
+          "fix": "Add null check for response.getUser() before accessing"
+        },
+        {
+          "severity": "HIGH",
+          "line": 71,
+          "description": "No null check on User returned from userClient.getUser(). Could be null",
+          "fix": "Add null check: if (user == null) throw UserNotFoundException(userId)"
+        },
+        {
+          "severity": "HIGH",
+          "line": 85,
+          "description": "No null check on User returned from userClient.updateUser(). Could be null",
+          "fix": "Add null check on returned user object"
+        },
+        {
+          "severity": "HIGH",
+          "line": 107,
+          "description": "No null check on User returned from userClient.getPreferences(). Could be null",
+          "fix": "Add null check on returned user object"
+        },
+        {
+          "severity": "HIGH",
+          "line": 121,
+          "description": "No null check on User returned from userClient.updatePreferences(). Could be null",
+          "fix": "Add null check on returned user object"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 67,
+          "description": "Token null check present but uses generic IllegalStateException. Should use custom exception for security",
+          "fix": "Create custom exception: class NotAuthenticatedException extends RuntimeException. Use throughout"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 154,
+          "description": "resetPassword logs 'Password reset completed' without logging email or user identifier for audit trail",
+          "fix": "Log reset completion with email/reset token identifier for security audit trail"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 156,
+          "description": "No return of reset status/confirmation. View cannot distinguish success from failure in same way",
+          "fix": "Consider returning a boolean or status message for better error handling in views"
+        },
+        {
+          "severity": "LOW",
+          "line": 27,
+          "description": "Debug log includes email address. In production, this could expose user information in logs",
+          "fix": "Use masked email: email.replaceAll(\"(^[^@]{2})[^@]*(@.*)\", \"$1***$2\") for debug logging"
+        }
+      ],
+      "status": "NEEDS_FIXES"
+    },
+    {
+      "file": "MatchService.java",
+      "issues": [
+        {
+          "severity": "CRITICAL",
+          "line": 37,
+          "description": "HTTP call to matchClient.getNextProfile() not wrapped in try-catch. No error handling for network failures",
+          "fix": "Wrap in try-catch block with error handling and potential retry logic"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 51,
+          "description": "HTTP call to matchClient.recordSwipe() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 71,
+          "description": "HTTP call to matchClient.getMyMatches() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 84,
+          "description": "HTTP call to matchClient.getMatch() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 104,
+          "description": "HTTP call to matchClient.unmatch() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 118,
+          "description": "HTTP call to matchClient.undoLastSwipe() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "HIGH",
+          "line": 37,
+          "description": "No null check on User returned from matchClient.getNextProfile(). Could be null",
+          "fix": "Return Optional<User> or null-check with default handling (no more profiles)"
+        },
+        {
+          "severity": "HIGH",
+          "line": 51,
+          "description": "No null check on SwipeResponse returned from matchClient.recordSwipe(). Could be null",
+          "fix": "Add null check before accessing response.isMatch()"
+        },
+        {
+          "severity": "HIGH",
+          "line": 53,
+          "description": "No null check on response object before accessing response.isMatch(). Could cause NPE",
+          "fix": "Add null check: if (response != null && response.isMatch())"
+        },
+        {
+          "severity": "HIGH",
+          "line": 71,
+          "description": "No null check on List<Match> returned from matchClient.getMyMatches(). Could be null",
+          "fix": "Add null check or return empty list: return Objects.requireNonNullElseGet(result, Collections::emptyList)"
+        },
+        {
+          "severity": "HIGH",
+          "line": 84,
+          "description": "No null check on Match returned from matchClient.getMatch(). Could be null",
+          "fix": "Add null check and throw MatchNotFoundException if null"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 33,
+          "description": "Token null check present but uses generic IllegalStateException. Should use custom exception",
+          "fix": "Create custom exception: NotAuthenticatedException extends RuntimeException"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 54,
+          "description": "Match notification only logs targetUserId without current user ID. Should include both for audit trail",
+          "fix": "Enhance logging: log.info(\"Match created between {} and {}\", currentUserId, targetUserId)"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 91,
+          "description": "Method getMatchDetails() is redundant alias for getMatch(). Inconsistent API design",
+          "fix": "Remove redundant method or mark one as deprecated with clear documentation"
+        }
+      ],
+      "status": "NEEDS_FIXES"
+    },
+    {
+      "file": "ChatService.java",
+      "issues": [
+        {
+          "severity": "CRITICAL",
+          "line": 36,
+          "description": "HTTP call to chatClient.getConversations() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 49,
+          "description": "HTTP call to chatClient.getMessages() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 63,
+          "description": "HTTP call to chatClient.sendMessage() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "CRITICAL",
+          "line": 76,
+          "description": "HTTP call to chatClient.getConversation() not wrapped in try-catch. No error handling",
+          "fix": "Wrap in try-catch block with error handling"
+        },
+        {
+          "severity": "HIGH",
+          "line": 36,
+          "description": "No null check on List<Conversation> returned from chatClient.getConversations(). Could be null",
+          "fix": "Add null check or return empty list: return Objects.requireNonNullElseGet(result, Collections::emptyList)"
+        },
+        {
+          "severity": "HIGH",
+          "line": 49,
+          "description": "No null check on List<Message> returned from chatClient.getMessages(). Could be null",
+          "fix": "Add null check or return empty list"
+        },
+        {
+          "severity": "HIGH",
+          "line": 63,
+          "description": "No null check on Message returned from chatClient.sendMessage(). Could be null",
+          "fix": "Add null check before returning"
+        },
+        {
+          "severity": "HIGH",
+          "line": 76,
+          "description": "No null check on Conversation returned from chatClient.getConversation(). Could be null",
+          "fix": "Add null check and throw ConversationNotFoundException if null"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 30,
+          "description": "Token null check present but uses generic IllegalStateException. Inconsistent with other services",
+          "fix": "Use custom NotAuthenticatedException for consistency across all services"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 86,
+          "description": "sendTypingIndicator() silently returns on null token (line 86) instead of throwing exception like other methods",
+          "fix": "Either throw exception for consistency or document this special behavior in JavaDoc"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 89,
+          "description": "INCONSISTENT ERROR HANDLING: Only sendTypingIndicator() has try-catch (line 89-94). Other methods lack try-catch",
+          "fix": "Apply same error handling pattern to all methods for consistency"
+        },
+        {
+          "severity": "MEDIUM",
+          "line": 93,
+          "description": "Typing indicator error logged at DEBUG level. Non-critical failures should still log at WARN level",
+          "fix": "Change to log.warn() for better visibility of non-critical issues"
+        },
+        {
+          "severity": "LOW",
+          "line": 93,
+          "description": "Only logs ex.getMessage(). Should include full stack trace for debugging",
+          "fix": "Use log.debug(..., ex) to include full stack trace"
+        }
+      ],
+      "status": "NEEDS_FIXES"
+    },
+    {
+      "file": "UserServiceClient.java",
+      "issues": [],
+      "status": "OK"
+    },
+    {
+      "file": "MatchServiceClient.java",
+      "issues": [],
+      "status": "OK"
+    },
+    {
+      "file": "ChatServiceClient.java",
+      "issues": [],
+      "status": "OK"
+    },
+    {
+      "file": "RecommendationServiceClient.java",
+      "issues": [],
+      "status": "OK"
+    }
+  ],
+  "summary": {
+    "total_issues": 59,
+    "critical": 20,
+    "high": 23,
+    "medium": 14,
+    "low": 2
+  },
+  "detailed_findings": {
+    "error_handling": {
+      "status": "CRITICAL_GAPS",
+      "description": "Services have NO try-catch blocks around HTTP calls. Feign exceptions propagate unhandled to views.",
+      "affected_files": ["UserService.java", "MatchService.java", "ChatService.java"],
+      "pattern_exception": "ChatService.sendTypingIndicator() is the ONLY method with error handling"
+    },
+    "null_safety": {
+      "status": "HIGH_RISK",
+      "description": "Systematic lack of null checks on responses from Feign clients. Could cause NullPointerExceptions.",
+      "affected_services": ["All 3 services"],
+      "pattern": "No validation of response objects or nested properties (e.g., response.getUser())"
+    },
+    "logging": {
+      "status": "PARTIAL",
+      "description": "@Slf4j annotation present in all services. Logging is adequate for main flows. Issues only with sensitive data exposure.",
+      "concerns": ["Email addresses in debug logs", "Stack trace omission in error logging"]
+    },
+    "authentication": {
+      "status": "GOOD",
+      "description": "Token authentication properly handled via SecurityUtils. Checks are present before API calls.",
+      "notes": "Could use custom NotAuthenticatedException for better error semantics"
+    },
+    "api_consistency": {
+      "status": "MEDIUM",
+      "description": "Consistent method naming. One redundancy found (getMatch vs getMatchDetails in MatchService)",
+      "issues": ["MatchService.getMatchDetails() is redundant", "Return types inconsistent (null vs empty list)"]
+    },
+    "exception_handling": {
+      "status": "POOR",
+      "description": "No custom exceptions defined. All methods throw generic exceptions. No semantic distinction between error types.",
+      "recommendation": "Create custom exceptions: NotAuthenticatedException, ServiceUnavailableException, ValidationException"
+    },
+    "retry_logic": {
+      "status": "MISSING",
+      "description": "No retry logic for transient failures. Network-sensitive operations like getNextProfile have no fallback.",
+      "recommendation": "Implement @Retry annotation (Resilience4j) for transient failures. Consider circuit breaker for service degradation."
+    },
+    "caching": {
+      "status": "NOT_APPLICABLE",
+      "description": "Services are wrappers around Feign clients. Caching should happen at Feign client level or in backend services.",
+      "note": "ProfileCards and match lists are frequently accessed and could benefit from client-side caching"
+    }
+  },
+  "recommendations": {
+    "immediate_action": [
+      "Add try-catch blocks to all HTTP client calls in services",
+      "Add null checks on all response objects",
+      "Create custom exception classes for different error scenarios"
+    ],
+    "short_term": [
+      "Add Resilience4j @Retry annotation for transient failures",
+      "Implement proper error logging with stack traces",
+      "Add @Cacheable for frequently accessed endpoints"
+    ],
+    "long_term": [
+      "Consider implementing circuit breaker pattern for resilience",
+      "Add distributed tracing for debugging service interactions",
+      "Implement exponential backoff for retries"
+    ]
+  }
+}

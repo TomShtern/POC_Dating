@@ -1,136 +1,187 @@
 server:
   port: 8083
+# Chat Service Configuration
+#
+# PURPOSE: Spring Boot application properties for Chat Service
+#
+# RESPONSIBILITIES:
+# - Real-time messaging via WebSocket/STOMP
+# - Message persistence and retrieval
+# - Conversation management
+# - Event publishing/consuming
+
+# ========================================
+# SERVER CONFIGURATION
+# ========================================
+server:
+  port: 8083
+  shutdown: graceful
+  error:
+    include-message: always
+    include-stacktrace: on-param
+    include-exception: false
 
 spring:
   application:
     name: chat-service
+    version: 1.0.0
 
+  # ========================================
+  # DATABASE CONFIGURATION
+  # ========================================
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_db}
     username: ${POSTGRES_USER:dating_user}
-    password: ${POSTGRES_PASSWORD:dating_password}
-    driver-class-name: org.postgresql.Driver
+    password: ${POSTGRES_PASSWORD:changeme123}
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      idle-timeout: 300000
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
       connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: false
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
 
+  # ========================================
+  # REDIS CONFIGURATION (Caching & Sessions)
+  # ========================================
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
-      timeout: 2000ms
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 2000ms
 
+  cache:
+    type: redis
+    redis:
+      time-to-live: ${REDIS_TTL_MINUTES:60}m
+
+  # ========================================
+  # RABBITMQ CONFIGURATION (Events)
+  # ========================================
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USER:guest}
     password: ${RABBITMQ_PASSWORD:guest}
-    virtual-host: /
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 10000
+    publisher-confirms: true
+    publisher-returns: true
 
-  cache:
-    type: redis
-    redis:
-      time-to-live: 3600000  # 1 hour default
+  # ========================================
+  # JACKSON CONFIGURATION (JSON)
+  # ========================================
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
 
-  # WebSocket configuration
+# ========================================
+# CHAT SERVICE CONFIGURATION
+# ========================================
+chat:
   websocket:
-    max-text-message-size: 65536
-    max-binary-message-size: 65536
+    endpoint: /ws
+    application-destination-prefix: /app
+    user-destination-prefix: /user
+    broker-destination: /queue,/topic
+  message:
+    max-length: 1000
+    page-size: 50
+  conversation:
+    page-size: 20
 
-# JWT configuration (same secret as User Service)
-security:
-  jwt:
-    secret: ${JWT_SECRET:change-me-with-a-secure-32-character-key-here}
+# ========================================
+# LOGGING CONFIGURATION
+# ========================================
+logging:
+  level:
+    root: ${LOG_LEVEL:INFO}
+    com.dating: DEBUG
+    org.springframework.web: INFO
+    org.springframework.websocket: DEBUG
+    org.hibernate: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/chat-service.log
+    max-size: 10MB
+    max-history: 10
 
-# Actuator endpoints
+# ========================================
+# ACTUATOR (Health Checks, Metrics)
+# ========================================
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus
+        include: health,metrics,info,caches,cacheStats,prometheus
+      base-path: /actuator
   endpoint:
     health:
       show-details: always
+    caches:
+      enabled: true
+  metrics:
+    export:
+      simple:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
 
-# Logging
+---
+# ========================================
+# PROFILE: DEV
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
 logging:
   level:
-    root: INFO
-    com.dating.chat: DEBUG
-    org.springframework.messaging: DEBUG
-    org.springframework.web.socket: DEBUG
-  pattern:
-    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    root: DEBUG
+    org.springframework.web: DEBUG
 
-# Custom application properties
-app:
-  chat:
-    # Maximum messages to return in history
-    max-history-size: 100
-    # Maximum page size for pagination
-    max-page-size: 100
-    # Cache TTL for messages (seconds)
-    message-cache-ttl: 3600
-    # Typing indicator timeout (seconds)
-    typing-timeout: 5
-    # Presence tracking TTL (seconds)
-    presence:
-      ttl-seconds: 1800
+---
+# ========================================
+# PROFILE: PROD
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
 
-  websocket:
-    # Allowed origins for WebSocket connections (comma-separated)
-    # Set to specific domains in production
-    allowed-origins: ${WEBSOCKET_ALLOWED_ORIGINS:http://localhost:8090,http://localhost:3000}
-    # Broker type: simple (in-memory) or stomp (RabbitMQ relay)
-    broker-type: ${WEBSOCKET_BROKER_TYPE:simple}
-
-  rabbitmq:
-    exchange: match.exchange
-    # STOMP broker relay port for WebSocket
-    stomp-port: ${RABBITMQ_STOMP_PORT:61613}
-    queues:
-      match-created: chat.match.created.queue
-      match-ended: chat.match.ended.queue
-
-  # Rate limiting configuration
-  ratelimit:
-    enabled: ${RATE_LIMIT_ENABLED:true}
-    # Maximum messages per second per user
-    messages-per-second: 10
-    # Time window in seconds
-    window-seconds: 1
-    # Allow burst (multiplier for base rate)
-    burst-multiplier: 1.5
-
-  # File attachments configuration
-  attachments:
-    enabled: ${FILE_ATTACHMENTS_ENABLED:true}
-    # Maximum file size in bytes (10MB)
-    max-file-size: 10485760
-    # Allowed MIME types
-    allowed-types: image/jpeg,image/png,image/gif,video/mp4,audio/mpeg
-    # Storage path (use S3 in production)
-    storage-path: ${ATTACHMENT_STORAGE_PATH:/tmp/chat-attachments}
-
-  # Push notifications configuration
-  push:
-    enabled: ${PUSH_NOTIFICATIONS_ENABLED:false}
-    # Firebase configuration (for mobile)
-    firebase:
-      credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
-    # Web push (VAPID)
-    vapid:
-      public-key: ${VAPID_PUBLIC_KEY:}
-      private-key: ${VAPID_PRIVATE_KEY:}
+logging:
+  level:
+    root: WARN

@@ -35,7 +35,7 @@ services:
 
 # Security
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-change-in-production-please-use-env-variable}
+  secret: ${JWT_SECRET:}
 
 # Logging
 logging:
@@ -45,12 +45,28 @@ logging:
     org.springframework.security: DEBUG
     org.springframework.cloud.openfeign: DEBUG
 
-# Actuator
+# Actuator - Health checks and metrics
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health, info, metrics, prometheus
+      base-path: /actuator
   endpoint:
     health:
-      show-details: always
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    redis:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      environment: ${ENVIRONMENT:dev}
+
+info:
+  app:
+    name: ${spring.application.name}
+    version: 1.0.0
+    description: Vaadin UI for POC Dating Application
