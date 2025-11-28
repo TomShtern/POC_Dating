@@ -43,17 +43,11 @@ public interface ChatServiceClient {
             @RequestBody SendMessageRequest request,
             @RequestHeader("X-User-Id") UUID userId);
 
-    /**
-     * Mark all messages in a conversation as read.
-     */
-    @PostMapping("/api/chat/conversations/{conversationId}/read")
-    Integer markAsRead(
-            @PathVariable UUID conversationId,
-            @RequestHeader("X-User-Id") UUID userId);
+    @GetMapping("/api/chat/conversations/{conversationId}")
+    Conversation getConversation(@PathVariable String conversationId,
+                                 @RequestHeader("Authorization") String token);
 
-    /**
-     * Get unread message count.
-     */
-    @GetMapping("/api/chat/messages/unread/count")
-    Long getUnreadCount(@RequestHeader("X-User-Id") UUID userId);
+    @PostMapping("/api/chat/conversations/{conversationId}/typing")
+    void sendTypingIndicator(@PathVariable String conversationId,
+                            @RequestHeader("Authorization") String token);
 }

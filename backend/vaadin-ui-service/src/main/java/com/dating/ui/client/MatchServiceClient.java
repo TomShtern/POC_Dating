@@ -48,15 +48,11 @@ public interface MatchServiceClient {
      * Get match details.
      */
     @GetMapping("/api/matches/{matchId}")
-    Match getMatch(
-            @PathVariable UUID matchId,
-            @RequestHeader("X-User-Id") UUID userId);
+    Match getMatch(@PathVariable String matchId, @RequestHeader("Authorization") String token);
 
-    /**
-     * Unmatch (end a match).
-     */
     @DeleteMapping("/api/matches/{matchId}")
-    void unmatch(
-            @PathVariable UUID matchId,
-            @RequestHeader("X-User-Id") UUID userId);
+    void unmatch(@PathVariable String matchId, @RequestHeader("Authorization") String token);
+
+    @PostMapping("/api/matches/undo")
+    void undoLastSwipe(@RequestHeader("Authorization") String token);
 }
