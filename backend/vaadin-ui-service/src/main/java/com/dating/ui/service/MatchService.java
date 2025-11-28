@@ -9,7 +9,9 @@ import com.dating.ui.dto.User;
 import com.dating.ui.exception.ServiceException;
 import com.dating.ui.security.SecurityUtils;
 import feign.FeignException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -95,7 +97,11 @@ public class MatchService {
                 throw new ServiceException("Failed to record swipe");
             }
 
+            // Only count successful swipes
+            getSwipeCounter(swipeType).increment();
+
             if (response.isMatch()) {
+                matchCounter.increment();
                 log.info("Match created! User: {} matched with: {}",
                     SecurityUtils.getCurrentUserId(), targetUserId);
             }

@@ -7,7 +7,9 @@ import com.dating.ui.dto.SendMessageRequest;
 import com.dating.ui.exception.ServiceException;
 import com.dating.ui.security.SecurityUtils;
 import feign.FeignException;
-import lombok.RequiredArgsConstructor;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -108,6 +110,8 @@ public class ChatService {
             if (message == null) {
                 throw new ServiceException("Failed to send message");
             }
+            // Only count successfully sent messages
+            messagesSentCounter.increment();
             return message;
         } catch (FeignException e) {
             log.error("Failed to send message to conversation: {} user: {}",
