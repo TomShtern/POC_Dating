@@ -34,12 +34,10 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_login TIMESTAMP,
-    -- Generated column for age (modern PostgreSQL feature)
-    age INT GENERATED ALWAYS AS (
-        CASE WHEN date_of_birth IS NOT NULL
-        THEN EXTRACT(YEAR FROM AGE(date_of_birth))::INT
-        ELSE NULL END
-    ) STORED,
+    -- Age column (calculated from date_of_birth)
+    -- Note: Cannot be GENERATED ALWAYS AS because AGE() is not immutable
+    -- Calculate with: EXTRACT(YEAR FROM AGE(CURRENT_DATE, date_of_birth))
+    age INT,
     CONSTRAINT valid_email CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}$'),
     CONSTRAINT valid_status CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DELETED', 'PENDING')),
     CONSTRAINT valid_gender CHECK (gender IN ('MALE', 'FEMALE', 'NON_BINARY', 'OTHER'))

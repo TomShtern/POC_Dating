@@ -721,12 +721,12 @@ ON CONFLICT (blocker_id, blocked_id) DO NOTHING;
 -- ========================================
 -- REPORTS (Abuse reports)
 -- ========================================
-INSERT INTO reports (reporter_id, reported_user_id, match_id, reason, description, status, created_at)
+INSERT INTO reports (reporter_id, reported_user_id, reason, description, status, created_at)
 VALUES
     -- Mia reported Elijah for harassment
-    ('11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222226', '33333333-3333-3333-3333-333333333336', 'HARASSMENT', 'User sent multiple inappropriate messages after I asked them to stop. Made me uncomfortable with their language and persistence.', 'UNDER_REVIEW', NOW() - INTERVAL '2 days'),
+    ('11111111-1111-1111-1111-111111111116', '22222222-2222-2222-2222-222222222226', 'HARASSMENT', 'User sent multiple inappropriate messages after I asked them to stop. Made me uncomfortable with their language and persistence.', 'REVIEWING', NOW() - INTERVAL '2 days'),
     -- Charlotte reported Alexander for spam-like behavior
-    ('11111111-1111-1111-1111-111111111117', '22222222-2222-2222-2222-222222222230', NULL, 'SPAM', 'User sent 50+ messages in a short period after being ignored. Appears to be spamming or automated behavior.', 'RESOLVED', NOW() - INTERVAL '4 days')
+    ('11111111-1111-1111-1111-111111111117', '22222222-2222-2222-2222-222222222230', 'SPAM', 'User sent 50+ messages in a short period after being ignored. Appears to be spamming or automated behavior.', 'RESOLVED', NOW() - INTERVAL '4 days')
 ON CONFLICT DO NOTHING;
 
 -- ========================================
