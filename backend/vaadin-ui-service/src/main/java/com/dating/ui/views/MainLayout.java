@@ -9,6 +9,8 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.notification.Notification;
+import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -68,14 +70,25 @@ public class MainLayout extends AppLayout {
         nav.addItem(new SideNavItem("Discover", SwipeView.class, VaadinIcon.HEART.create()));
         nav.addItem(new SideNavItem("Matches", MatchesView.class, VaadinIcon.USERS.create()));
         nav.addItem(new SideNavItem("Messages", MessagesView.class, VaadinIcon.CHAT.create()));
+        nav.addItem(new SideNavItem("Notifications", NotificationsView.class, VaadinIcon.BELL.create()));
         nav.addItem(new SideNavItem("Profile", ProfileView.class, VaadinIcon.USER.create()));
+        nav.addItem(new SideNavItem("Preferences", PreferencesView.class, VaadinIcon.SLIDER.create()));
+        nav.addItem(new SideNavItem("Settings", SettingsView.class, VaadinIcon.COG.create()));
+        nav.addItem(new SideNavItem("Blocked Users", BlockedUsersView.class, VaadinIcon.BAN.create()));
+        nav.addItem(new SideNavItem("About", AboutView.class, VaadinIcon.INFO_CIRCLE.create()));
 
         addToDrawer(nav);
     }
 
     private void handleLogout() {
-        userService.logout();
-        UI.getCurrent().navigate(LoginView.class);
-        UI.getCurrent().getPage().reload();
+        try {
+            userService.logout();
+            UI.getCurrent().navigate(LoginView.class);
+            UI.getCurrent().getPage().reload();
+        } catch (Exception ex) {
+            Notification.show("Logout failed. Please try again.",
+                3000, Notification.Position.TOP_CENTER)
+                .addThemeVariants(NotificationVariant.LUMO_ERROR);
+        }
     }
 }

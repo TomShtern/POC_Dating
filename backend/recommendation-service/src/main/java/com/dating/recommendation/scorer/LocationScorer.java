@@ -128,8 +128,8 @@ public class LocationScorer implements CompatibilityScorer {
                 candidate.getLatitude(), candidate.getLongitude()
         );
 
-        log.trace("Distance between user {} and candidate {}: {:.2f} km",
-                user.getId(), candidate.getId(), distance);
+        log.trace("Distance between user {} and candidate {}: {} km",
+                user.getId(), candidate.getId(), String.format("%.2f", distance));
 
         // =====================================================================
         // STEP 3: Get user's maximum distance preference
@@ -166,15 +166,15 @@ public class LocationScorer implements CompatibilityScorer {
         //   return 0.0;                        // Too far
         // =====================================================================
         if (distance >= maxDistance) {
-            log.trace("Candidate {} is beyond max distance ({:.1f} >= {:.1f})",
-                    candidate.getId(), distance, maxDistance);
+            log.trace("Candidate {} is beyond max distance ({} >= {})",
+                    candidate.getId(), String.format("%.1f", distance), String.format("%.1f", maxDistance));
             return 0.0;
         }
 
         double score = 1.0 - (distance / maxDistance);
 
-        log.trace("Location score for candidate {}: {:.3f} (distance={:.1f}km, max={:.1f}km)",
-                candidate.getId(), score, distance, maxDistance);
+        log.trace("Location score for candidate {}: {} (distance={}km, max={}km)",
+                candidate.getId(), String.format("%.3f", score), String.format("%.1f", distance), String.format("%.1f", maxDistance));
 
         return score;
     }

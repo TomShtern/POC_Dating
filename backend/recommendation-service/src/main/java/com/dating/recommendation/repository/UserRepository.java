@@ -1,6 +1,7 @@
 package com.dating.recommendation.repository;
 
 import com.dating.recommendation.model.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -63,6 +64,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @param excludeIds Set of user IDs to exclude (already swiped, blocked, self)
      * @return List of candidate users
      */
+    @EntityGraph(attributePaths = {"genderPreferences", "interests"})
     @Query("SELECT u FROM User u WHERE u.active = true AND u.id NOT IN :excludeIds")
     List<User> findCandidates(@Param("excludeIds") Set<UUID> excludeIds);
 
@@ -86,6 +88,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @param genderPreferences User's desired genders
      * @return Pre-filtered candidate list
      */
+    @EntityGraph(attributePaths = {"genderPreferences", "interests"})
     @Query("""
            SELECT u FROM User u
            WHERE u.active = true
@@ -110,6 +113,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
      * @param activeSinceDays Number of days to look back
      * @return List of recently active users
      */
+    @EntityGraph(attributePaths = {"genderPreferences", "interests"})
     @Query("""
            SELECT u FROM User u
            WHERE u.active = true

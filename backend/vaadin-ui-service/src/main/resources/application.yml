@@ -35,7 +35,7 @@ services:
 
 # Security
 jwt:
-  secret: ${JWT_SECRET:your-secret-key-change-in-production-please-use-env-variable}
+  secret: ${JWT_SECRET:}
 
 # Logging
 logging:

@@ -1,267 +1,198 @@
-# ==============================================================================
-# RECOMMENDATION SERVICE CONFIGURATION
-# ==============================================================================
+# Recommendation Service Configuration
 #
-# This file configures the Recommendation Service, including the pluggable
-# scoring algorithm weights and thresholds.
+# PURPOSE: Spring Boot application properties for Recommendation Service
 #
-# HOW TO MODIFY ALGORITHM:
-# - To make a factor more important: increase its weight
-# - To disable a factor: set weight to 0
-# - Weights don't need to sum to 1.0 (they're normalized automatically)
-#
-# EXAMPLE PROFILES:
-#
-# Profile: "Location First" (for users who want nearby matches)
-#   location.weight: 0.5
-#   age.weight: 0.2
-#   interests.weight: 0.2
-#   activity.weight: 0.1
-#
-# Profile: "Interests First" (for users who want compatible matches)
-#   interests.weight: 0.5
-#   age.weight: 0.2
-#   location.weight: 0.2
-#   activity.weight: 0.1
-#
-# ==============================================================================
+# PORT: 8084 (internal only, accessed through API Gateway)
 
-# ------------------------------------------------------------------------------
-# Server Configuration
-# ------------------------------------------------------------------------------
+# ========================================
+# SERVER CONFIGURATION
+# ========================================
 server:
-  port: 8084  # Recommendation service port
+  port: 8084
+  shutdown: graceful
+  error:
+    include-message: always
+    include-stacktrace: on-param
+    include-exception: false
 
-# ------------------------------------------------------------------------------
-# Spring Configuration
-# ------------------------------------------------------------------------------
 spring:
   application:
     name: recommendation-service
+    version: 1.0.0
 
-  # ----------------------------------------------------------------------------
-  # Database Configuration (PostgreSQL)
-  # ----------------------------------------------------------------------------
-  # Connects to shared database with User Service
+  # ========================================
+  # DATABASE CONFIGURATION
+  # ========================================
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/dating_db}
-    username: ${DATABASE_USERNAME:dating_user}
-    password: ${DATABASE_PASSWORD:dating_password}
-    driver-class-name: org.postgresql.Driver
-
-    # Connection pool settings
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:dating_db}
+    username: ${POSTGRES_USER:dating_user}
+    password: ${POSTGRES_PASSWORD:changeme123}
     hikari:
-      maximum-pool-size: 10
-      minimum-idle: 5
-      connection-timeout: 30000
-      idle-timeout: 600000
-      max-lifetime: 1800000
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:20}
+      minimum-idle: ${DB_POOL_MIN_SIZE:5}
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 1200000
 
-  # ----------------------------------------------------------------------------
-  # JPA Configuration
-  # ----------------------------------------------------------------------------
   jpa:
     hibernate:
-      ddl-auto: validate  # Don't auto-create tables (User Service manages schema)
-    show-sql: false       # Set to true for debugging
+      ddl-auto: validate
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
 
-  # ----------------------------------------------------------------------------
-  # Redis Configuration (Caching)
-  # ----------------------------------------------------------------------------
-  redis:
-    host: ${REDIS_HOST:localhost}
-    port: ${REDIS_PORT:6379}
-    password: ${REDIS_PASSWORD:}
-    timeout: 5000ms
+  # ========================================
+  # REDIS CONFIGURATION (Caching)
+  # ========================================
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 5000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+          max-wait: 2000ms
 
-  # ----------------------------------------------------------------------------
-  # Cache Configuration
-  # ----------------------------------------------------------------------------
   cache:
     type: redis
     redis:
-      time-to-live: 86400000  # 24 hours in milliseconds
-      cache-null-values: false
+      time-to-live: ${REDIS_TTL_MINUTES:1440}m
 
-# ==============================================================================
-# RECOMMENDATION ALGORITHM CONFIGURATION
-# ==============================================================================
-# This section controls the scoring algorithm behavior.
-# Modify these values to tune recommendations without code changes.
-# ==============================================================================
+  # ========================================
+  # RABBITMQ CONFIGURATION (Events)
+  # ========================================
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    connection-timeout: 10000
+    publisher-confirms: true
+    publisher-returns: true
 
+  # ========================================
+  # JACKSON CONFIGURATION (JSON)
+  # ========================================
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: true
+    deserialization:
+      fail-on-unknown-properties: false
+
+  # ========================================
+  # CLOUD CONFIGURATION (Feign)
+  # ========================================
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connect-timeout: 5000
+            read-timeout: 5000
+            logger-level: basic
+
+# ========================================
+# SERVICE URLS
+# ========================================
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
+
+# ========================================
+# RECOMMENDATION CONFIGURATION
+# ========================================
 recommendation:
-  # ----------------------------------------------------------------------------
-  # General Settings
-  # ----------------------------------------------------------------------------
+  default-algorithm: v1
+  cache-ttl-hours: 24
+  default-limit: 10
+  max-limit: 50
+  scoring:
+    profile-completeness-weight: 10
+    preference-match-weight: 40
+    activity-weight: 20
+    ml-prediction-weight: 30
 
-  # Number of recommendations to return per request
-  # Range: 10-50, Default: 20
-  # CONSIDERATIONS:
-  # - Too few: User runs out quickly
-  # - Too many: UI performance issues
-  batch-size: 20
-
-  # Minimum score to include in results (0.0 to 1.0)
-  # Candidates below this score are filtered out
-  # Range: 0.1-0.5, Default: 0.3
-  # CONSIDERATIONS:
-  # - Too low: Shows poor matches
-  # - Too high: May not have enough candidates
-  minimum-score: 0.3
-
-  # How often to refresh recommendations (in hours)
-  # Cache TTL for recommendations
-  refresh-interval-hours: 24
-
-  # ----------------------------------------------------------------------------
-  # Scorer Weights
-  # ----------------------------------------------------------------------------
-  # Each scorer contributes to the final score based on its weight.
-  # Weights are normalized, so they don't need to sum to 1.0.
-  #
-  # To disable a scorer: set its weight to 0
-  # To emphasize a scorer: increase its weight relative to others
-  # ----------------------------------------------------------------------------
-
-  scorers:
-    # --------------------------------------------------------------------------
-    # AGE COMPATIBILITY SCORER
-    # --------------------------------------------------------------------------
-    # Checks if users are within each other's preferred age ranges.
-    #
-    # SCORING:
-    # - 1.0: Both users are in each other's preferred range
-    # - 0.5: One user is in the other's range
-    # - 0.0: Neither user is in range
-    #
-    # WEIGHT GUIDANCE:
-    # - High (0.3+): Age is critical, strict matching
-    # - Medium (0.2): Age matters but flexible
-    # - Low (0.1): Age is minor factor
-    # --------------------------------------------------------------------------
-    age:
-      weight: 0.2  # 20% of total score
-
-    # --------------------------------------------------------------------------
-    # LOCATION SCORER
-    # --------------------------------------------------------------------------
-    # Scores based on distance between users.
-    # Uses Haversine formula for accurate Earth-surface distance.
-    #
-    # SCORING (linear decay):
-    # - 0 km: 1.0 (same location)
-    # - max-distance-km/2: 0.5 (halfway)
-    # - max-distance-km: 0.0 (too far)
-    #
-    # WEIGHT GUIDANCE:
-    # - High (0.4+): Location is critical (local dating)
-    # - Medium (0.3): Location matters but not everything
-    # - Low (0.1): Long-distance is acceptable
-    # --------------------------------------------------------------------------
-    location:
-      weight: 0.3  # 30% of total score
-      max-distance-km: 50  # Default max distance if user hasn't set preference
-
-    # --------------------------------------------------------------------------
-    # INTEREST SCORER
-    # --------------------------------------------------------------------------
-    # Scores based on shared interests using Jaccard similarity.
-    #
-    # FORMULA: |intersection| / |union|
-    # - 1.0: Identical interests
-    # - 0.5: Half of interests shared
-    # - 0.0: No shared interests
-    #
-    # WEIGHT GUIDANCE:
-    # - High (0.4+): Compatibility is key
-    # - Medium (0.25): Good for conversation starters
-    # - Low (0.1): Physical attraction matters more
-    # --------------------------------------------------------------------------
-    interests:
-      weight: 0.25  # 25% of total score
-      minimum-shared: 0  # Minimum shared interests (0 = any overlap counts)
-
-    # --------------------------------------------------------------------------
-    # ACTIVITY SCORER
-    # --------------------------------------------------------------------------
-    # Scores based on how recently the user was active.
-    # Prefers users who will actually respond.
-    #
-    # SCORING (linear decay):
-    # - Active today: 1.0
-    # - Active at threshold days: 0.0
-    # - Beyond threshold: 0.0
-    #
-    # WEIGHT GUIDANCE:
-    # - High (0.3): Only show active users
-    # - Medium (0.15): Prefer active but show others
-    # - Low (0.05): Activity doesn't matter much
-    # --------------------------------------------------------------------------
-    activity:
-      weight: 0.15  # 15% of total score
-      inactive-days-threshold: 30  # Days until considered inactive
-
-    # --------------------------------------------------------------------------
-    # GENDER PREFERENCE SCORER
-    # --------------------------------------------------------------------------
-    # Hard filter based on gender preferences.
-    # Returns 1.0 for mutual match, 0.0 otherwise.
-    #
-    # NOTE: Even with low weight, 0.0 score significantly affects total.
-    # This effectively acts as a filter.
-    #
-    # WEIGHT GUIDANCE:
-    # - Any (0.1+): Acts as filter due to binary scoring
-    # - Higher weight = stronger filter effect
-    # --------------------------------------------------------------------------
-    gender:
-      weight: 0.1  # 10% of total score
-
-# ------------------------------------------------------------------------------
-# Logging Configuration
-# ------------------------------------------------------------------------------
+# ========================================
+# LOGGING CONFIGURATION
+# ========================================
 logging:
   level:
-    root: INFO
-    com.dating.recommendation: DEBUG
-    com.dating.recommendation.scorer: DEBUG  # Set to TRACE for detailed scoring logs
-    org.springframework.cache: DEBUG
-    org.hibernate.SQL: WARN
+    root: ${LOG_LEVEL:INFO}
+    com.dating: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: WARN
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/recommendation-service.log
+    max-size: 10MB
+    max-history: 10
 
-# ------------------------------------------------------------------------------
-# Actuator Configuration (Health Checks & Monitoring)
-# ------------------------------------------------------------------------------
+# ========================================
+# ACTUATOR (Health Checks, Metrics)
+# ========================================
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, metrics, prometheus
+        include: health,metrics,info,caches,cacheStats,prometheus
       base-path: /actuator
   endpoint:
     health:
-      show-details: when-authorized
-      probes:
-        enabled: true
-  health:
-    db:
+      show-details: always
+    caches:
       enabled: true
-    redis:
-      enabled: true
-  info:
-    env:
-      enabled: false
   metrics:
+    export:
+      simple:
+        enabled: true
     tags:
       application: ${spring.application.name}
-      environment: ${ENVIRONMENT:dev}
 
-info:
-  app:
-    name: ${spring.application.name}
-    version: 1.0.0
-    description: ML-powered recommendation engine
+---
+# ========================================
+# PROFILE: DEV
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework.web: DEBUG
+
+---
+# ========================================
+# PROFILE: PROD
+# ========================================
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    root: WARN

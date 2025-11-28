@@ -4,10 +4,10 @@ import com.dating.ui.client.ChatServiceClient;
 import com.dating.ui.dto.Conversation;
 import com.dating.ui.dto.Message;
 import com.dating.ui.dto.SendMessageRequest;
+import com.dating.ui.exception.ServiceException;
 import com.dating.ui.security.SecurityUtils;
-import io.micrometer.core.instrument.Counter;
-import io.micrometer.core.instrument.MeterRegistry;
-import io.micrometer.core.instrument.Timer;
+import feign.FeignException;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -48,10 +48,19 @@ public class ChatService {
         String token = SecurityUtils.getCurrentToken();
 
         if (token == null) {
-            throw new IllegalStateException("User not authenticated");
+            throw new ServiceException("User not authenticated");
         }
 
-        return apiCallTimer.record(() -> chatClient.getConversations("Bearer " + token));
+        try {
+            List<Conversation> conversations = chatClient.getConversations("Bearer " + token);
+            if (conversations == null) {
+                throw new ServiceException("Failed to retrieve conversations");
+            }
+            return conversations;
+        } catch (FeignException e) {
+            log.error("Failed to get conversations for user: {}", SecurityUtils.getCurrentUserId(), e);
+            throw new ServiceException("Unable to load conversations. Please try again.", e);
+        }
     }
 
     /**
@@ -61,17 +70,26 @@ public class ChatService {
         String token = SecurityUtils.getCurrentToken();
 
         if (token == null) {
-            throw new IllegalStateException("User not authenticated");
+            throw new ServiceException("User not authenticated");
         }
 
-        List<Message> messages = apiCallTimer.record(() -> chatClient.getMessages(conversationId, "Bearer " + token));
-
-        // Track messages read
-        if (messages != null && !messages.isEmpty()) {
-            messagesReadCounter.increment(messages.size());
+        try {
+            List<Message> messages = chatClient.getMessages(conversationId, "Bearer " + token);
+            if (messages == null) {
+                throw new ServiceException("Failed to retrieve messages");
+            }
+            return messages;
+        } catch (FeignException e) {
+            log.error("Failed to get messages for conversation: {} user: {}",
+                conversationId, SecurityUtils.getCurrentUserId(), e);
+            if (e.status() == 404) {
+                throw new ServiceException("Conversation not found", e);
+            }
+            if (e.status() == 403) {
+                throw new ServiceException("You don't have access to this conversation", e);
+            }
+            throw new ServiceException("Unable to load messages. Please try again.", e);
         }
-
-        return messages;
     }
 
     /**
@@ -81,21 +99,27 @@ public class ChatService {
         String token = SecurityUtils.getCurrentToken();
 
         if (token == null) {
-            throw new IllegalStateException("User not authenticated");
+            throw new ServiceException("User not authenticated");
         }
 
-        SendMessageRequest request = new SendMessageRequest(text);
-        Message message;
         try {
-            message = apiCallTimer.record(() -> chatClient.sendMessage(conversationId, request, "Bearer " + token));
-        } catch (Exception e) {
-            // Still record the send attempt even on failure
-            messagesSentCounter.increment();
-            log.warn("Failed to send message to conversation: {}", conversationId, e);
-            throw e;
+            SendMessageRequest request = new SendMessageRequest(text);
+            Message message = chatClient.sendMessage(conversationId, request, "Bearer " + token);
+            if (message == null) {
+                throw new ServiceException("Failed to send message");
+            }
+            return message;
+        } catch (FeignException e) {
+            log.error("Failed to send message to conversation: {} user: {}",
+                conversationId, SecurityUtils.getCurrentUserId(), e);
+            if (e.status() == 404) {
+                throw new ServiceException("Conversation not found", e);
+            }
+            if (e.status() == 403) {
+                throw new ServiceException("You can't send messages to this conversation", e);
+            }
+            throw new ServiceException("Unable to send message. Please try again.", e);
         }
-        messagesSentCounter.increment();
-        return message;
     }
 
     /**
@@ -105,9 +129,43 @@ public class ChatService {
         String token = SecurityUtils.getCurrentToken();
 
         if (token == null) {
-            throw new IllegalStateException("User not authenticated");
+            throw new ServiceException("User not authenticated");
         }
 
-        return apiCallTimer.record(() -> chatClient.getConversation(conversationId, "Bearer " + token));
+        try {
+            Conversation conversation = chatClient.getConversation(conversationId, "Bearer " + token);
+            if (conversation == null) {
+                throw new ServiceException("Conversation not found");
+            }
+            return conversation;
+        } catch (FeignException e) {
+            log.error("Failed to get conversation: {} for user: {}",
+                conversationId, SecurityUtils.getCurrentUserId(), e);
+            if (e.status() == 404) {
+                throw new ServiceException("Conversation not found", e);
+            }
+            if (e.status() == 403) {
+                throw new ServiceException("You don't have access to this conversation", e);
+            }
+            throw new ServiceException("Unable to load conversation. Please try again.", e);
+        }
+    }
+
+    /**
+     * Send typing indicator to the other user
+     */
+    public void sendTypingIndicator(String conversationId) {
+        String token = SecurityUtils.getCurrentToken();
+
+        if (token == null) {
+            return; // Silently ignore if not authenticated
+        }
+
+        try {
+            chatClient.sendTypingIndicator(conversationId, "Bearer " + token);
+        } catch (FeignException e) {
+            // Log but don't throw - typing indicators are not critical
+            log.debug("Failed to send typing indicator for conversation: {}", conversationId, e);
+        }
     }
 }

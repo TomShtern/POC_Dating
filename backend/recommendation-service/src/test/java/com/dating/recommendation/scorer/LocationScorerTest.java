@@ -206,6 +206,60 @@ class LocationScorerTest {
         assertEquals(0.0, score, "Opposite sides of Earth should return 0.0");
     }
 
+    @Test
+    @DisplayName("Both users missing location should return neutral 0.5")
+    void testBothMissingLocation() {
+        User user = User.builder()
+                .id(UUID.randomUUID())
+                .latitude(null)
+                .longitude(null)
+                .maxDistancePreference(50)
+                .build();
+
+        User candidate = User.builder()
+                .id(UUID.randomUUID())
+                .latitude(null)
+                .longitude(null)
+                .maxDistancePreference(50)
+                .build();
+
+        double score = scorer.calculateScore(user, candidate);
+
+        assertEquals(0.5, score, "Both missing location should return neutral 0.5");
+    }
+
+    @Test
+    @DisplayName("Exactly at max distance should return 0.0")
+    void testExactlyAtMaxDistance() {
+        // Use precise coordinates where we know the distance
+        // 1 degree of latitude ≈ 111km
+        // For 50km, we need about 0.45 degrees
+        User user = createUserWithLocation(40.0, -74.0, 50);
+        // Move exactly 0.45 degrees north (approximately 50km)
+        User candidate = createUserWithLocation(40.45, -74.0, 50);
+
+        double score = scorer.calculateScore(user, candidate);
+
+        // At exactly max distance, should return 0.0
+        assertTrue(score <= 0.05,
+                "Exactly at max distance should return ~0.0, got: " + score);
+    }
+
+    @Test
+    @DisplayName("Just inside max distance should return small positive score")
+    void testJustInsideMaxDistance() {
+        // User at origin
+        User user = createUserWithLocation(40.0, -74.0, 50);
+        // Move 0.44 degrees north (approximately 49km, just inside 50km)
+        User candidate = createUserWithLocation(40.44, -74.0, 50);
+
+        double score = scorer.calculateScore(user, candidate);
+
+        // Just inside max distance should give small positive score
+        assertTrue(score > 0.0 && score < 0.1,
+                "Just inside max distance should return small positive score, got: " + score);
+    }
+
     // =========================================================================
     // WEIGHT AND NAME TESTS
     // =========================================================================

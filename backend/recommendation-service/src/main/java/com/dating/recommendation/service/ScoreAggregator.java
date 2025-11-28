@@ -1,5 +1,6 @@
 package com.dating.recommendation.service;
 
+import com.dating.recommendation.dto.CandidateProfileDTO;
 import com.dating.recommendation.dto.ScoredCandidate;
 import com.dating.recommendation.model.User;
 import com.dating.recommendation.scorer.CompatibilityScorer;
@@ -172,7 +173,8 @@ public class ScoreAggregator {
                 individualScores.size());
 
         // Return result with full breakdown for transparency
-        return new ScoredCandidate(candidate, finalScore, individualScores);
+        // Convert User to CandidateProfileDTO to avoid exposing sensitive internal fields
+        return new ScoredCandidate(CandidateProfileDTO.fromUser(candidate), finalScore, individualScores);
     }
 
     /**

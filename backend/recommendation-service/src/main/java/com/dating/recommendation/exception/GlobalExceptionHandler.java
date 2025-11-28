@@ -1,74 +1,120 @@
 package com.dating.recommendation.exception;
 
+import com.dating.common.dto.ErrorResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ============================================================================
- * GLOBAL EXCEPTION HANDLER
- * ============================================================================
- *
- * PURPOSE:
- * Catches all exceptions and converts them to standardized error responses.
- * Ensures consistent error format across all endpoints.
- *
- * ERROR RESPONSE FORMAT:
- * {
- *   "timestamp": "2024-01-15T10:30:00",
- *   "status": 404,
- *   "error": "Not Found",
- *   "message": "User not found: abc-123",
- *   "path": "/api/recommendations/users/abc-123"
- * }
- *
- * HOW TO ADD NEW EXCEPTION HANDLERS:
- * 1. Create custom exception class
- * 2. Add @ExceptionHandler method here
- * 3. Return appropriate HTTP status
- *
- * ============================================================================
+ * Global exception handler for REST controllers.
+ * Converts exceptions to standardized error responses.
  */
-@ControllerAdvice
+@RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
     /**
-     * Handle UserNotFoundException.
-     * Maps to HTTP 404 Not Found.
+     * Handle validation exceptions from @Valid annotation.
      */
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFound(UserNotFoundException ex) {
-        log.warn("User not found: {}", ex.getMessage());
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
+        log.warn("Validation error: {}", ex.getMessage());
 
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.NOT_FOUND.value());
-        error.put("error", "Not Found");
-        error.put("message", ex.getMessage());
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getAllErrors().forEach(error -> {
+            String fieldName = ((FieldError) error).getField();
+            String errorMessage = error.getDefaultMessage();
+            errors.put(fieldName, errorMessage);
+        });
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("VALIDATION_ERROR")
+                .message("Validation failed")
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handle illegal argument exceptions.
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+        log.warn("Illegal argument: {}", ex.getMessage());
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("BAD_REQUEST")
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+    }
+
+    /**
+     * Handle runtime exceptions (including Feign client errors).
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ErrorResponse> handleRuntimeException(
+            RuntimeException ex, HttpServletRequest request) {
+        log.error("Runtime exception: {}", ex.getMessage(), ex);
+
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
+        String errorCode = "INTERNAL_ERROR";
+
+        // Check for specific error messages
+        if (ex.getMessage() != null) {
+            if (ex.getMessage().contains("not found")) {
+                status = HttpStatus.NOT_FOUND;
+                errorCode = "NOT_FOUND";
+            } else if (ex.getMessage().contains("unavailable")) {
+                status = HttpStatus.SERVICE_UNAVAILABLE;
+                errorCode = "SERVICE_UNAVAILABLE";
+            }
+        }
+
+        ErrorResponse error = ErrorResponse.builder()
+                .status(status.value())
+                .error(errorCode)
+                .message(ex.getMessage())
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
+
+        return ResponseEntity.status(status).body(error);
     }
 
     /**
      * Handle all other exceptions.
-     * Maps to HTTP 500 Internal Server Error.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
-        log.error("Unexpected error: {}", ex.getMessage(), ex);
+    public ResponseEntity<ErrorResponse> handleGenericException(
+            Exception ex, HttpServletRequest request) {
+        log.error("Unexpected error", ex);
 
-        Map<String, Object> error = new HashMap<>();
-        error.put("timestamp", LocalDateTime.now());
-        error.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        error.put("error", "Internal Server Error");
-        error.put("message", "An unexpected error occurred");
+        ErrorResponse error = ErrorResponse.builder()
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .error("INTERNAL_ERROR")
+                .message("An unexpected error occurred")
+                .path(request.getRequestURI())
+                .timestamp(Instant.now())
+                .build();
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }

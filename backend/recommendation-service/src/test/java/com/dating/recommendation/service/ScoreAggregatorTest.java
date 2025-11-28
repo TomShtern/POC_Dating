@@ -206,6 +206,87 @@ class ScoreAggregatorTest {
     }
 
     // =========================================================================
+    // SCORE VALIDATION TESTS (Clamping invalid scores)
+    // =========================================================================
+
+    @Test
+    @DisplayName("Score above 1.0 should be clamped to 1.0")
+    void testScoreAboveOneClamped() {
+        // Scorer returns invalid score 1.5 - should be clamped to 1.0
+        List<CompatibilityScorer> scorers = List.of(
+                new TestScorer("invalid-high", 1.0, 1.5)
+        );
+        ScoreAggregator aggregator = new ScoreAggregator(scorers);
+
+        ScoredCandidate result = aggregator.aggregate(user, candidate);
+
+        assertEquals(1.0, result.finalScore(), 0.001,
+                "Score above 1.0 should be clamped to 1.0");
+    }
+
+    @Test
+    @DisplayName("Score below 0.0 should be clamped to 0.0")
+    void testScoreBelowZeroClamped() {
+        // Scorer returns invalid score -0.5 - should be clamped to 0.0
+        List<CompatibilityScorer> scorers = List.of(
+                new TestScorer("invalid-low", 1.0, -0.5)
+        );
+        ScoreAggregator aggregator = new ScoreAggregator(scorers);
+
+        ScoredCandidate result = aggregator.aggregate(user, candidate);
+
+        assertEquals(0.0, result.finalScore(), 0.001,
+                "Score below 0.0 should be clamped to 0.0");
+    }
+
+    @Test
+    @DisplayName("Multiple scorers with some invalid scores should clamp correctly")
+    void testMixedValidInvalidScores() {
+        // Mix of valid and invalid scores
+        // Scorer1: 1.5 (clamped to 1.0) * 0.5 = 0.5
+        // Scorer2: 0.6 * 0.5 = 0.3
+        // Total = 0.8 / 1.0 = 0.8
+        List<CompatibilityScorer> scorers = List.of(
+                new TestScorer("invalid", 0.5, 1.5),
+                new TestScorer("valid", 0.5, 0.6)
+        );
+        ScoreAggregator aggregator = new ScoreAggregator(scorers);
+
+        ScoredCandidate result = aggregator.aggregate(user, candidate);
+
+        assertEquals(0.8, result.finalScore(), 0.001,
+                "Mixed valid/invalid scores should clamp correctly");
+    }
+
+    @Test
+    @DisplayName("Extremely high score should be clamped")
+    void testExtremelyHighScore() {
+        List<CompatibilityScorer> scorers = List.of(
+                new TestScorer("extreme", 1.0, 100.0)
+        );
+        ScoreAggregator aggregator = new ScoreAggregator(scorers);
+
+        ScoredCandidate result = aggregator.aggregate(user, candidate);
+
+        assertEquals(1.0, result.finalScore(), 0.001,
+                "Extremely high score should be clamped to 1.0");
+    }
+
+    @Test
+    @DisplayName("Extremely low score should be clamped")
+    void testExtremelyLowScore() {
+        List<CompatibilityScorer> scorers = List.of(
+                new TestScorer("extreme", 1.0, -100.0)
+        );
+        ScoreAggregator aggregator = new ScoreAggregator(scorers);
+
+        ScoredCandidate result = aggregator.aggregate(user, candidate);
+
+        assertEquals(0.0, result.finalScore(), 0.001,
+                "Extremely low score should be clamped to 0.0");
+    }
+
+    // =========================================================================
     // EDGE CASE TESTS
     // =========================================================================
 

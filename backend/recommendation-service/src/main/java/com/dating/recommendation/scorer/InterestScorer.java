@@ -180,8 +180,8 @@ public class InterestScorer implements CompatibilityScorer {
         // =====================================================================
         double jaccardSimilarity = (double) sharedCount / unionCount;
 
-        log.trace("Interest score: {} shared out of {} union = {:.3f}. Shared: {}",
-                sharedCount, unionCount, jaccardSimilarity, intersection);
+        log.trace("Interest score: {} shared out of {} union = {}. Shared: {}",
+                sharedCount, unionCount, String.format("%.3f", jaccardSimilarity), intersection);
 
         return jaccardSimilarity;
     }
