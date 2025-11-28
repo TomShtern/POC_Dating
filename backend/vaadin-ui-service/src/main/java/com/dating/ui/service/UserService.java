@@ -16,11 +16,43 @@ import org.springframework.stereotype.Service;
  * Wraps UserServiceClient and handles authentication
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class UserService {
 
     private final UserServiceClient userClient;
+    private final Counter loginAttemptsCounter;
+    private final Counter loginCounter;
+    private final Counter loginFailureCounter;
+    private final Counter registrationCounter;
+    private final Timer apiCallTimer;
+
+    public UserService(UserServiceClient userClient, MeterRegistry meterRegistry) {
+        this.userClient = userClient;
+        this.loginAttemptsCounter = Counter.builder("ui.login.attempts.total")
+            .description("Total number of login attempts")
+            .register(meterRegistry);
+        this.loginCounter = Counter.builder("ui.login.success.total")
+            .description("Total number of successful logins")
+            .register(meterRegistry);
+        this.loginFailureCounter = Counter.builder("ui.login.failure.total")
+            .description("Total number of failed login attempts")
+            .register(meterRegistry);
+        this.registrationCounter = Counter.builder("ui.registrations.total")
+            .description("Total number of successful registrations")
+            .register(meterRegistry);
+        this.apiCallTimer = Timer.builder("ui.api.call.time")
+            .description("Time spent calling backend services")
+            .tag("service", "user-service")
+            .register(meterRegistry);
+    }
+
+    /**
+     * Increment the login failure counter.
+     * Call this when login fails for security monitoring.
+     */
+    public void recordLoginFailure() {
+        loginFailureCounter.increment();
+    }
 
     /**
      * Login user
@@ -138,7 +170,10 @@ public class UserService {
      * Logout current user
      */
     public void logout() {
-        log.info("User logged out: {}", SecurityUtils.getCurrentUserId());
+        String userId = SecurityUtils.getCurrentUserId();
+        if (userId != null) {
+            log.debug("User session ended");
+        }
         SecurityUtils.clearAuthentication();
     }
 

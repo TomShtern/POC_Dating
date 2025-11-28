@@ -128,9 +128,6 @@ logging:
     com.dating: DEBUG
     org.springframework.web: INFO
     org.hibernate: WARN
-  pattern:
-    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/user-service.log
     max-size: 10MB

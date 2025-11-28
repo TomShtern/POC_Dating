@@ -19,11 +19,27 @@ import java.util.List;
  * Note: Real-time messaging will be handled via WebSocket in views
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ChatService {
 
     private final ChatServiceClient chatClient;
+    private final Timer apiCallTimer;
+    private final Counter messagesSentCounter;
+    private final Counter messagesReadCounter;
+
+    public ChatService(ChatServiceClient chatClient, MeterRegistry meterRegistry) {
+        this.chatClient = chatClient;
+        this.apiCallTimer = Timer.builder("ui.api.call.time")
+            .description("Time spent calling backend services")
+            .tag("service", "chat-service")
+            .register(meterRegistry);
+        this.messagesSentCounter = Counter.builder("ui.messages.sent.total")
+            .description("Total number of messages sent")
+            .register(meterRegistry);
+        this.messagesReadCounter = Counter.builder("ui.messages.read.total")
+            .description("Total number of messages read/retrieved")
+            .register(meterRegistry);
+    }
 
     /**
      * Get all conversations for current user

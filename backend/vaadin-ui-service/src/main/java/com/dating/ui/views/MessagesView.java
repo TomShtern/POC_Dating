@@ -43,8 +43,11 @@ public class MessagesView extends VerticalLayout {
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, HH:mm");
 
-    public MessagesView(ChatService chatService) {
+    public MessagesView(ChatService chatService, PageViewMetricsService pageViewMetrics) {
         this.chatService = chatService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("messages");
 
         setSizeFull();
         setPadding(true);

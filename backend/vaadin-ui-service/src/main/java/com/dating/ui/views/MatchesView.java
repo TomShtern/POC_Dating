@@ -53,6 +53,9 @@ public class MatchesView extends VerticalLayout {
         this.matchService = matchService;
         this.userService = userService;
 
+        // Record page view metric
+        pageViewMetrics.recordPageView("matches");
+
         setSizeFull();
         setPadding(true);
 

@@ -1,6 +1,7 @@
 package com.dating.ui.views;
 
 import com.dating.ui.dto.AuthResponse;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
@@ -31,14 +32,19 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginView extends VerticalLayout {
 
     private final UserService userService;
+    private final PageViewMetricsService pageViewMetrics;
 
     private EmailField emailField;
     private PasswordField passwordField;
     private Button loginButton;
     private Button registerButton;
 
-    public LoginView(UserService userService) {
+    public LoginView(UserService userService, PageViewMetricsService pageViewMetrics) {
         this.userService = userService;
+        this.pageViewMetrics = pageViewMetrics;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("login");
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);
@@ -146,7 +152,8 @@ public class LoginView extends VerticalLayout {
             UI.getCurrent().navigate(SwipeView.class);
 
         } catch (Exception ex) {
-            log.error("Login failed", ex);
+            log.error("Login failed for email: {}", email, ex);
+            userService.recordLoginFailure();
             showError("Invalid email or password");
         } finally {
             // Re-enable button

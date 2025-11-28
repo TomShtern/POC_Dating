@@ -3,6 +3,7 @@ package com.dating.ui.views;
 import com.dating.ui.components.ImageUploadComponent;
 import com.dating.ui.components.InterestTagsComponent;
 import com.dating.ui.dto.User;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.button.Button;
@@ -45,8 +46,11 @@ public class ProfileView extends VerticalLayout {
     private InterestTagsComponent interestTags;
     private Button saveButton;
 
-    public ProfileView(UserService userService) {
+    public ProfileView(UserService userService, PageViewMetricsService pageViewMetrics) {
         this.userService = userService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("profile");
 
         setSizeFull();
         setPadding(true);

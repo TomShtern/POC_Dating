@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
  * Main service for generating and managing recommendations.
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RecommendationService {
 

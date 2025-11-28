@@ -42,8 +42,11 @@ public class SwipeView extends VerticalLayout {
     private Button likeButton;
     private Button undoButton;
 
-    public SwipeView(MatchService matchService) {
+    public SwipeView(MatchService matchService, PageViewMetricsService pageViewMetrics) {
         this.matchService = matchService;
+
+        // Record page view metric
+        pageViewMetrics.recordPageView("discover");
 
         setSizeFull();
         setAlignItems(Alignment.CENTER);

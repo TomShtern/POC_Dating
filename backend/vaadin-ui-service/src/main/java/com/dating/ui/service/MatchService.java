@@ -14,17 +14,48 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service layer for match-related operations
  * Handles swiping, matching, and profile discovery
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class MatchService {
 
     private final MatchServiceClient matchClient;
+    private final MeterRegistry meterRegistry;
+    private final Timer apiCallTimer;
+    private final Timer feedGenerationTimer;
+    private final Map<String, Counter> swipeCounters;
+    private final Counter matchCounter;
+
+    public MatchService(MatchServiceClient matchClient, MeterRegistry meterRegistry) {
+        this.matchClient = matchClient;
+        this.meterRegistry = meterRegistry;
+        this.swipeCounters = new ConcurrentHashMap<>();
+        this.apiCallTimer = Timer.builder("ui.api.call.time")
+            .description("Time spent calling backend services")
+            .tag("service", "match-service")
+            .register(meterRegistry);
+        this.feedGenerationTimer = Timer.builder("ui.feed.generation.time")
+            .description("Time spent generating/fetching user feed")
+            .register(meterRegistry);
+        this.matchCounter = Counter.builder("ui.matches.total")
+            .description("Total number of matches created")
+            .register(meterRegistry);
+    }
+
+    private Counter getSwipeCounter(SwipeType swipeType) {
+        return swipeCounters.computeIfAbsent(swipeType.name(), key ->
+            Counter.builder("ui.swipes.total")
+                .description("Total number of swipes by direction")
+                .tag("direction", swipeType.name().toLowerCase())
+                .register(meterRegistry)
+        );
+    }
 
     /**
      * Get next profile to swipe on
