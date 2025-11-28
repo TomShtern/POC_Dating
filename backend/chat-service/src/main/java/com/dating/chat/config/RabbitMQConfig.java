@@ -1,15 +1,25 @@
 package com.dating.chat.config;
 
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import com.dating.common.config.RabbitMQConstants;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
+ * RabbitMQ Configuration for Chat Service.
+ *
+ * Defines queues, exchanges, and bindings for:
+ * - Consuming match events (match.created, match.ended)
+ * - Publishing chat events (message.sent, message.read)
  * RabbitMQ configuration for event publishing and consuming.
  * Chat service publishes message events and consumes match events.
  */

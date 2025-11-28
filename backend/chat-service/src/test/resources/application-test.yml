@@ -25,4 +25,5 @@ spring:
 logging:
   level:
     root: WARN
+    com.dating.chat: DEBUG
     com.dating: DEBUG

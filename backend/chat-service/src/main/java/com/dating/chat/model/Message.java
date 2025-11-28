@@ -1,5 +1,25 @@
 package com.dating.chat.model;
 
+import com.dating.chat.dto.websocket.MessageType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import com.dating.common.constant.MessageStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -86,6 +106,12 @@ public class Message {
     private Instant deletedAt;
 
     /**
+     * Message delivery status.
+     */
+    public enum MessageStatus {
+        SENT,
+        DELIVERED,
+        READ
      * Mark message as delivered.
      */
     public void markAsDelivered() {

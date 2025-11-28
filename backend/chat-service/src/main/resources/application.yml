@@ -1,3 +1,5 @@
+server:
+  port: 8083
 # Chat Service Configuration
 #
 # PURPOSE: Spring Boot application properties for Chat Service

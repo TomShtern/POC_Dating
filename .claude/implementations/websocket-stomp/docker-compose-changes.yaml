@@ -1,0 +1,69 @@
+# ========================================
+# DOCKER-COMPOSE CHANGES FOR STOMP SUPPORT
+# ========================================
+# Update these sections in docker-compose.yml
+
+rabbitmq:
+  image: rabbitmq:3.12-management-alpine
+  container_name: dating_rabbitmq
+  environment:
+    RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+    RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
+    RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+  ports:
+    - "5672:5672"     # AMQP protocol (for event exchange)
+    - "61613:61613"   # STOMP protocol (for WebSocket broker relay) - NEW!
+    - "15672:15672"   # Management UI
+  volumes:
+    - rabbitmq_data:/var/lib/rabbitmq
+    # Enable STOMP plugin via configuration file - NEW!
+    - ./config/rabbitmq-enabled-plugins:/etc/rabbitmq/enabled_plugins:ro
+  networks:
+    - dating_network
+  healthcheck:
+    test: rabbitmq-diagnostics -q ping
+    interval: 10s
+    timeout: 5s
+    retries: 5
+  restart: unless-stopped
+
+chat-service:
+  build:
+    context: ./backend/chat-service
+    dockerfile: Dockerfile
+  container_name: dating_chat_service
+  ports:
+    - "8083:8083"
+  environment:
+    SERVER_PORT: 8083
+    SERVICE_NAME: chat-service
+    POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+    REDIS_HOST: ${REDIS_HOST:-redis}
+    RABBITMQ_HOST: ${RABBITMQ_HOST:-rabbitmq}
+    
+    # === NEW ENVIRONMENT VARIABLES FOR STOMP ===
+    RABBITMQ_STOMP_HOST: ${RABBITMQ_STOMP_HOST:-rabbitmq}
+    RABBITMQ_STOMP_PORT: ${RABBITMQ_STOMP_PORT:-61613}
+    RABBITMQ_STOMP_CLIENT_LOGIN: ${RABBITMQ_STOMP_CLIENT_LOGIN:-guest}
+    RABBITMQ_STOMP_CLIENT_PASSCODE: ${RABBITMQ_STOMP_CLIENT_PASSCODE:-guest}
+    RABBITMQ_STOMP_SYSTEM_LOGIN: ${RABBITMQ_STOMP_SYSTEM_LOGIN:-}
+    RABBITMQ_STOMP_SYSTEM_PASSCODE: ${RABBITMQ_STOMP_SYSTEM_PASSCODE:-}
+    RABBITMQ_STOMP_CONNECTION_POOL_SIZE: ${RABBITMQ_STOMP_CONNECTION_POOL_SIZE:-5}
+    RABBITMQ_STOMP_HEARTBEAT_INTERVAL: ${RABBITMQ_STOMP_HEARTBEAT_INTERVAL:-60000}
+    RABBITMQ_STOMP_HEARTBEAT_TOLERANCE: ${RABBITMQ_STOMP_HEARTBEAT_TOLERANCE:-180000}
+    RABBITMQ_STOMP_RECONNECT_DELAY: ${RABBITMQ_STOMP_RECONNECT_DELAY:-5000}
+    WEBSOCKET_BROKER_TYPE: ${WEBSOCKET_BROKER_TYPE:-stomp}
+    # ==========================================
+    
+    LOG_LEVEL: ${LOG_LEVEL:-INFO}
+    SPRING_PROFILES_ACTIVE: prod
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rabbitmq:
+      condition: service_healthy
+  networks:
+    - dating_network
+  restart: unless-stopped
