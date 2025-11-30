@@ -15,7 +15,7 @@ This repository contains comprehensive technical analysis of four major dating a
 ## Analysis Documents
 
 ### Individual App Technical Deep Dives
-1. **[TINDER_TECH_ANALYSIS.md](TINDER_TECH_ANALYSIS.md)** - Grade: B+
+1. **[TINDER_TECH_ANALYSIS.md](docs/research/TINDER_TECH_ANALYSIS.md)** - Grade: B+
    - 500+ microservices architecture
    - Custom TAG API Gateway (Spring Cloud Gateway)
    - Native mobile apps (Swift, Kotlin)
@@ -23,21 +23,21 @@ This repository contains comprehensive technical analysis of four major dating a
    - MongoDB/DynamoDB + Redis
    - 100% AWS infrastructure
 
-2. **[BUMBLE_TECH_ANALYSIS.md](BUMBLE_TECH_ANALYSIS.md)** - Grade: B-
+2. **[BUMBLE_TECH_ANALYSIS.md](docs/research/BUMBLE_TECH_ANALYSIS.md)** - Grade: B-
    - Bumble 2.0 cloud-native transformation
    - Polyglot backend (Java, Kotlin, Python, PHP, Node.js, Ruby)
    - Native mobile apps (Swift, Kotlin)
    - DynamoDB + Redis
    - AWS infrastructure
 
-3. **[OKCUPID_TECH_ANALYSIS.md](OKCUPID_TECH_ANALYSIS.md)** - Grade: C+
+3. **[OKCUPID_TECH_ANALYSIS.md](docs/research/OKCUPID_TECH_ANALYSIS.md)** - Grade: C+
    - Legacy OKWS (custom C++ web server from 2004)
    - Modern GraphQL API (Node.js + Apollo Server)
    - Native mobile apps (Swift, Kotlin)
    - Migrating to AWS
    - React/Redux web frontend
 
-4. **[HINGE_TECH_ANALYSIS.md](HINGE_TECH_ANALYSIS.md)** - Grade: B
+4. **[HINGE_TECH_ANALYSIS.md](docs/research/HINGE_TECH_ANALYSIS.md)** - Grade: B
    - Cross-platform mobile (React Native/Flutter)
    - Python/Django backend
    - PostgreSQL + Redis
@@ -45,7 +45,7 @@ This repository contains comprehensive technical analysis of four major dating a
    - AWS infrastructure
 
 ### Comparative Analysis
-5. **[DATING_APPS_COMPARISON.md](DATING_APPS_COMPARISON.md)**
+5. **[DATING_APPS_COMPARISON.md](docs/research/DATING_APPS_COMPARISON.md)**
    - Side-by-side comparison matrix
    - Language/database/architecture trade-offs
    - What each app got right and wrong
@@ -53,7 +53,7 @@ This repository contains comprehensive technical analysis of four major dating a
    - Key lessons for engineers
 
 ### Deep Dive: Performance, Scale & Costs
-6. **[PERFORMANCE_SCALE_METRICS.md](PERFORMANCE_SCALE_METRICS.md)** - NEW
+6. **[PERFORMANCE_SCALE_METRICS.md](docs/research/PERFORMANCE_SCALE_METRICS.md)** - NEW
    - Performance metrics: Tinder (300ms latency, 2B daily swipes), Hinge (833 req/sec)
    - Team sizes: Tinder (~680 engineers), engineering team structures
    - Infrastructure costs: $60-180M/year estimates for Tinder
@@ -61,7 +61,7 @@ This repository contains comprehensive technical analysis of four major dating a
    - Cost efficiency analysis and recommendations
 
 ### Deep Dive: Security & Compliance
-7. **[SECURITY_COMPLIANCE_ANALYSIS.md](SECURITY_COMPLIANCE_ANALYSIS.md)** - NEW
+7. **[SECURITY_COMPLIANCE_ANALYSIS.md](docs/research/SECURITY_COMPLIANCE_ANALYSIS.md)** - NEW
    - Authentication: Multi-factor auth reduces fakes by 89%
    - Encryption: AES-256, TLS 1.3, end-to-end for messages
    - GDPR/CCPA compliance: Fines up to €20M or 4% revenue
@@ -69,7 +69,7 @@ This repository contains comprehensive technical analysis of four major dating a
    - Incident response frameworks and best practices
 
 ### Deep Dive: DevOps, Testing & ML
-8. **[DEVOPS_TESTING_ML_INFRASTRUCTURE.md](DEVOPS_TESTING_ML_INFRASTRUCTURE.md)** - NEW
+8. **[DEVOPS_TESTING_ML_INFRASTRUCTURE.md](docs/research/DEVOPS_TESTING_ML_INFRASTRUCTURE.md)** - NEW
    - CI/CD: Jenkins pipelines, deployment frequency, Kubernetes strategies
    - Testing: A/B testing (Tinder, Bumble), automation-first approach
    - Quality assurance: 20% time on matching algorithm testing
@@ -77,7 +77,7 @@ This repository contains comprehensive technical analysis of four major dating a
    - Monitoring & observability: DataDog, Prometheus, distributed tracing
 
 ### Deep Dive: Technical Evolution & Integrations
-9. **[TECHNICAL_EVOLUTION_INTEGRATIONS.md](TECHNICAL_EVOLUTION_INTEGRATIONS.md)** - NEW
+9. **[TECHNICAL_EVOLUTION_INTEGRATIONS.md](docs/research/TECHNICAL_EVOLUTION_INTEGRATIONS.md)** - NEW
    - Complete timeline: Tinder (2012-2025), Bumble, OkCupid, Hinge
    - Major migrations: DynamoDB (6 months), Kubernetes (2 years), ElastiCache
    - OKWS cautionary tale: 20-year-old C++ server still running
