@@ -46,52 +46,52 @@
 <details>
 <summary><strong>Click to expand root documentation files (10 files)</strong></summary>
 
-### [DATING_APPS_COMPARISON.md](DATING_APPS_COMPARISON.md)
+### [DATING_APPS_COMPARISON.md](../research/DATING_APPS_COMPARISON.md)
 Comprehensive side-by-side technical comparison of Tinder, Bumble, OkCupid, and Hinge architectures with complexity analysis and ideal 2025 stack recommendations.
 - **Metadata:** 27,939 bytes | 822 lines
 - **Key Notes:** Architecture grades (Tinder B+, Bumble B-, OkCupid C+, Hinge B), recommends Go + PostgreSQL + React Native
 
-### [BUMBLE_TECH_ANALYSIS.md](BUMBLE_TECH_ANALYSIS.md)
+### [BUMBLE_TECH_ANALYSIS.md](../research/BUMBLE_TECH_ANALYSIS.md)
 Technical deep-dive into Bumble's architecture including Bumble 2.0 cloud-native transformation and polyglot backend challenges.
 - **Metadata:** 13,150 bytes | 372 lines
 - **Key Notes:** Critical issue with 6+ programming languages creating operational chaos
 
-### [OKCUPID_TECH_ANALYSIS.md](OKCUPID_TECH_ANALYSIS.md)
+### [OKCUPID_TECH_ANALYSIS.md](../research/OKCUPID_TECH_ANALYSIS.md)
 Analysis of OkCupid's 20-year journey from custom OKWS C++ web server to modern GraphQL stack.
 - **Metadata:** 18,039 bytes | 506 lines
 - **Key Notes:** Cautionary tale of custom infrastructure becoming technical debt
 
-### [HINGE_TECH_ANALYSIS.md](HINGE_TECH_ANALYSIS.md)
+### [HINGE_TECH_ANALYSIS.md](../research/HINGE_TECH_ANALYSIS.md)
 Analysis of Hinge's pragmatic stack using React Native/Flutter, Python/Django backend, PostgreSQL, and Gale-Shapley matching algorithm.
 - **Metadata:** 20,275 bytes | 557 lines
 - **Key Notes:** Most correct database choice (PostgreSQL); performance ceiling at 100M+ users
 
-### [DEVOPS_TESTING_ML_INFRASTRUCTURE.md](DEVOPS_TESTING_ML_INFRASTRUCTURE.md)
+### [DEVOPS_TESTING_ML_INFRASTRUCTURE.md](../research/DEVOPS_TESTING_ML_INFRASTRUCTURE.md)
 Detailed analysis of CI/CD practices, testing methodologies, A/B testing frameworks, and ML infrastructure for dating apps.
 - **Metadata:** 18,876 bytes | 699 lines
 - **Key Notes:** Tinder's TinVec embeddings, Smart Photos optimization; quality infrastructure cost $2-11M/year
 
-### [SECURITY_COMPLIANCE_ANALYSIS.md](SECURITY_COMPLIANCE_ANALYSIS.md)
+### [SECURITY_COMPLIANCE_ANALYSIS.md](../research/SECURITY_COMPLIANCE_ANALYSIS.md)
 Comprehensive security architecture covering authentication, encryption (AES-256, TLS 1.3), GDPR/CCPA compliance with real enforcement cases.
 - **Metadata:** 16,236 bytes | 571 lines
 - **Key Notes:** MFA reduces fake profiles by 89%; GDPR fines up to €20M or 4% revenue
 
-### [README.md](README.md)
+### [README.md](../../README.md)
 Primary project documentation with architecture overview, quick start guide, technology stack details, and development instructions.
 - **Metadata:** 33,397 bytes | 888 lines
 - **Key Notes:** Documents switch from React to Vaadin (pure Java UI); Spring Boot 3.x microservices
 
-### [PERFORMANCE_SCALE_METRICS.md](PERFORMANCE_SCALE_METRICS.md)
+### [PERFORMANCE_SCALE_METRICS.md](../research/PERFORMANCE_SCALE_METRICS.md)
 Performance metrics and scalability analysis with infrastructure cost estimates and team structures.
 - **Metadata:** 11,808 bytes | 428 lines
 - **Key Notes:** Tinder processes 2B daily swipes; infrastructure costs $60-180M/year
 
-### [TINDER_TECH_ANALYSIS.md](TINDER_TECH_ANALYSIS.md)
+### [TINDER_TECH_ANALYSIS.md](../research/TINDER_TECH_ANALYSIS.md)
 Technical deep-dive into Tinder's 500+ microservices architecture with TAG API Gateway and service mesh.
 - **Metadata:** 13,713 bytes | 418 lines
 - **Key Notes:** Over-engineered with 10x more services than needed
 
-### [TECHNICAL_EVOLUTION_INTEGRATIONS.md](TECHNICAL_EVOLUTION_INTEGRATIONS.md)
+### [TECHNICAL_EVOLUTION_INTEGRATIONS.md](../research/TECHNICAL_EVOLUTION_INTEGRATIONS.md)
 Timeline of technical evolution for major dating apps (2004-2025) documenting migrations and lessons learned.
 - **Metadata:** 20,905 bytes | 693 lines
 - **Key Notes:** Successful migrations: 6-24 months; aggressive timelines with 50%+ engineering allocation succeed
@@ -747,21 +747,21 @@ Critical status notice indicating React frontend replaced with Vaadin.
 
 ## 📝 Notes
 
-1. **Frontend Technology Decision:** The project originally planned React/TypeScript frontend but transitioned to Vaadin (Pure Java) on 2025-11-11 due to team expertise alignment and 3-week MVP timeline constraints. See [docs/FRONTEND_OPTIONS_ANALYSIS.md](docs/FRONTEND_OPTIONS_ANALYSIS.md) for detailed rationale.
+1. **Frontend Technology Decision:** The project originally planned React/TypeScript frontend but transitioned to Vaadin (Pure Java) on 2025-11-11 due to team expertise alignment and 3-week MVP timeline constraints. See [docs/FRONTEND_OPTIONS_ANALYSIS.md](../FRONTEND_OPTIONS_ANALYSIS.md) for detailed rationale.
 
-2. **Documentation Organization:** All documentation has clear status markers (ACTIVE/REFERENCE/DEPRECATED) and is organized by role-based navigation in [docs/DOCUMENT_INDEX.md](docs/DOCUMENT_INDEX.md).
+2. **Documentation Organization:** All documentation has clear status markers (ACTIVE/REFERENCE/DEPRECATED) and is organized by role-based navigation in [docs/DOCUMENT_INDEX.md](../DOCUMENT_INDEX.md).
 
-3. **Microservices Maturity:** The architecture follows industry best practices from competitor analysis (Tinder, Bumble, Hinge, OkCupid) while avoiding over-engineering. Recommended 10-20 services initially vs Tinder's 500+. See [DATING_APPS_COMPARISON.md](DATING_APPS_COMPARISON.md).
+3. **Microservices Maturity:** The architecture follows industry best practices from competitor analysis (Tinder, Bumble, Hinge, OkCupid) while avoiding over-engineering. Recommended 10-20 services initially vs Tinder's 500+. See [DATING_APPS_COMPARISON.md](../research/DATING_APPS_COMPARISON.md).
 
-4. **Database Design:** PostgreSQL chosen over NoSQL (MongoDB/DynamoDB) based on competitor analysis showing PostgreSQL as optimal for dating apps (Hinge's approach validated). See [HINGE_TECH_ANALYSIS.md](HINGE_TECH_ANALYSIS.md).
+4. **Database Design:** PostgreSQL chosen over NoSQL (MongoDB/DynamoDB) based on competitor analysis showing PostgreSQL as optimal for dating apps (Hinge's approach validated). See [HINGE_TECH_ANALYSIS.md](../research/HINGE_TECH_ANALYSIS.md).
 
-5. **Event-Driven Architecture:** RabbitMQ message broker enables loose coupling between services. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for event flow diagrams.
+5. **Event-Driven Architecture:** RabbitMQ message broker enables loose coupling between services. See [docs/ARCHITECTURE.md](../ARCHITECTURE.md) for event flow diagrams.
 
-6. **Testing Strategy:** Comprehensive testing with TestContainers for integration tests. See [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for testing guidelines.
+6. **Testing Strategy:** Comprehensive testing with TestContainers for integration tests. See [docs/DEVELOPMENT.md](../DEVELOPMENT.md) for testing guidelines.
 
-7. **Security Compliance:** Documentation includes GDPR/CCPA compliance analysis with real enforcement cases. See [SECURITY_COMPLIANCE_ANALYSIS.md](SECURITY_COMPLIANCE_ANALYSIS.md).
+7. **Security Compliance:** Documentation includes GDPR/CCPA compliance analysis with real enforcement cases. See [SECURITY_COMPLIANCE_ANALYSIS.md](../research/SECURITY_COMPLIANCE_ANALYSIS.md).
 
-8. **Performance Benchmarks:** Documentation includes metrics from major dating apps. See [PERFORMANCE_SCALE_METRICS.md](PERFORMANCE_SCALE_METRICS.md).
+8. **Performance Benchmarks:** Documentation includes metrics from major dating apps. See [PERFORMANCE_SCALE_METRICS.md](../research/PERFORMANCE_SCALE_METRICS.md).
 
 ---
 
