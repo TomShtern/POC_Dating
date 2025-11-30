@@ -25,7 +25,7 @@ public class RabbitMQConfig {
      * Topic exchange for match-related events.
      */
     @Bean
-    public TopicExchange matchExchange() {
+    TopicExchange matchExchange() {
         return new TopicExchange(RabbitMQConstants.MATCH_EXCHANGE);
     }
 
@@ -33,7 +33,7 @@ public class RabbitMQConfig {
      * Topic exchange for user events (to bind to).
      */
     @Bean
-    public TopicExchange userExchange() {
+    TopicExchange userExchange() {
         return new TopicExchange(RabbitMQConstants.USER_EXCHANGE);
     }
 
@@ -45,7 +45,7 @@ public class RabbitMQConfig {
      * Queue for match created events with dead letter support.
      */
     @Bean
-    public Queue matchCreatedQueue() {
+    Queue matchCreatedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.MATCH_CREATED_QUEUE)
                 .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
@@ -56,7 +56,7 @@ public class RabbitMQConfig {
      * Queue for match ended events with dead letter support.
      */
     @Bean
-    public Queue matchEndedQueue() {
+    Queue matchEndedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.MATCH_ENDED_QUEUE)
                 .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
@@ -71,7 +71,7 @@ public class RabbitMQConfig {
      * Queue for consuming user registered events with dead letter support.
      */
     @Bean
-    public Queue matchUserRegisteredQueue() {
+    Queue matchUserRegisteredQueue() {
         return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_REGISTERED_QUEUE)
                 .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
@@ -82,7 +82,7 @@ public class RabbitMQConfig {
      * Queue for consuming user updated events with dead letter support.
      */
     @Bean
-    public Queue matchUserUpdatedQueue() {
+    Queue matchUserUpdatedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_UPDATED_QUEUE)
                 .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
@@ -93,7 +93,7 @@ public class RabbitMQConfig {
      * Queue for consuming user deleted events with dead letter support.
      */
     @Bean
-    public Queue matchUserDeletedQueue() {
+    Queue matchUserDeletedQueue() {
         return QueueBuilder.durable(RabbitMQConstants.MATCH_USER_DELETED_QUEUE)
                 .withArgument("x-dead-letter-exchange", RabbitMQConstants.DEAD_LETTER_EXCHANGE)
                 .withArgument("x-dead-letter-routing-key", RabbitMQConstants.DEAD_LETTER_KEY)
@@ -108,7 +108,7 @@ public class RabbitMQConfig {
      * Binding for match created events.
      */
     @Bean
-    public Binding matchCreatedBinding(Queue matchCreatedQueue, TopicExchange matchExchange) {
+    Binding matchCreatedBinding(Queue matchCreatedQueue, TopicExchange matchExchange) {
         return BindingBuilder.bind(matchCreatedQueue)
                 .to(matchExchange)
                 .with(RabbitMQConstants.MATCH_CREATED_KEY);
@@ -118,7 +118,7 @@ public class RabbitMQConfig {
      * Binding for match ended events.
      */
     @Bean
-    public Binding matchEndedBinding(Queue matchEndedQueue, TopicExchange matchExchange) {
+    Binding matchEndedBinding(Queue matchEndedQueue, TopicExchange matchExchange) {
         return BindingBuilder.bind(matchEndedQueue)
                 .to(matchExchange)
                 .with(RabbitMQConstants.MATCH_ENDED_KEY);
@@ -132,7 +132,7 @@ public class RabbitMQConfig {
      * Binding for user registered events.
      */
     @Bean
-    public Binding userRegisteredBinding(Queue matchUserRegisteredQueue, TopicExchange userExchange) {
+    Binding userRegisteredBinding(Queue matchUserRegisteredQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(matchUserRegisteredQueue)
                 .to(userExchange)
                 .with(RabbitMQConstants.USER_REGISTERED_KEY);
@@ -142,7 +142,7 @@ public class RabbitMQConfig {
      * Binding for user updated events.
      */
     @Bean
-    public Binding userUpdatedBinding(Queue matchUserUpdatedQueue, TopicExchange userExchange) {
+    Binding userUpdatedBinding(Queue matchUserUpdatedQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(matchUserUpdatedQueue)
                 .to(userExchange)
                 .with(RabbitMQConstants.USER_UPDATED_KEY);
@@ -152,7 +152,7 @@ public class RabbitMQConfig {
      * Binding for user deleted events.
      */
     @Bean
-    public Binding userDeletedBinding(Queue matchUserDeletedQueue, TopicExchange userExchange) {
+    Binding userDeletedBinding(Queue matchUserDeletedQueue, TopicExchange userExchange) {
         return BindingBuilder.bind(matchUserDeletedQueue)
                 .to(userExchange)
                 .with(RabbitMQConstants.USER_DELETED_KEY);
@@ -166,7 +166,7 @@ public class RabbitMQConfig {
      * JSON message converter for RabbitMQ messages.
      */
     @Bean
-    public MessageConverter jsonMessageConverter() {
+    MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
@@ -174,7 +174,7 @@ public class RabbitMQConfig {
      * RabbitMQ template configured with JSON converter.
      */
     @Bean
-    public RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
+    RabbitTemplate rabbitTemplate(ConnectionFactory connectionFactory) {
         RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
         rabbitTemplate.setMessageConverter(jsonMessageConverter());
         return rabbitTemplate;

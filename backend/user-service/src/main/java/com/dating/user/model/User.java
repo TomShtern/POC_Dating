@@ -60,6 +60,19 @@ public class User {
     @Column(name = "profile_picture_url", length = 500)
     private String profilePictureUrl;
 
+    // Location information
+    @Column(name = "city", length = 100)
+    private String city;
+
+    @Column(name = "country", length = 100)
+    private String country;
+
+    @Column(name = "latitude")
+    private Double latitude;
+
+    @Column(name = "longitude")
+    private Double longitude;
+
     @Column(nullable = false, length = 20)
     @Builder.Default
     private String status = "ACTIVE";

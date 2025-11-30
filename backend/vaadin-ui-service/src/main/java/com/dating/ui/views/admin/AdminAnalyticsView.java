@@ -181,7 +181,7 @@ public class AdminAnalyticsView extends VerticalLayout {
 
             Span value = new Span(String.format("%,d", point.getValue()));
             value.setWidth("60px");
-            value.addClassNames(LumoUtility.FontSize.XSMALL, LumoUtility.TextAlign.RIGHT);
+            value.addClassNames(LumoUtility.FontSize.XSMALL, LumoUtility.TextAlignment.RIGHT);
 
             bar.add(date, barSpan, value);
             bar.expand(barSpan);

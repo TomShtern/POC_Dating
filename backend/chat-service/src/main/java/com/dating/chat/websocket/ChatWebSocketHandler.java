@@ -154,11 +154,14 @@ public class ChatWebSocketHandler {
             @Payload TypingIndicator indicator,
             SimpMessageHeaderAccessor headerAccessor) {
 
-        log.debug("Typing indicator: {} in conversation {} from user {}",
-                indicator.getType(),
-                indicator.getConversationId(),
-                indicator.getUserId());
+        String sessionId = headerAccessor.getSessionId();
+        UUID userId = sessionManager.getUserId(sessionId);
 
-        chatService.handleTypingIndicator(indicator);
+        log.debug("Typing indicator: {} in conversation {} from user {}",
+                indicator.isTyping(),
+                indicator.matchId(),
+                userId);
+
+        chatService.handleTypingIndicator(indicator, userId);
     }
 }

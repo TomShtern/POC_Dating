@@ -7,7 +7,6 @@ import com.dating.recommendation.dto.response.*;
 import com.dating.recommendation.mapper.RecommendationMapper;
 import com.dating.recommendation.model.Recommendation;
 import com.dating.recommendation.repository.RecommendationRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
@@ -33,6 +32,18 @@ public class RecommendationService {
     private final ScoringService scoringService;
     private final PreferenceAnalyzerService preferenceAnalyzerService;
     private final RecommendationMapper recommendationMapper;
+
+    public RecommendationService(RecommendationRepository recommendationRepository,
+                                 UserServiceClient userServiceClient,
+                                 ScoringService scoringService,
+                                 PreferenceAnalyzerService preferenceAnalyzerService,
+                                 RecommendationMapper recommendationMapper) {
+        this.recommendationRepository = recommendationRepository;
+        this.userServiceClient = userServiceClient;
+        this.scoringService = scoringService;
+        this.preferenceAnalyzerService = preferenceAnalyzerService;
+        this.recommendationMapper = recommendationMapper;
+    }
 
     @Value("${recommendation.default-algorithm:v1}")
     private String defaultAlgorithm;
@@ -145,8 +156,8 @@ public class RecommendationService {
         log.info("Generating new recommendations for user {}", userId);
 
         // Get source user profile
-        UserProfileDto sourceUser = userServiceClient.getUserById(userId);
-        sourceUser = preferenceAnalyzerService.enrichWithActivityStats(sourceUser);
+        UserProfileDto rawSourceUser = userServiceClient.getUserById(userId);
+        UserProfileDto sourceUser = preferenceAnalyzerService.enrichWithActivityStats(rawSourceUser);
 
         // Get eligible candidates based on source user's preferences
         List<UserProfileDto> candidates = userServiceClient.getCandidates(

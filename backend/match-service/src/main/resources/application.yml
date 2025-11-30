@@ -79,7 +79,7 @@ spring:
     password: ${RABBITMQ_PASSWORD:guest}
     virtual-host: ${RABBITMQ_VHOST:/}
     connection-timeout: 10000
-    publisher-confirms: true
+    publisher-confirm-type: correlated
     publisher-returns: true
 
   # ========================================
@@ -128,8 +128,8 @@ logging:
     file: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   file:
     name: logs/match-service.log
-    max-size: 10MB
-    max-history: 10
+  logback.rollingpolicy.max-history: 10
+  logback.rollingpolicy.max-file-size: 10MB
 
 # ========================================
 # ACTUATOR (Health Checks, Metrics)
@@ -144,13 +144,11 @@ management:
     health:
       show-details: always
     caches:
-      enabled: true
+      access: read-only
   metrics:
-    export:
-      simple:
-        enabled: true
     tags:
       application: ${spring.application.name}
+  simple.metrics.export.enabled: true
 
 ---
 # ========================================

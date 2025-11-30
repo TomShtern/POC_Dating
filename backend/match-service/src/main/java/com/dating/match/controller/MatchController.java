@@ -25,15 +25,15 @@ public class MatchController {
      * Get all matches for current user.
      *
      * @param userId User ID from X-User-Id header
-     * @param limit Page size (default 20)
+     * @param limit  Page size (default 20)
      * @param offset Page offset (default 0)
      * @return List of matches
      */
     @GetMapping
     public ResponseEntity<MatchListResponse> getMatches(
             @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam(value = "limit", defaultValue = "20") int limit,
-            @RequestParam(value = "offset", defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "20") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
         log.debug("Get matches request from user {}", userId);
 
         MatchListResponse response = matchService.getMatches(userId, limit, offset);
@@ -43,7 +43,7 @@ public class MatchController {
     /**
      * Get match details.
      *
-     * @param userId User ID from X-User-Id header
+     * @param userId  User ID from X-User-Id header
      * @param matchId Match ID
      * @return Match details
      */
@@ -60,7 +60,7 @@ public class MatchController {
     /**
      * Unmatch (end a match).
      *
-     * @param userId User ID from X-User-Id header
+     * @param userId  User ID from X-User-Id header
      * @param matchId Match ID
      * @return 204 No Content
      */

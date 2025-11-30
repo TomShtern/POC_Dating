@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Match;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.dating.ui.service.UserService;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
@@ -42,6 +43,7 @@ public class MatchesView extends VerticalLayout {
 
     private final MatchService matchService;
     private final UserService userService;
+    private final PageViewMetricsService pageViewMetrics;
     private Grid<Match> matchGrid;
     private List<Match> allMatches;
     private VerticalLayout emptyState;
@@ -49,9 +51,10 @@ public class MatchesView extends VerticalLayout {
     private static final DateTimeFormatter DATE_FORMATTER =
         DateTimeFormatter.ofPattern("MMM d, yyyy");
 
-    public MatchesView(MatchService matchService, UserService userService) {
+    public MatchesView(MatchService matchService, UserService userService, PageViewMetricsService pageViewMetrics) {
         this.matchService = matchService;
         this.userService = userService;
+        this.pageViewMetrics = pageViewMetrics;
 
         // Record page view metric
         pageViewMetrics.recordPageView("matches");

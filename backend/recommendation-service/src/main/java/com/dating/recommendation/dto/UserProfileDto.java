@@ -40,9 +40,9 @@ public class UserProfileDto implements Serializable {
     private Double longitude;
 
     // Preferences
-    private int minAge;
-    private int maxAge;
-    private int maxDistanceKm;
+    private Integer minAge;
+    private Integer maxAge;
+    private Integer maxDistanceKm;
     private String interestedIn;
     private List<String> interests;
 

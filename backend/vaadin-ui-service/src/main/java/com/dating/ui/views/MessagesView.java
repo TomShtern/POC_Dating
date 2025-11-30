@@ -2,6 +2,7 @@ package com.dating.ui.views;
 
 import com.dating.ui.dto.Conversation;
 import com.dating.ui.service.ChatService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;

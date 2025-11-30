@@ -54,7 +54,7 @@ public abstract class BaseEvent implements Serializable {
      * @param source Service that generated the event
      * @param eventType Type of the event
      */
-    protected void initializeEvent(String source, String eventType) {
+    public void initializeEvent(String source, String eventType) {
         this.eventId = UUID.randomUUID();
         this.timestamp = Instant.now();
         this.source = source;

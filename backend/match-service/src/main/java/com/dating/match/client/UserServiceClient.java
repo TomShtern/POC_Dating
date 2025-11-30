@@ -10,11 +10,7 @@ import java.util.UUID;
 /**
  * Feign client for User Service communication.
  */
-@FeignClient(
-    name = "user-service",
-    url = "${services.user-service.url}",
-    configuration = FeignClientConfig.class
-)
+@FeignClient(name = "user-service", url = "${services.user-service.url}", configuration = FeignClientConfig.class)
 public interface UserServiceClient {
 
     /**
@@ -24,7 +20,7 @@ public interface UserServiceClient {
      * @return User profile response
      */
     @GetMapping("/api/users/{userId}")
-    UserProfileResponse getUserById(@PathVariable("userId") UUID userId);
+    UserProfileResponse getUserById(@PathVariable UUID userId);
 
     /**
      * Get user preferences by ID.
@@ -33,34 +29,34 @@ public interface UserServiceClient {
      * @return User preferences response
      */
     @GetMapping("/api/users/{userId}/preferences")
-    UserPreferencesResponse getPreferences(@PathVariable("userId") UUID userId);
+    UserPreferencesResponse getPreferences(@PathVariable UUID userId);
 
     /**
      * User profile response from user-service.
      */
     record UserProfileResponse(
-        UUID id,
-        String email,
-        String username,
-        String firstName,
-        String lastName,
-        int age,
-        String gender,
-        String bio,
-        String profilePictureUrl,
-        String status
-    ) {}
+            UUID id,
+            String email,
+            String username,
+            String firstName,
+            String lastName,
+            int age,
+            String gender,
+            String bio,
+            String profilePictureUrl,
+            String status) {
+    }
 
     /**
      * User preferences response from user-service.
      */
     record UserPreferencesResponse(
-        UUID id,
-        UUID userId,
-        int minAge,
-        int maxAge,
-        int maxDistanceKm,
-        String interestedIn,
-        java.util.List<String> interests
-    ) {}
+            UUID id,
+            UUID userId,
+            int minAge,
+            int maxAge,
+            int maxDistanceKm,
+            String interestedIn,
+            java.util.List<String> interests) {
+    }
 }

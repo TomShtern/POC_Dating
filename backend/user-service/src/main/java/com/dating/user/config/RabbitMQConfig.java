@@ -1,5 +1,6 @@
 package com.dating.user.config;
 
+import com.dating.common.config.DeadLetterConfig;
 import com.dating.common.config.RabbitMQConstants;
 import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
@@ -8,12 +9,15 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 /**
  * RabbitMQ configuration for event publishing.
  * Defines exchanges, queues, and bindings for user events.
+ * Imports DeadLetterConfig to ensure dead letter exchange/queue are created.
  */
 @Configuration
+@Import(DeadLetterConfig.class)
 public class RabbitMQConfig {
 
     /**

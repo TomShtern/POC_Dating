@@ -2,6 +2,8 @@ package com.dating.common.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import lombok.Builder;
+
 import java.time.Instant;
 import java.util.Map;
 
@@ -17,6 +19,7 @@ import java.util.Map;
  * @param validationErrors Field-level validation errors (optional)
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@Builder
 public record ErrorResponse(
         Instant timestamp,
         int status,

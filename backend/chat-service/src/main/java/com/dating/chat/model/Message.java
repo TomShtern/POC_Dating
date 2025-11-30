@@ -1,30 +1,24 @@
 package com.dating.chat.model;
 
-import com.dating.chat.dto.websocket.MessageType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import com.dating.common.constant.MessageStatus;
+import com.dating.chat.dto.websocket.MessageType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
@@ -37,17 +31,20 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "messages", indexes = {
-    @Index(name = "idx_messages_match_id", columnList = "match_id"),
-    @Index(name = "idx_messages_sender", columnList = "sender_id"),
-    @Index(name = "idx_messages_status", columnList = "status"),
-    @Index(name = "idx_messages_created", columnList = "created_at"),
-    @Index(name = "idx_messages_match_created", columnList = "match_id, created_at"),
-    @Index(name = "idx_messages_match_status", columnList = "match_id, sender_id, status")
+        @Index(name = "idx_messages_match_id", columnList = "match_id"),
+        @Index(name = "idx_messages_sender", columnList = "sender_id"),
+        @Index(name = "idx_messages_status", columnList = "status"),
+        @Index(name = "idx_messages_created", columnList = "created_at"),
+        @Index(name = "idx_messages_match_created", columnList = "match_id, created_at"),
+        @Index(name = "idx_messages_match_status", columnList = "match_id, sender_id, status")
 })
-@Data
+@Getter
+@Setter
+@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@EqualsAndHashCode(of = "id")
 public class Message {
 
     @Id
@@ -71,6 +68,20 @@ public class Message {
      */
     @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
+
+    /**
+     * Message type (TEXT, IMAGE, etc.).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    @Builder.Default
+    private MessageType type = MessageType.TEXT;
+
+    /**
+     * Sender name (denormalized for performance).
+     */
+    @Column(name = "sender_name", length = 100)
+    private String senderName;
 
     /**
      * Message delivery status (SENT, DELIVERED, READ).
@@ -108,13 +119,8 @@ public class Message {
     /**
      * Message delivery status.
      */
-    public enum MessageStatus {
-        SENT,
-        DELIVERED,
-        READ
-     * Mark message as delivered.
-     */
-    public void markAsDelivered() {
+
+    public void markAsDelivered() { // This method is now correctly placed and formatted.
         if (this.status == MessageStatus.SENT) {
             this.status = MessageStatus.DELIVERED;
             this.deliveredAt = Instant.now();
@@ -140,4 +146,5 @@ public class Message {
     public boolean isDeleted() {
         return this.deletedAt != null;
     }
+
 }

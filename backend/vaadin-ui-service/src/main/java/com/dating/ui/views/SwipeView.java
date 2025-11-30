@@ -5,6 +5,7 @@ import com.dating.ui.dto.SwipeResponse;
 import com.dating.ui.dto.SwipeType;
 import com.dating.ui.dto.User;
 import com.dating.ui.service.MatchService;
+import com.dating.ui.service.PageViewMetricsService;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.UI;

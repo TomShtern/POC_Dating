@@ -46,9 +46,9 @@ public class ConversationService {
                 .map(matchId -> buildConversationResponse(matchId, userId))
                 .sorted((c1, c2) -> {
                     // Sort by last message time, most recent first
-                    if (c1.getLastMessageAt() == null) return 1;
-                    if (c2.getLastMessageAt() == null) return -1;
-                    return c2.getLastMessageAt().compareTo(c1.getLastMessageAt());
+                    if (c1.getLastMessageTime() == null) return 1;
+                    if (c2.getLastMessageTime() == null) return -1;
+                    return c2.getLastMessageTime().compareTo(c1.getLastMessageTime());
                 })
                 .limit(limit)
                 .toList();

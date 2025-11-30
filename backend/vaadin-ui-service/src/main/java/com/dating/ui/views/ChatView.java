@@ -8,6 +8,7 @@ import com.dating.ui.service.ChatService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.Key;
+import com.vaadin.flow.component.KeyModifier;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -180,7 +181,7 @@ public class ChatView extends VerticalLayout implements HasUrlParameter<String> 
         messageInput.setMinHeight("60px");
         messageInput.setMaxHeight("120px");
         messageInput.addKeyPressListener(Key.ENTER, e -> {
-            if (!e.isShiftKey()) {
+            if (!e.getModifiers().contains(KeyModifier.SHIFT)) {
                 sendMessage();
             }
         });

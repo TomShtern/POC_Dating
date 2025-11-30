@@ -41,7 +41,7 @@ public class UserMapper {
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .lastLogin(user.getLastLogin())
+                .lastLogin(user.getLastLoginAt())
                 .build();
     }
 

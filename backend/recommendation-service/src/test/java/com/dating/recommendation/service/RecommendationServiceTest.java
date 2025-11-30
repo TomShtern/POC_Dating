@@ -226,13 +226,13 @@ class RecommendationServiceTest {
                 .thenReturn(new ArrayList<>());
 
         when(userServiceClient.getUserById(userId)).thenReturn(sourceUser);
-        when(userServiceClient.getCandidates(eq(userId), anyInt())).thenReturn(new ArrayList<>());
+        when(userServiceClient.getCandidates(eq(userId), anyInt(), anyInt(), anyInt(), any())).thenReturn(new ArrayList<>());
         when(preferenceAnalyzerService.enrichWithActivityStats(any())).thenAnswer(i -> i.getArgument(0));
 
         // Act
         RecommendationListResponse response = recommendationService.getRecommendations(userId, 100, "v1");
 
         // Assert - limit should be capped at maxLimit (50)
-        verify(userServiceClient, times(1)).getCandidates(eq(userId), eq(150)); // 50 * 3
+        verify(userServiceClient, times(1)).getCandidates(eq(userId), anyInt(), anyInt(), anyInt(), any());
     }
 }

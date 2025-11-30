@@ -13,61 +13,57 @@ import java.util.UUID;
 /**
  * Feign client for Recommendation Service communication.
  */
-@FeignClient(
-    name = "recommendation-service",
-    url = "${services.recommendation-service.url}",
-    configuration = FeignClientConfig.class
-)
+@FeignClient(name = "recommendation-service", url = "${services.recommendation-service.url}", configuration = FeignClientConfig.class)
 public interface RecommendationServiceClient {
 
     /**
      * Get recommendations for a user.
      *
      * @param userId User ID
-     * @param limit Number of recommendations to fetch
+     * @param limit  Number of recommendations to fetch
      * @return Recommendations response
      */
     @GetMapping("/api/recommendations/{userId}")
     RecommendationsResponse getRecommendations(
-            @PathVariable("userId") UUID userId,
-            @RequestParam(value = "limit", defaultValue = "50") int limit);
+            @PathVariable UUID userId,
+            @RequestParam(defaultValue = "50") int limit);
 
     /**
      * Get compatibility score between two users.
      *
-     * @param userId First user ID
+     * @param userId       First user ID
      * @param targetUserId Target user ID
      * @return Compatibility score response
      */
     @GetMapping("/api/recommendations/{userId}/{targetUserId}/score")
     CompatibilityScoreResponse getCompatibilityScore(
-            @PathVariable("userId") UUID userId,
-            @PathVariable("targetUserId") UUID targetUserId);
+            @PathVariable UUID userId,
+            @PathVariable UUID targetUserId);
 
     /**
      * Recommendations response from recommendation-service.
      */
     record RecommendationsResponse(
-        List<RecommendedUser> recommendations,
-        long total,
-        boolean hasMore
-    ) {}
+            List<RecommendedUser> recommendations,
+            long total,
+            boolean hasMore) {
+    }
 
     /**
      * Recommended user with score.
      */
     record RecommendedUser(
-        UUID id,
-        int score,
-        Map<String, Object> scoreFactors,
-        String reason
-    ) {}
+            UUID id,
+            int score,
+            Map<String, Object> scoreFactors,
+            String reason) {
+    }
 
     /**
      * Compatibility score response.
      */
     record CompatibilityScoreResponse(
-        int score,
-        Map<String, Object> factors
-    ) {}
+            int score,
+            Map<String, Object> factors) {
+    }
 }

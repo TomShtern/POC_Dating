@@ -5,9 +5,11 @@ import com.dating.ui.dto.Match;
 import com.dating.ui.dto.MatchListResponse;
 import com.dating.ui.dto.SwipeRequest;
 import com.dating.ui.dto.SwipeResponse;
+import com.dating.ui.dto.User;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -16,6 +18,12 @@ import java.util.UUID;
  */
 @FeignClient(name = "match-service", url = "${services.match-service.url}")
 public interface MatchServiceClient {
+
+    /**
+     * Get next profile for swiping.
+     */
+    @GetMapping("/api/matches/next")
+    User getNextProfile(@RequestHeader("Authorization") String token);
 
     /**
      * Get feed of potential matches for a user.
@@ -33,16 +41,13 @@ public interface MatchServiceClient {
     @PostMapping("/api/matches/swipes")
     SwipeResponse recordSwipe(
             @RequestBody SwipeRequest request,
-            @RequestHeader("X-User-Id") UUID userId);
+            @RequestHeader("Authorization") String token);
 
     /**
      * Get all matches for current user.
      */
     @GetMapping("/api/matches")
-    MatchListResponse getMatches(
-            @RequestHeader("X-User-Id") UUID userId,
-            @RequestParam(value = "limit", defaultValue = "20") int limit,
-            @RequestParam(value = "offset", defaultValue = "0") int offset);
+    List<Match> getMyMatches(@RequestHeader("Authorization") String token);
 
     /**
      * Get match details.

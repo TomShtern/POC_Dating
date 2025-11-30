@@ -24,18 +24,18 @@ public class FeedController {
     /**
      * Get swiping feed for a user.
      *
-     * @param userId User ID from path
+     * @param userId        User ID from path
      * @param requestUserId User ID from X-User-Id header (for authorization)
-     * @param limit Number of users to return (default 10)
-     * @param offset Pagination offset (default 0)
+     * @param limit         Number of users to return (default 10)
+     * @param offset        Pagination offset (default 0)
      * @return Feed response
      */
     @GetMapping("/feed/{userId}")
     public ResponseEntity<FeedResponse> getFeed(
             @PathVariable UUID userId,
             @RequestHeader("X-User-Id") UUID requestUserId,
-            @RequestParam(value = "limit", defaultValue = "10") int limit,
-            @RequestParam(value = "offset", defaultValue = "0") int offset) {
+            @RequestParam(defaultValue = "10") int limit,
+            @RequestParam(defaultValue = "0") int offset) {
         log.debug("Feed request for user {} by {}", userId, requestUserId);
 
         // Verify the requesting user is the same as the path user

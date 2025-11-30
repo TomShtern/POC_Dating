@@ -131,7 +131,7 @@ class UserServiceTest {
         assertEquals("New bio", response.getBio());
 
         verify(userRepository).save(any(User.class));
-        verify(eventPublisher).publishUserUpdated(any(User.class));
+        verify(eventPublisher).publishUserUpdated(eq(userId), eq("profile"));
     }
 
     @Test

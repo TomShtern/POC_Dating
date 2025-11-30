@@ -54,7 +54,7 @@ class ChatWebSocketControllerTest {
 
     @Test
     void sendMessage_shouldSaveAndBroadcastMessage() {
-        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT);
+        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT, null, null);
 
         when(chatMessageService.isUserInMatch(userId, matchId)).thenReturn(true);
         when(chatMessageService.saveMessage(any(), any(), any(), any(), any()))
@@ -78,7 +78,7 @@ class ChatWebSocketControllerTest {
 
     @Test
     void sendMessage_shouldThrowExceptionWhenNotAuthorized() {
-        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT);
+        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT, null, null);
         when(chatMessageService.isUserInMatch(userId, matchId)).thenReturn(false);
 
         assertThatThrownBy(() -> controller.sendMessage(request, principal))
@@ -89,7 +89,7 @@ class ChatWebSocketControllerTest {
 
     @Test
     void sendMessage_shouldThrowExceptionWhenPrincipalIsNull() {
-        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT);
+        SendMessageRequest request = new SendMessageRequest(matchId, "Hello!", MessageType.TEXT, null, null);
 
         assertThatThrownBy(() -> controller.sendMessage(request, null))
                 .isInstanceOf(AccessDeniedException.class)

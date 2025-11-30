@@ -6,6 +6,7 @@ import com.dating.chat.dto.response.ConversationsListResponse;
 import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.dto.websocket.ChatMessage;
+import com.dating.chat.dto.websocket.TypingEvent;
 import com.dating.chat.dto.websocket.TypingIndicator;
 import com.dating.chat.websocket.WebSocketSessionManager;
 import com.dating.common.constant.MessageStatus;
@@ -236,19 +237,19 @@ class ChatServiceTest {
     @Test
     void testHandleTypingIndicator_BroadcastsToOtherParticipant() {
         // Arrange
-        TypingIndicator indicator = TypingIndicator.start(conversationId, senderId);
+        TypingIndicator indicator = new TypingIndicator(conversationId, true);
         // Return messages to determine other participant
         when(messageService.getMessages(conversationId, 50, 0))
                 .thenReturn(List.of(testMessageResponse, otherUserMessageResponse));
 
         // Act
-        chatService.handleTypingIndicator(indicator);
+        chatService.handleTypingIndicator(indicator, senderId);
 
         // Assert
         verify(messagingTemplate, times(1)).convertAndSendToUser(
                 eq(receiverId.toString()),
                 eq("/queue/typing"),
-                eq(indicator)
+                any(TypingEvent.class)
         );
     }
 }

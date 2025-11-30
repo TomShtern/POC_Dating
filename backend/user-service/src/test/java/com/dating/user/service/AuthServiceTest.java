@@ -108,7 +108,7 @@ class AuthServiceTest {
 
         verify(userRepository).save(any(User.class));
         verify(userPreferenceRepository).save(any());
-        verify(eventPublisher).publishUserRegistered(testUser);
+        verify(eventPublisher).publishUserRegistered(testUser.getId(), testUser.getEmail(), testUser.getUsername());
     }
 
     @Test
@@ -201,7 +201,7 @@ class AuthServiceTest {
         UUID userId = UUID.randomUUID();
 
         // Act
-        authService.logout(userId);
+        authService.logout(userId, "dummy-token");
 
         // Assert
         verify(tokenService).revokeAllUserTokens(userId);

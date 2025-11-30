@@ -18,6 +18,7 @@ import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 import org.springframework.messaging.simp.stomp.StompFrameHandler;
 import org.springframework.messaging.simp.stomp.StompHeaders;
 import org.springframework.messaging.simp.stomp.StompSession;
+import org.springframework.messaging.simp.stomp.StompSessionHandler;
 import org.springframework.messaging.simp.stomp.StompSessionHandlerAdapter;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.socket.client.standard.StandardWebSocketClient;
@@ -105,9 +106,9 @@ class WebSocketIntegrationTest {
 
         StompSession session = stompClient.connectAsync(
                 websocketUrl,
-                null,
+                (org.springframework.web.socket.WebSocketHttpHeaders) null,
                 connectHeaders,
-                new StompSessionHandlerAdapter() {}
+                (StompSessionHandler) new StompSessionHandlerAdapter() {}
         ).get(5, TimeUnit.SECONDS);
 
         assertThat(session.isConnected()).isTrue();
@@ -128,9 +129,9 @@ class WebSocketIntegrationTest {
 
         StompSession session2 = stompClient.connectAsync(
                 websocketUrl,
-                null,
+                (org.springframework.web.socket.WebSocketHttpHeaders) null,
                 headers2,
-                new StompSessionHandlerAdapter() {}
+                (StompSessionHandler) new StompSessionHandlerAdapter() {}
         ).get(5, TimeUnit.SECONDS);
 
         // Subscribe to messages
@@ -155,16 +156,18 @@ class WebSocketIntegrationTest {
 
         StompSession session1 = stompClient.connectAsync(
                 websocketUrl,
-                null,
+                (org.springframework.web.socket.WebSocketHttpHeaders) null,
                 headers1,
-                new StompSessionHandlerAdapter() {}
+                (StompSessionHandler) new StompSessionHandlerAdapter() {}
         ).get(5, TimeUnit.SECONDS);
 
         // Send message from user 1
         SendMessageRequest request = new SendMessageRequest(
                 matchId,
                 "Hello from user 1!",
-                MessageType.TEXT
+                MessageType.TEXT,
+                null,
+                null
         );
         session1.send("/app/chat.send", request);
 

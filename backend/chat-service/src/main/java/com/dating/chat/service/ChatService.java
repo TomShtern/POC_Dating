@@ -6,6 +6,7 @@ import com.dating.chat.dto.response.ConversationsListResponse;
 import com.dating.chat.dto.response.MessageListResponse;
 import com.dating.chat.dto.response.MessageResponse;
 import com.dating.chat.dto.websocket.ChatMessage;
+import com.dating.chat.dto.websocket.TypingEvent;
 import com.dating.chat.dto.websocket.TypingIndicator;
 import com.dating.chat.websocket.WebSocketSessionManager;
 import lombok.RequiredArgsConstructor;
@@ -120,17 +121,18 @@ public class ChatService {
      * Handle typing indicator.
      *
      * @param indicator Typing indicator
+     * @param userId User who is typing
      */
-    public void handleTypingIndicator(TypingIndicator indicator) {
+    public void handleTypingIndicator(TypingIndicator indicator, UUID userId) {
         log.debug("Typing indicator: {} in conversation {} from user {}",
-                indicator.getType(), indicator.getConversationId(), indicator.getUserId());
+                indicator.isTyping(), indicator.matchId(), userId);
 
         // Broadcast to the other participant
         String destination = "/queue/typing";
         messagingTemplate.convertAndSendToUser(
-                getOtherParticipant(indicator.getConversationId(), indicator.getUserId()).toString(),
+                getOtherParticipant(indicator.matchId(), userId).toString(),
                 destination,
-                indicator
+                new TypingEvent(indicator.matchId(), userId, indicator.isTyping())
         );
     }
 

@@ -120,7 +120,7 @@ class ChatMessageServiceTest {
 
         Message savedMessage = Message.builder()
                 .id(UUID.randomUUID())
-                .conversation(conversation)
+                .matchId(matchId)
                 .senderId(userId)
                 .senderName(senderName)
                 .content(content)
@@ -160,11 +160,11 @@ class ChatMessageServiceTest {
     @Test
     void markMessagesAsRead_shouldUpdateMessages() {
         UUID lastReadMessageId = UUID.randomUUID();
-        when(messageRepository.markMessagesAsRead(any(), any(), any(), any())).thenReturn(5);
+        when(messageRepository.markAllAsRead(any(), any(), any())).thenReturn(5);
 
         chatMessageService.markMessagesAsRead(matchId, userId, lastReadMessageId);
 
-        verify(messageRepository).markMessagesAsRead(any(), any(), any(), any());
+        verify(messageRepository).markAllAsRead(any(), any(), any());
     }
 
     @Test
@@ -190,7 +190,7 @@ class ChatMessageServiceTest {
 
     @Test
     void countUnreadMessages_shouldReturnCount() {
-        when(messageRepository.countUnreadMessages(conversationId, userId)).thenReturn(3L);
+        when(messageRepository.countUnreadByMatchIdAndUserId(conversationId, userId)).thenReturn(3L);
 
         long result = chatMessageService.countUnreadMessages(conversationId, userId);
 

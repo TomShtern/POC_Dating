@@ -8,6 +8,7 @@ import com.dating.chat.model.Conversation;
 import com.dating.chat.model.Message;
 import com.dating.chat.repository.ConversationRepository;
 import com.dating.chat.repository.MessageRepository;
+import com.dating.common.constant.MessageStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -83,12 +84,12 @@ public class ChatMessageService {
 
         // Create and save the message with ordering
         Message message = Message.builder()
-                .conversation(conversation)
+                .matchId(matchId)
                 .senderId(senderId)
                 .senderName(senderName)
                 .content(content)
                 .type(type)
-                .status(Message.MessageStatus.SENT)
+                .status(MessageStatus.SENT)
                 .build();
 
         message = messageRepository.save(message);
@@ -117,8 +118,8 @@ public class ChatMessageService {
     @CacheEvict(value = "messages", allEntries = true)
     public void markMessageAsDelivered(UUID messageId) {
         messageRepository.findById(messageId).ifPresent(message -> {
-            if (message.getStatus() == Message.MessageStatus.SENT) {
-                message.setStatus(Message.MessageStatus.DELIVERED);
+            if (message.getStatus() == MessageStatus.SENT) {
+                message.setStatus(MessageStatus.DELIVERED);
                 message.setDeliveredAt(Instant.now());
                 messageRepository.save(message);
                 log.debug("Message marked as delivered: {}", messageId);
@@ -132,7 +133,7 @@ public class ChatMessageService {
     @Transactional
     @CacheEvict(value = "messages", allEntries = true)
     public void markMessagesAsRead(UUID matchId, UUID readerId, UUID lastReadMessageId) {
-        int updated = messageRepository.markMessagesAsRead(matchId, readerId, lastReadMessageId, Instant.now());
+        int updated = messageRepository.markAllAsRead(matchId, readerId, Instant.now());
         log.info("Marked {} messages as read: matchId={}, readerId={}", updated, matchId, readerId);
     }
 
@@ -156,7 +157,7 @@ public class ChatMessageService {
 
         // Order by created_at DESC for message ordering guarantee
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
-        return messageRepository.findByMatchId(matchId, pageRequest);
+        return messageRepository.findByMatchIdOrderByCreatedAtDesc(matchId, pageRequest);
     }
 
     /**
@@ -187,7 +188,7 @@ public class ChatMessageService {
      */
     @Transactional(readOnly = true)
     public long countUnreadMessages(UUID conversationId, UUID userId) {
-        return messageRepository.countUnreadMessages(conversationId, userId);
+        return messageRepository.countUnreadByMatchIdAndUserId(conversationId, userId);
     }
 
     /**
